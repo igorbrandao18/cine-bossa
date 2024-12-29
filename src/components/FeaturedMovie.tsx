@@ -2,7 +2,7 @@ import React, { memo, useEffect, useCallback } from 'react';
 import { StyleSheet, Dimensions, View, Pressable } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Movie } from '../types/tmdb';
-import { IMAGE_BASE_URL, POSTER_SIZES } from '../config/api';
+import { IMAGE_BASE_URL, BACKDROP_SIZES } from '../config/api';
 import { Link } from 'expo-router';
 import Animated, { 
   FadeIn, 
@@ -15,7 +15,6 @@ import Animated, {
   runOnJS
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import {
   Gesture,
   GestureDetector,
@@ -23,14 +22,17 @@ import {
 } from 'react-native-gesture-handler';
 
 const { width, height } = Dimensions.get('window');
-const BANNER_HEIGHT = height * 0.7;
+const BANNER_HEIGHT = height * 0.4;
 
 interface FeaturedMovieProps {
   movie: Movie;
   onNext?: () => void;
 }
 
-export const FeaturedMovie = memo(function FeaturedMovie({ movie, onNext }: FeaturedMovieProps) {
+export const FeaturedMovie = memo(function FeaturedMovie({ 
+  movie, 
+  onNext,
+}: FeaturedMovieProps) {
   const translateX = useSharedValue(0);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -91,41 +93,44 @@ export const FeaturedMovie = memo(function FeaturedMovie({ movie, onNext }: Feat
   }));
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <GestureDetector gesture={panGesture}>
-        <Animated.View 
-          entering={FadeIn.duration(300)}
-          style={[styles.featuredContainer, animatedStyle]}
-        >
-          <Animated.Image
-            source={{ 
-              uri: `${IMAGE_BASE_URL}/${POSTER_SIZES.original}${movie.backdrop_path}` 
-            }}
-            style={styles.featuredImage}
-            resizeMode="cover"
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.8)', '#000']}
-            style={styles.gradient}
-            locations={[0, 0.5, 1]}
+    <View style={styles.container}>
+      <GestureHandlerRootView style={styles.gestureContainer}>
+        <GestureDetector gesture={panGesture}>
+          <Animated.View 
+            entering={FadeIn.duration(300)}
+            style={[styles.featuredContainer, animatedStyle]}
           >
-            <BlurView intensity={20} style={styles.featuredContent}>
-              <Text variant="headlineMedium" style={styles.featuredTitle}>
-                {movie.title}
-              </Text>
-              <Text variant="bodyMedium" style={styles.featuredOverview} numberOfLines={3}>
-                {movie.overview}
-              </Text>
-              <Link href={`/movie/${movie.id}`} asChild>
-                <Pressable style={styles.playButton}>
-                  <Text style={styles.playButtonText}>Comprar Ingresso</Text>
-                </Pressable>
-              </Link>
-            </BlurView>
-          </LinearGradient>
-        </Animated.View>
-      </GestureDetector>
-    </GestureHandlerRootView>
+            <Animated.Image
+              source={{ 
+                uri: `${IMAGE_BASE_URL}/${BACKDROP_SIZES.original}${movie.backdrop_path}` 
+              }}
+              style={styles.featuredImage}
+              resizeMode="cover"
+            />
+
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.95)', '#000']}
+              style={styles.gradient}
+              locations={[0, 0.5, 0.8]}
+            >
+              <View style={styles.contentContainer}>
+                <Text variant="headlineMedium" style={styles.featuredTitle}>
+                  {movie.title}
+                </Text>
+                <Text variant="bodyMedium" style={styles.featuredOverview} numberOfLines={2}>
+                  {movie.overview}
+                </Text>
+                <Link href={`/movie/${movie.id}`} asChild>
+                  <Pressable style={styles.playButton}>
+                    <Text style={styles.playButtonText}>Comprar Ingresso</Text>
+                  </Pressable>
+                </Link>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        </GestureDetector>
+      </GestureHandlerRootView>
+    </View>
   );
 });
 
@@ -133,6 +138,11 @@ const styles = StyleSheet.create({
   container: {
     height: BANNER_HEIGHT,
     width,
+    backgroundColor: '#000',
+    overflow: 'hidden',
+  },
+  gestureContainer: {
+    flex: 1,
   },
   featuredContainer: {
     height: BANNER_HEIGHT,
@@ -140,7 +150,7 @@ const styles = StyleSheet.create({
   },
   featuredImage: {
     width: '100%',
-    height: BANNER_HEIGHT,
+    height: '100%',
     position: 'absolute',
   },
   gradient: {
@@ -150,31 +160,32 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: BANNER_HEIGHT,
     justifyContent: 'flex-end',
-    padding: 20,
   },
-  featuredContent: {
-    borderRadius: 8,
+  contentContainer: {
     padding: 16,
+    paddingBottom: 24,
   },
   featuredTitle: {
     color: '#fff',
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   featuredOverview: {
     color: '#fff',
-    marginBottom: 16,
+    marginBottom: 12,
+    fontSize: 13,
   },
   playButton: {
     backgroundColor: '#E50914',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 4,
     alignSelf: 'flex-start',
   },
   playButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 14,
   },
 }); 

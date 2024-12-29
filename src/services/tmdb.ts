@@ -53,6 +53,13 @@ export const tmdbAPI = {
     api.get(`/movie/${movieId}/credits`),
 
   // Vídeos do filme (trailers, teasers, etc)
-  getMovieVideos: (movieId: number) => 
-    api.get(`/movie/${movieId}/videos`)
+  getMovieVideos: (movieId: number) => {
+    return axios.get(`${BASE_URL}/movie/${movieId}/videos`, {
+      params: {
+        api_key: API_KEY,
+        language: 'pt-BR',
+        append_to_response: 'videos'
+      }
+    });
+  },
 }; 

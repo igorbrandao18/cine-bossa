@@ -1,9 +1,15 @@
 import React, { memo } from 'react';
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { Link } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { 
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring 
+} from 'react-native-reanimated';
 import { Movie } from '../types/tmdb';
 import { IMAGE_BASE_URL, POSTER_SIZES } from '../config/api';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width * 0.28;
@@ -15,25 +21,42 @@ interface MoviePosterProps {
 }
 
 export const MoviePoster = memo(function MoviePoster({ movie, size = 'small' }: MoviePosterProps) {
+  const scale = useSharedValue(1);
+
+  const gesture = Gesture.Tap()
+    .onBegin(() => {
+      scale.value = withSpring(0.95);
+    })
+    .onFinalize(() => {
+      scale.value = withSpring(1);
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }]
+  }));
+
   return (
     <Link href={`/movie/${movie.id}`} asChild>
-      <Animated.View 
-        entering={FadeInDown.delay(200)} 
-        style={[
-          styles.container,
-          size === 'large' ? styles.largePoster : styles.smallPoster
-        ]}
-      >
-        <Animated.Image
-          source={{ uri: `${IMAGE_BASE_URL}/${POSTER_SIZES.medium}${movie.poster_path}` }}
+      <GestureDetector gesture={gesture}>
+        <Animated.View 
+          entering={FadeInDown.delay(200)} 
           style={[
-            styles.poster,
-            size === 'large' ? styles.largePoster : styles.smallPoster
+            styles.container,
+            size === 'large' ? styles.largePoster : styles.smallPoster,
+            animatedStyle
           ]}
-          loading="lazy"
-          cachePolicy="memory-disk"
-        />
-      </Animated.View>
+        >
+          <Animated.Image
+            source={{ uri: `${IMAGE_BASE_URL}/${POSTER_SIZES.medium}${movie.poster_path}` }}
+            style={[
+              styles.poster,
+              size === 'large' ? styles.largePoster : styles.smallPoster
+            ]}
+            loading="lazy"
+            cachePolicy="memory-disk"
+          />
+        </Animated.View>
+      </GestureDetector>
     </Link>
   );
 });
@@ -44,6 +67,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginVertical: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+    backgroundColor: '#1a1a1a', // Cor de fundo para quando a imagem estiver carregando
   },
   poster: {
     borderRadius: 8,
