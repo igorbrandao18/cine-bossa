@@ -1,99 +1,139 @@
-import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, SafeAreaView, ActivityIndicator } from 'react-native';
-import { Text } from 'react-native-paper';
-import { MoviePoster } from '../components/MoviePoster';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
+import { View, ScrollView, StyleSheet, Dimensions, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
+import { Text, Button } from 'react-native-paper';
 import { FeaturedMovie } from '../components/FeaturedMovie';
 import { useMovieStore } from '../stores/movieStore';
+import { FeaturedMovieSkeleton } from '../components/FeaturedMovieSkeleton';
+import { Skeleton } from '../components/Skeleton';
+import { cache } from '../services/cache';
+import type { MovieState } from '../stores/movieStore';
+import { MovieRow } from '../components/MovieRow';
+import { testConnection } from '../services/tmdb';
 
 const { width } = Dimensions.get('window');
-
-// Componente MovieRow memoizado para evitar re-renders desnecessários
-const MovieRow = React.memo(({ title, movies }: { title: string; movies: Movie[] }) => {
-  const [visibleMovies, setVisibleMovies] = useState<Movie[]>([]);
-  const scrollViewRef = useRef<ScrollView>(null);
-
-  useEffect(() => {
-    setVisibleMovies(movies.slice(0, 5));
-  }, [movies]);
-
-  const handleScroll = useCallback((event: any) => {
-    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-    const isEndReached = contentOffset.x + layoutMeasurement.width >= contentSize.width - 20;
-
-    if (isEndReached && visibleMovies.length < movies.length) {
-      setVisibleMovies(prev => [
-        ...prev,
-        ...movies.slice(prev.length, prev.length + 5)
-      ]);
-    }
-  }, [movies, visibleMovies]);
-
-  return (
-    <View style={styles.row}>
-      <Text variant="titleMedium" style={styles.rowTitle}>{title}</Text>
-      {movies.length > 0 ? (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          removeClippedSubviews={true}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          ref={scrollViewRef}
-          contentContainerStyle={styles.rowContent}
-          style={styles.scrollView}
-        >
-          {visibleMovies.map(movie => (
-            <MoviePoster key={movie.id} movie={movie} />
-          ))}
-        </ScrollView>
-      ) : (
-        <View style={styles.emptyRow}>
-          <Text style={styles.emptyText}>Nenhum filme disponível</Text>
-        </View>
-      )}
-    </View>
-  );
-}, (prevProps, nextProps) => {
-  return prevProps.movies.length === nextProps.movies.length;
-});
+const ITEM_WIDTH = width * 0.28;
+const ITEM_HEIGHT = ITEM_WIDTH * 1.5;
 
 export default function HomeScreen() {
-  const { 
-    loading, 
-    sections, 
-    featuredIndex,
-    loadMovies,
-    nextFeatured 
-  } = useMovieStore();
+  const { sections, loading, error, loadMovies, loadMoreMovies } = useMovieStore();
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadMovies();
+    const init = async () => {
+      const isConnected = await testConnection();
+      if (isConnected) {
+        loadMovies();
+      }
+    };
+    init();
   }, []);
 
-  // Memoize o featured movie para evitar re-renders desnecessários
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await loadMovies();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadMovies]);
+
+  const nextFeatured = useCallback(() => {
+    if (sections?.nowPlaying?.data?.length > 0) {
+      setFeaturedIndex(prev => 
+        prev === sections.nowPlaying.data.length - 1 ? 0 : prev + 1
+      );
+    }
+  }, [sections?.nowPlaying?.data?.length]);
+
   const featuredMovie = useMemo(() => {
-    if (sections.nowPlaying.length > 0) {
+    if (sections?.nowPlaying?.data?.length > 0) {
       return (
         <FeaturedMovie 
-          movie={sections.nowPlaying[featuredIndex]} 
+          movie={sections.nowPlaying.data[featuredIndex]} 
           onNext={nextFeatured}
         />
       );
     }
     return null;
-  }, [sections.nowPlaying, featuredIndex]);
+  }, [sections?.nowPlaying?.data, featuredIndex, nextFeatured]);
 
-  // Memoize as seções de filmes
-  const movieSections = useMemo(() => (
-    <View style={styles.content}>
-      <MovieRow title="Em Cartaz" movies={sections.nowPlaying} />
-      <MovieRow title="Populares" movies={sections.popular} />
-      <MovieRow title="Próximos Lançamentos" movies={sections.upcoming} />
-      <MovieRow title="Mais Bem Avaliados" movies={sections.topRated} />
-    </View>
-  ), [sections]);
+  const handleLoadMore = useCallback((section: keyof MovieState['sections']) => {
+    return loadMoreMovies(section);
+  }, [loadMoreMovies]);
 
-  if (loading && !sections.nowPlaying.length) {
+  const memoizedSections = useMemo(() => {
+    if (!sections) return {};
+    
+    return {
+      nowPlaying: {
+        title: "Em Cartaz",
+        data: sections.nowPlaying.data,
+        hasMore: sections.nowPlaying.page < sections.nowPlaying.totalPages
+      },
+      popular: {
+        title: "Populares",
+        data: sections.popular.data,
+        hasMore: sections.popular.page < sections.popular.totalPages
+      },
+      upcoming: {
+        title: "Em Breve",
+        data: sections.upcoming.data,
+        hasMore: sections.upcoming.page < sections.upcoming.totalPages
+      },
+      topRated: {
+        title: "Mais Bem Avaliados",
+        data: sections.topRated.data,
+        hasMore: sections.topRated.page < sections.topRated.totalPages
+      }
+    };
+  }, [sections]);
+
+  console.log('Sections:', sections);
+  console.log('Memoized Sections:', memoizedSections);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView>
+          <FeaturedMovieSkeleton />
+          {Array.from({ length: 4 }).map((_, index) => (
+            <View key={index} style={styles.row}>
+              <Skeleton width={120} height={24} />
+              <View style={styles.rowContent}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton 
+                    key={i}
+                    width={ITEM_WIDTH}
+                    height={ITEM_HEIGHT}
+                    borderRadius={8}
+                  />
+                ))}
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button 
+          mode="contained" 
+          onPress={loadMovies}
+          textColor="#fff"
+          buttonColor="#E50914"
+        >
+          Tentar Novamente
+        </Button>
+      </View>
+    );
+  }
+
+  if (!sections || !sections.nowPlaying.data.length) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E50914" />
@@ -102,27 +142,40 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.container}>
       <ScrollView 
-        style={styles.container} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        removeClippedSubviews={true}
+        style={styles.scrollContent}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#E50914"
+            colors={['#E50914']}
+            progressBackgroundColor="#1a1a1a"
+          />
+        }
       >
         {featuredMovie}
-        {movieSections}
+
+        {Object.entries(memoizedSections).map(([key, section]) => (
+          <MovieRow 
+            key={key}
+            title={section.title}
+            movies={section.data}
+            onLoadMore={() => handleLoadMore(key as keyof MovieState['sections'])}
+            hasMore={section.hasMore}
+          />
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
   container: {
     flex: 1,
+    backgroundColor: '#000',
   },
   scrollContent: {
     paddingTop: 0,
@@ -134,12 +187,10 @@ const styles = StyleSheet.create({
   row: {
     marginBottom: 32,
   },
-  rowTitle: {
-    color: '#fff',
-    marginLeft: 16,
-    marginBottom: 12,
-    fontSize: 18,
-    fontWeight: 'bold',
+  rowContent: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 12,
   },
   loadingContainer: {
     flex: 1,
@@ -147,21 +198,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#000',
   },
-  emptyRow: {
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: '#666',
-    fontSize: 16,
-  },
-  rowContent: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 12,
-  },
-  scrollView: {
-    marginTop: 8,
-  },
+  errorText: {
+    color: '#fff',
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+    paddingHorizontal: 20
+  }
 }); 

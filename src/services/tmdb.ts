@@ -1,65 +1,52 @@
-import axios from 'axios';
-import { API_KEY, BASE_URL } from '../config/api';
+import { tmdbAPI as api } from '../config/api';
+import type { MoviesResponse, MovieDetails } from '../types/tmdb';
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  params: {
-    api_key: API_KEY,
-    language: 'pt-BR'
-  }
-});
-
-export const tmdbAPI = {
-  // Filmes em cartaz
+// Serviços da API
+export const movieService = {
   getNowPlaying: (page = 1) => 
-    api.get('/movie/now_playing', { params: { page } }),
-
-  // Filmes populares
+    api.get<MoviesResponse>('/movie/now_playing', { params: { page } }),
+  
   getPopular: (page = 1) => 
-    api.get('/movie/popular', { params: { page } }),
-
-  // Próximos lançamentos
+    api.get<MoviesResponse>('/movie/popular', { params: { page } }),
+  
   getUpcoming: (page = 1) => 
-    api.get('/movie/upcoming', { params: { page } }),
-
-  // Filmes mais bem avaliados
+    api.get<MoviesResponse>('/movie/upcoming', { params: { page } }),
+  
   getTopRated: (page = 1) => 
-    api.get('/movie/top_rated', { params: { page } }),
+    api.get<MoviesResponse>('/movie/top_rated', { params: { page } }),
+  
+  getDetails: (id: number) => 
+    api.get<MovieDetails>(`/movie/${id}`)
+};
 
-  // Filmes por gênero
-  getMoviesByGenre: (genreId: number, page = 1) => 
-    api.get('/discover/movie', { 
-      params: { 
-        page,
-        with_genres: genreId,
-        sort_by: 'popularity.desc'
-      } 
-    }),
+export const testConnection = async () => {
+  try {
+    const response = await api.get('/configuration');
+    console.log('✅ API conectada:', response.data);
+    return true;
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      console.error('❌ Erro de autenticação. Verifique sua API key');
+    } else {
+      console.error('❌ Erro na conexão:', error.message);
+    }
+    return false;
+  }
+};
 
-  // Detalhes do filme
-  getMovieDetails: (movieId: number) => 
-    api.get<MovieDetails>(`/movie/${movieId}`),
-
-  // Lista de gêneros
-  getGenres: () => 
-    api.get('/genre/movie/list'),
-
-  // Buscar filmes
-  searchMovies: (query: string, page = 1) => 
-    api.get('/search/movie', { params: { query, page } }),
-
-  // Créditos do filme (elenco e equipe)
-  getMovieCredits: (movieId: number) => 
-    api.get(`/movie/${movieId}/credits`),
-
-  // Vídeos do filme (trailers, teasers, etc)
-  getMovieVideos: (movieId: number) => {
-    return axios.get(`${BASE_URL}/movie/${movieId}/videos`, {
-      params: {
-        api_key: API_KEY,
-        language: 'pt-BR',
-        append_to_response: 'videos'
-      }
-    });
-  },
+// Função helper para retry
+export const withRetry = async <T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 1000
+): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return withRetry(fn, retries - 1, delay * 2);
+    }
+    throw error;
+  }
 }; 

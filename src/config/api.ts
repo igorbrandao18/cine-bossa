@@ -1,31 +1,75 @@
-export const API_KEY = 'c90bcc69290d26ceb456609c8e38227d';
-export const BASE_URL = 'https://api.themoviedb.org/3';
-export const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
+import axios from 'axios';
 
-export const POSTER_SIZES = {
-  small: 'w185',
-  medium: 'w342',
-  large: 'w500',
-  original: 'original'
-} as const;
+const API_KEY = 'c90bcc69290d26ceb456609c8e38227d';
 
-export const BACKDROP_SIZES = {
-  small: 'w300',
-  medium: 'w780',
-  large: 'w1280',
-  original: 'original'
-} as const;
+if (!API_KEY) {
+  throw new Error('TMDB API Key não encontrada');
+}
 
-export const YOUTUBE_THUMBNAIL = {
-  default: 'https://img.youtube.com/vi/{videoId}/default.jpg',
-  medium: 'https://img.youtube.com/vi/{videoId}/mqdefault.jpg',
-  high: 'https://img.youtube.com/vi/{videoId}/hqdefault.jpg',
-  standard: 'https://img.youtube.com/vi/{videoId}/sddefault.jpg',
-  maxres: 'https://img.youtube.com/vi/{videoId}/maxresdefault.jpg',
-} as const;
+export const API_CONFIG = {
+  baseUrl: 'https://api.themoviedb.org/3',
+  imageBaseUrl: 'https://image.tmdb.org/t/p',
+  apiKey: API_KEY,
+  language: 'pt-BR',
+  region: 'BR'
+};
 
-// Adicione isso para debug
-console.log('API Config:', {
-  BASE_URL,
-  API_KEY: API_KEY.substring(0, 4) + '...' // Por segurança, não logue a chave inteira
-}); 
+export const SIZES = {
+  poster: {
+    small: 'w185',
+    medium: 'w342',
+    large: 'w500'
+  },
+  backdrop: {
+    small: 'w300',
+    medium: 'w780',
+    large: 'w1280',
+    original: 'original'
+  }
+};
+
+// Cria instância do axios com configurações base
+export const tmdbAPI = axios.create({
+  baseURL: API_CONFIG.baseUrl,
+  params: {
+    api_key: API_KEY,
+    language: API_CONFIG.language,
+    region: API_CONFIG.region
+  }
+});
+
+// Interceptors para debug
+tmdbAPI.interceptors.request.use(
+  config => {
+    if (__DEV__) {
+      console.log('🔍 API Request:', {
+        url: config.url,
+        method: config.method,
+        params: {
+          ...config.params,
+          api_key: config.params.api_key.slice(0, 4) + '...'
+        }
+      });
+    }
+    return config;
+  },
+  error => {
+    console.error('❌ Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+tmdbAPI.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('❌ API Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.response?.data?.status_message
+    });
+    return Promise.reject(error);
+  }
+);
+
+export const createImageUrl = (path: string, size: string) => 
+  `${API_CONFIG.imageBaseUrl}/${size}${path}`; 

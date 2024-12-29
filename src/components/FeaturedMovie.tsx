@@ -1,9 +1,9 @@
 import React, { memo, useEffect, useCallback } from 'react';
-import { StyleSheet, Dimensions, View, Pressable } from 'react-native';
+import { StyleSheet, Dimensions, View, Pressable, Image } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Movie } from '../types/tmdb';
-import { IMAGE_BASE_URL, BACKDROP_SIZES } from '../config/api';
-import { Link } from 'expo-router';
+import { API_CONFIG, SIZES } from '../config/api';
+import { useRouter } from 'expo-router';
 import Animated, { 
   FadeIn, 
   useAnimatedStyle, 
@@ -20,10 +20,15 @@ import {
   GestureDetector,
   GestureHandlerRootView
 } from 'react-native-gesture-handler';
-import { useRouter } from 'expo-router';
+import { Image as ExpoImage } from 'expo-image';
 
 const { width, height } = Dimensions.get('window');
 const BANNER_HEIGHT = height * 0.4;
+
+const DEFAULT_BACKDROP = 'https://image.tmdb.org/t/p/original/wwemzKWzjKYJFfCeiB57q3r4Bcm.png';
+
+// Usando blurhash ao invés de imagem
+const PLACEHOLDER_BLURHASH = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
 
 interface FeaturedMovieProps {
   movie: Movie;
@@ -101,6 +106,18 @@ export const FeaturedMovie = memo(function FeaturedMovie({
     });
   }, [movie.id]);
 
+  const imageUrl = movie.backdrop_path 
+    ? `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.original}${movie.backdrop_path}`
+    : DEFAULT_BACKDROP;
+
+  // Prefetch da próxima imagem
+  useEffect(() => {
+    if (movie.backdrop_path) {
+      const nextImageUrl = `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.original}${movie.backdrop_path}`;
+      Image.prefetch(nextImageUrl);
+    }
+  }, [movie.backdrop_path]);
+
   return (
     <View style={styles.container}>
       <GestureHandlerRootView style={styles.gestureContainer}>
@@ -109,12 +126,13 @@ export const FeaturedMovie = memo(function FeaturedMovie({
             entering={FadeIn.duration(300)}
             style={[styles.featuredContainer, animatedStyle]}
           >
-            <Animated.Image
-              source={{ 
-                uri: `${IMAGE_BASE_URL}/${BACKDROP_SIZES.original}${movie.backdrop_path}` 
-              }}
+            <ExpoImage
+              source={{ uri: imageUrl }}
               style={styles.featuredImage}
-              resizeMode="cover"
+              contentFit="cover"
+              transition={300}
+              placeholder={PLACEHOLDER_BLURHASH}
+              cachePolicy="memory-disk"
             />
 
             <LinearGradient
@@ -127,7 +145,7 @@ export const FeaturedMovie = memo(function FeaturedMovie({
                   {movie.title}
                 </Text>
                 <Text variant="bodyMedium" style={styles.featuredOverview} numberOfLines={2}>
-                  {movie.overview}
+                  {movie.overview || 'Sem descrição disponível'}
                 </Text>
                 <Pressable 
                   style={styles.playButton}

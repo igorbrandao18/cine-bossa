@@ -1,29 +1,42 @@
 import { create } from 'zustand';
-import { MovieDetails } from '../types/tmdb';
+import type { MovieDetails } from '../types/tmdb';
 import { tmdbAPI } from '../services/tmdb';
 
-interface SessionStore {
+interface SessionState {
   movieDetails: MovieDetails | null;
   loading: boolean;
   error: string | null;
-  loadMovieDetails: (movieId: number) => Promise<void>;
 }
 
-export const useSessionStore = create<SessionStore>((set) => ({
+interface SessionActions {
+  loadMovieDetails: (movieId: number) => Promise<void>;
+  clearError: () => void;
+  reset: () => void;
+}
+
+const initialState: SessionState = {
   movieDetails: null,
   loading: false,
-  error: null,
+  error: null
+};
+
+export const useSessionStore = create<SessionState & SessionActions>((set) => ({
+  ...initialState,
 
   loadMovieDetails: async (movieId: number) => {
     set({ loading: true, error: null });
     try {
-      const response = await tmdbAPI.getMovieDetails(movieId);
-      set({ movieDetails: response.data });
+      const { data } = await tmdbAPI.movies.getDetails(movieId);
+      set({ movieDetails: data });
     } catch (error) {
-      set({ error: 'Erro ao carregar detalhes do filme' });
-      console.error('Erro ao carregar detalhes:', error);
+      const message = error instanceof Error ? error.message : 'Erro ao carregar detalhes do filme';
+      set({ error: message });
     } finally {
       set({ loading: false });
     }
   },
+
+  clearError: () => set({ error: null }),
+  
+  reset: () => set(initialState)
 })); 
