@@ -22,11 +22,11 @@ export const MoviePoster = memo(function MoviePoster({
 
   return (
     <Pressable 
-      onPress={() => router.push(`/sessions/${movie.id}`)}
+      onPress={() => router.push(`/movie/${movie.id}`)}
       style={[styles.container, { width, height }]}
     >
       <ExpoImage
-        source={{ uri: `${API_CONFIG.imageBaseUrl}/${SIZES.poster.medium}${movie.poster_path}` }}
+        source={{ uri: `${API_CONFIG.imageBaseUrl}/${SIZES.poster.w342}${movie.poster_path}` }}
         style={styles.poster}
         contentFit="cover"
         transition={200}
