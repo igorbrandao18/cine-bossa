@@ -21,6 +21,7 @@ interface Seat {
   row: string;
   number: number;
   status: 'available' | 'occupied' | 'selected';
+  type: 'standard' | 'vip' | 'imax' | 'couple';
 }
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -51,6 +52,12 @@ const Seat = React.memo(({
     onPress();
   };
 
+  const getSeatColor = () => {
+    if (seat.status === 'selected') return '#E50914';
+    if (seat.status === 'occupied') return '#666';
+    return seat.type === 'vip' ? '#FFD700' : '#fff';
+  };
+
   return (
     <Animated.View style={[styles.seatWrapper, animatedStyle]}>
       <IconButton
@@ -58,14 +65,12 @@ const Seat = React.memo(({
         size={24}
         disabled={seat.status === 'occupied' || disabled}
         onPress={handlePress}
-        iconColor={
-          seat.status === 'selected' ? '#E50914' :
-          seat.status === 'occupied' ? '#666' : '#fff'
-        }
+        iconColor={getSeatColor()}
       />
       <Text style={[
         styles.seatText,
-        seat.status === 'occupied' && styles.seatTextDisabled
+        seat.status === 'occupied' && styles.seatTextDisabled,
+        seat.type === 'vip' && styles.seatTextVip
       ]}>
         {seat.row}{seat.number}
       </Text>
@@ -73,36 +78,80 @@ const Seat = React.memo(({
   );
 });
 
-// Função para gerar assentos mock
+// Função para gerar assentos mock com diferentes tipos
 const generateSeats = (): Record<string, Seat[]> => {
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  const seatsPerRow = 12; // Aumentado para 12 assentos por fileira
+  const seatsPerRow = 12;
   const seatsByRow: Record<string, Seat[]> = {};
 
-  rows.forEach(row => {
+  rows.forEach((row, rowIndex) => {
     seatsByRow[row] = [];
     for (let i = 1; i <= seatsPerRow; i++) {
-      // Cria um corredor no meio (entre os assentos 6 e 7)
-      if (i === 7) {
+      if (i === 7) { // Corredor
         seatsByRow[row].push({
           id: `${row}${i}`,
           row,
           number: i,
-          status: 'occupied' // Usa 'occupied' para criar o corredor
+          status: 'occupied',
+          type: 'standard'
         });
       } else {
+        // Diferentes tipos de assentos por área
+        let type: Seat['type'] = 'standard';
+        
+        // Fileiras D, E são VIP (meio da sala)
+        if (['D', 'E'].includes(row)) {
+          type = 'vip';
+        }
+        // Fileira F é IMAX
+        else if (row === 'F') {
+          type = 'imax';
+        }
+        // Últimas posições das fileiras são para casais
+        else if (i === 1 || i === 12) {
+          type = 'couple';
+        }
+
         seatsByRow[row].push({
           id: `${row}${i}`,
           row,
           number: i,
-          // Alguns assentos aleatórios ocupados, mas menos frequentes
-          status: Math.random() > 0.9 ? 'occupied' : 'available'
+          status: Math.random() > 0.9 ? 'occupied' : 'available',
+          type
         });
       }
     }
   });
 
   return seatsByRow;
+};
+
+const getSeatPrice = (basePrice: number, type: Seat['type']): number => {
+  switch (type) {
+    case 'vip':
+      return basePrice * 1.5;
+    case 'imax':
+      return basePrice * 2;
+    case 'couple':
+      return basePrice * 2.5;
+    default:
+      return basePrice;
+  }
+};
+
+const getSeatColor = (status: string, type: string): string => {
+  if (status === 'selected') return '#E50914';
+  if (status === 'occupied') return '#666';
+  switch (type) {
+    case 'vip':
+      return '#FFD700';
+    case 'imax':
+      return '#00FF00';
+    case 'couple':
+      return '#FF69B4';
+    default:
+      return '#fff';
+  }
 };
 
 export default function SeatsScreen() {
@@ -158,7 +207,14 @@ export default function SeatsScreen() {
     scale.value = Math.min(Math.max(nativeEvent.scale, 0.5), 2);
   };
 
-  const totalPrice = selectedSeats.length * session.price;
+  const totalPrice = selectedSeats.reduce((total, seat) => {
+    return total + getSeatPrice(session.price, seat.type);
+  }, 0);
+
+  const priceBreakdown = selectedSeats.reduce((acc, seat) => {
+    acc[seat.type] = (acc[seat.type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   if (!session) {
     return (
@@ -207,15 +263,19 @@ export default function SeatsScreen() {
         <View style={styles.legend}>
           <View style={styles.legendItem}>
             <IconButton icon="seat-outline" size={20} iconColor="#fff" />
-            <Text style={styles.legendText}>Disponível</Text>
+            <Text style={styles.legendText}>Standard (R$ {session.price.toFixed(2)})</Text>
           </View>
           <View style={styles.legendItem}>
-            <IconButton icon="seat" size={20} iconColor="#E50914" />
-            <Text style={styles.legendText}>Selecionado</Text>
+            <IconButton icon="seat-outline" size={20} iconColor="#FFD700" />
+            <Text style={styles.legendText}>VIP (R$ {(session.price * 1.5).toFixed(2)})</Text>
           </View>
           <View style={styles.legendItem}>
-            <IconButton icon="seat" size={20} iconColor="#666" />
-            <Text style={styles.legendText}>Ocupado</Text>
+            <IconButton icon="seat-outline" size={20} iconColor="#00FF00" />
+            <Text style={styles.legendText}>IMAX (R$ {(session.price * 2).toFixed(2)})</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <IconButton icon="seat-outline" size={20} iconColor="#FF69B4" />
+            <Text style={styles.legendText}>Casal (R$ {(session.price * 2.5).toFixed(2)})</Text>
           </View>
         </View>
       </ScrollView>
@@ -226,6 +286,15 @@ export default function SeatsScreen() {
             <Text style={styles.selectedText}>
               {selectedSeats.length} assento{selectedSeats.length !== 1 ? 's' : ''} selecionado{selectedSeats.length !== 1 ? 's' : ''}
             </Text>
+            {Object.entries(priceBreakdown).length > 0 && (
+              <View style={styles.priceBreakdown}>
+                {Object.entries(priceBreakdown).map(([type, count]) => (
+                  <Text key={type} style={styles.priceBreakdownText}>
+                    {count}x {type}: R$ {(getSeatPrice(session.price, type as Seat['type']) * count).toFixed(2)}
+                  </Text>
+                ))}
+              </View>
+            )}
             <Text style={styles.priceText}>
               Total: R$ {totalPrice.toFixed(2)}
             </Text>
@@ -396,5 +465,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginTop: 24,
+  },
+  seatTextVip: {
+    color: '#FFD700',
+  },
+  priceBreakdown: {
+    marginTop: 4,
+  },
+  priceBreakdownText: {
+    color: '#999',
+    fontSize: 12,
   }
 }); 
