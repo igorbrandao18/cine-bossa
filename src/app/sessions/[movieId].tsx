@@ -13,7 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { height } = Dimensions.get('window');
 const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 0;
-const HEADER_HEIGHT = height * 0.4;
+const HEADER_HEIGHT = height * 0.65;
 
 export default function SessionsScreen() {
   const { movieId } = useLocalSearchParams();
@@ -121,19 +121,19 @@ export default function SessionsScreen() {
           headerBackTitle: ' ',
         }}
       />
-      <StatusBar translucent backgroundColor="transparent" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Image 
             source={{ 
-              uri: `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.large}${movie.backdrop_path}` 
+              uri: `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.original}${movie.backdrop_path}` 
             }}
             style={styles.backdrop}
           />
           <LinearGradient
-            colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0)', 'rgba(0,0,0,1)']}
-            locations={[0, 0.3, 1]}
-            style={StyleSheet.absoluteFill}
+            colors={['transparent', 'rgba(0,0,0,0.8)', '#000']}
+            style={styles.gradient}
+            locations={[0, 0.6, 1]}
           />
           <View style={styles.movieInfo}>
             <Text style={styles.title}>{movie.title}</Text>
@@ -235,6 +235,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
+    paddingBottom: 32,
+  },
+  gradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: HEADER_HEIGHT,
+    justifyContent: 'flex-end',
   },
   title: {
     fontSize: 28,
