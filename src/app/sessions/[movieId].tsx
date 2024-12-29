@@ -1,176 +1,124 @@
+import React, { useEffect } from 'react';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { Text, Button, Chip } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, Image } from 'react-native';
-import { Card, Title, Text, Button, Chip, ActivityIndicator } from 'react-native-paper';
+import { useSessionStore } from '../../stores/sessionStore';
+import { useMovieStore } from '../../stores/movieStore';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Movie, MovieDetails } from '../../types/tmdb';
-import { IMAGE_BASE_URL, BACKDROP_SIZES } from '../../config/api';
-import { useSessionStore } from '../../stores/sessionStore';
+import { API_CONFIG, SIZES } from '../../config/api';
 import { LinearGradient } from 'expo-linear-gradient';
-
-// Dados mockados para exemplo (depois substituir por API)
-const MOCK_SESSIONS = [
-  {
-    id: '1',
-    room: 'Sala VIP',
-    type: '3D',
-    datetime: '2024-03-20T14:30:00',
-    price: 45.0,
-    availableSeats: 45
-  },
-  {
-    id: '2',
-    room: 'Sala Premium',
-    type: 'IMAX',
-    datetime: '2024-03-20T17:00:00',
-    price: 52.0,
-    availableSeats: 32
-  },
-  {
-    id: '3',
-    room: 'Sala 3',
-    type: '2D',
-    datetime: '2024-03-20T19:30:00',
-    price: 32.0,
-    availableSeats: 60
-  }
-];
 
 export default function SessionsScreen() {
   const { movieId } = useLocalSearchParams();
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const { movieDetails, loading, loadMovieDetails } = useSessionStore();
+  const { sessions, loading, error, loadSessions } = useSessionStore();
+  const movie = useMovieStore(state => 
+    state.sections.nowPlaying.data.find(m => m.id === Number(movieId))
+  );
 
   useEffect(() => {
     if (movieId) {
-      loadMovieDetails(Number(movieId));
+      loadSessions(Number(movieId));
     }
   }, [movieId]);
 
-  const handleSelectSession = useCallback((sessionId: string) => {
-    router.push({
-      pathname: '/seats/[sessionId]',
-      params: { 
-        sessionId,
-        movieId: movieDetails?.id,
-        movieTitle: movieDetails?.title
-      }
-    });
-  }, [movieDetails]);
-
-  if (loading || !movieDetails) {
+  if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={styles.container}>
         <ActivityIndicator size="large" color="#E50914" />
       </View>
     );
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-        <View style={styles.header}>
-          <Image
-            source={{ 
-              uri: `${IMAGE_BASE_URL}/${BACKDROP_SIZES.original}${movieDetails.backdrop_path}` 
-            }}
-            style={styles.backdrop}
-          />
-          <LinearGradient
-            colors={['transparent', '#000']}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.movieInfo}>
-            <Title style={styles.title}>{movieDetails.title}</Title>
-            <View style={styles.details}>
-              <Chip style={styles.chip}>
-                {movieDetails.runtime} min
-              </Chip>
-              {movieDetails.genres.map(genre => (
-                <Chip key={genre.id} style={styles.chip}>
-                  {genre.name}
-                </Chip>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.content}>
-          <Title style={styles.sectionTitle}>Sessões Disponíveis</Title>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.datesContainer}
-          >
-            {/* Próximos 7 dias */}
-            {Array.from({ length: 7 }).map((_, index) => {
-              const date = new Date();
-              date.setDate(date.getDate() + index);
-              const isSelected = selectedDate.toDateString() === date.toDateString();
-
-              return (
-                <Chip
-                  key={date.toISOString()}
-                  selected={isSelected}
-                  onPress={() => setSelectedDate(date)}
-                  style={[styles.dateChip, isSelected && styles.selectedDateChip]}
-                >
-                  {format(date, 'EEE, dd/MM', { locale: ptBR })}
-                </Chip>
-              );
-            })}
-          </ScrollView>
-
-          <View style={styles.sessionsContainer}>
-            {MOCK_SESSIONS.map(session => (
-              <Card
-                key={session.id}
-                style={[
-                  styles.sessionCard,
-                  selectedSession === session.id && styles.selectedSession
-                ]}
-                onPress={() => handleSelectSession(session.id)}
-              >
-                <Card.Content>
-                  <View style={styles.sessionHeader}>
-                    <Title style={styles.roomName}>{session.room}</Title>
-                    <Chip mode="outlined" style={styles.typeChip}>
-                      {session.type}
-                    </Chip>
-                  </View>
-                  <View style={styles.sessionDetails}>
-                    <Text style={styles.time}>
-                      {format(new Date(session.datetime), 'HH:mm')}
-                    </Text>
-                    <Text style={styles.price}>
-                      R$ {session.price.toFixed(2)}
-                    </Text>
-                    <Text style={styles.seats}>
-                      {session.availableSeats} lugares disponíveis
-                    </Text>
-                  </View>
-                </Card.Content>
-              </Card>
-            ))}
-          </View>
-        </View>
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          style={styles.button}
-          disabled={!selectedSession}
-          onPress={() => router.push(`/seats/${selectedSession}`)}
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button 
+          mode="contained" 
+          onPress={() => loadSessions(Number(movieId))}
+          buttonColor="#E50914"
+          textColor="#fff"
         >
-          Selecionar Assentos
+          Tentar Novamente
         </Button>
       </View>
-    </SafeAreaView>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Filme não encontrado</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Image 
+          source={{ 
+            uri: `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.large}${movie.backdrop_path}` 
+          }}
+          style={styles.backdrop}
+        />
+        <LinearGradient
+          colors={['transparent', '#000']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.movieInfo}>
+          <Text style={styles.title}>{movie.title}</Text>
+          <Text style={styles.overview} numberOfLines={2}>
+            {movie.overview}
+          </Text>
+          <View style={styles.tags}>
+            <Chip 
+              mode="outlined" 
+              textStyle={styles.chipText}
+              style={styles.chip}
+            >
+              {format(new Date(movie.release_date), 'yyyy')}
+            </Chip>
+            <Chip 
+              mode="outlined" 
+              textStyle={styles.chipText}
+              style={styles.chip}
+            >
+              {movie.vote_average.toFixed(1)} ⭐
+            </Chip>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.sessions}>
+        <Text style={styles.sectionTitle}>Sessões Disponíveis</Text>
+        {sessions.map(session => (
+          <View key={session.id} style={styles.sessionCard}>
+            <View style={styles.sessionInfo}>
+              <Text style={styles.time}>{session.time}</Text>
+              <Text style={styles.room}>{session.room}</Text>
+            </View>
+            <View style={styles.sessionDetails}>
+              <Text style={styles.price}>R$ {session.price.toFixed(2)}</Text>
+              <Text style={styles.seats}>
+                {session.availableSeats} lugares disponíveis
+              </Text>
+            </View>
+            <Button 
+              mode="contained"
+              onPress={() => router.push(`/seats/${session.id}`)}
+              buttonColor="#E50914"
+              textColor="#fff"
+              style={styles.button}
+            >
+              Selecionar Assentos
+            </Button>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -179,14 +127,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
-  },
   header: {
-    height: 200,
+    height: 300,
     position: 'relative',
   },
   backdrop: {
@@ -201,85 +143,78 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    color: '#fff',
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
   },
-  details: {
+  overview: {
+    fontSize: 14,
+    color: '#ccc',
+    marginBottom: 12,
+  },
+  tags: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
-    marginTop: 8,
   },
   chip: {
-    backgroundColor: '#E5091422',
+    backgroundColor: 'rgba(229, 9, 20, 0.2)',
+    borderColor: '#E50914',
   },
-  content: {
+  chipText: {
+    color: '#fff',
+  },
+  sessions: {
     padding: 16,
+    gap: 16,
   },
   sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 16,
-  },
-  datesContainer: {
-    marginBottom: 24,
-  },
-  dateChip: {
-    marginRight: 8,
-    backgroundColor: '#333',
-  },
-  selectedDateChip: {
-    backgroundColor: '#E50914',
-  },
-  sessionsContainer: {
-    gap: 16,
+    marginBottom: 8,
   },
   sessionCard: {
     backgroundColor: '#1a1a1a',
-    marginBottom: 8,
+    borderRadius: 8,
+    padding: 16,
+    gap: 12,
   },
-  selectedSession: {
-    borderColor: '#E50914',
-    borderWidth: 2,
-  },
-  sessionHeader: {
+  sessionInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  roomName: {
+  time: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#fff',
-    fontSize: 18,
   },
-  typeChip: {
-    borderColor: '#E50914',
+  room: {
+    fontSize: 16,
+    color: '#999',
   },
   sessionDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  time: {
-    color: '#fff',
-    fontSize: 16,
-  },
   price: {
+    fontSize: 18,
     color: '#E50914',
-    fontSize: 16,
     fontWeight: 'bold',
   },
   seats: {
-    color: '#666',
     fontSize: 14,
-  },
-  footer: {
-    padding: 16,
-    backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    color: '#999',
   },
   button: {
-    backgroundColor: '#E50914',
+    marginTop: 8,
   },
+  errorText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 16,
+  }
 }); 

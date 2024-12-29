@@ -20,21 +20,10 @@ export const MoviePoster = memo(function MoviePoster({
 }: MoviePosterProps) {
   const router = useRouter();
 
-  const handlePress = useCallback(() => {
-    router.push({
-      pathname: '/sessions/[movieId]',
-      params: { movieId: movie.id }
-    });
-  }, [movie.id]);
-
   return (
     <Pressable 
-      onPress={handlePress}
-      style={({ pressed }) => [
-        styles.container,
-        { width, height },
-        pressed && { opacity: 0.7 }
-      ]}
+      onPress={() => router.push(`/sessions/${movie.id}`)}
+      style={[styles.container, { width, height }]}
     >
       <ExpoImage
         source={{ uri: `${API_CONFIG.imageBaseUrl}/${SIZES.poster.medium}${movie.poster_path}` }}
