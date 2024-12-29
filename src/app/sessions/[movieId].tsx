@@ -123,7 +123,8 @@ export default function SessionsScreen() {
             style={styles.backdrop}
           />
           <LinearGradient
-            colors={['rgba(0,0,0,0.4)', 'transparent', '#000']}
+            colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0)', 'rgba(0,0,0,1)']}
+            locations={[0, 0.3, 1]}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.movieInfo}>
@@ -212,6 +213,7 @@ const styles = StyleSheet.create({
     height: 300,
     position: 'relative',
     marginBottom: 16,
+    paddingTop: 32,
   },
   backdrop: {
     width: '100%',

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, ActivityIndicator, RefreshControl, StatusBar } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { FeaturedMovie } from '../components/FeaturedMovie';
 import { useMovieStore } from '../stores/movieStore';
@@ -94,7 +94,8 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        <StatusBar translucent backgroundColor="transparent" />
         <ScrollView>
           <FeaturedMovieSkeleton />
           {Array.from({ length: 4 }).map((_, index) => (
@@ -113,13 +114,14 @@ export default function HomeScreen() {
             </View>
           ))}
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error) {
     return (
       <View style={styles.loadingContainer}>
+        <StatusBar translucent backgroundColor="transparent" />
         <Text style={styles.errorText}>{error}</Text>
         <Button 
           mode="contained" 
@@ -142,7 +144,8 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" />
       <ScrollView 
         style={styles.scrollContent}
         contentContainerStyle={styles.content}
@@ -168,7 +171,7 @@ export default function HomeScreen() {
           />
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -182,7 +185,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 20,
-    paddingTop: 24,
+    paddingTop: 0,
   },
   row: {
     marginBottom: 32,

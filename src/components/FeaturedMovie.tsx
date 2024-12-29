@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useCallback } from 'react';
-import { StyleSheet, Dimensions, View, Pressable, Image } from 'react-native';
+import { StyleSheet, Dimensions, View, Pressable, Image, StatusBar } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Movie } from '../types/tmdb';
 import { API_CONFIG, SIZES } from '../config/api';
@@ -23,7 +23,8 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 
 const { width, height } = Dimensions.get('window');
-const BANNER_HEIGHT = height * 0.4;
+const BANNER_HEIGHT = height * 0.5;
+const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 0;
 
 const DEFAULT_BACKDROP = 'https://image.tmdb.org/t/p/original/wwemzKWzjKYJFfCeiB57q3r4Bcm.png';
 
@@ -169,6 +170,7 @@ const styles = StyleSheet.create({
     width,
     backgroundColor: '#000',
     overflow: 'hidden',
+    marginTop: -STATUS_BAR_HEIGHT,
   },
   gestureContainer: {
     flex: 1,
