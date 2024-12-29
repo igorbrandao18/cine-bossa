@@ -19,6 +19,8 @@ export default function SessionsScreen() {
   const { movieId } = useLocalSearchParams();
   const router = useRouter();
   const { sessions, loading, error, loadSessions } = useSessionStore();
+  const [showBackButton, setShowBackButton] = useState(false);
+  
   const movie = useMovieStore(state => {
     const sections = state.sections;
     for (const section of Object.values(sections)) {
@@ -29,18 +31,17 @@ export default function SessionsScreen() {
   });
 
   const [selectedSeatType, setSelectedSeatType] = useState<keyof typeof SEAT_TYPES | null>(null);
-  const [showBackButton, setShowBackButton] = useState(false);
+
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    setShowBackButton(scrollY > 50);
+  }, []);
 
   useEffect(() => {
     if (movieId) {
       loadSessions(Number(movieId));
     }
   }, [movieId]);
-
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-    setShowBackButton(scrollY > 50);
-  }, []);
 
   if (loading) {
     return (
@@ -395,7 +396,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: STATUS_BAR_HEIGHT + 16,
+    top: STATUS_BAR_HEIGHT + 60,
     left: 16,
     zIndex: 10,
     width: 40,
