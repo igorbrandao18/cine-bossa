@@ -4,7 +4,7 @@ import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { Text, Button, TextInput, Card, Divider, Portal, Dialog } from 'react-native-paper';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { processPayment } from '../services/payment';
+import { processPayment } from '../features/sessions/services/payment';
 import { Alert } from 'react-native';
 
 // Dados mockados (depois substituir por API)

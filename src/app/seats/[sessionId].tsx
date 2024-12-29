@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Portal, Modal, Text, Card, Chip, Divider, Surface } from 'react-native-paper';
-import { useSessionStore } from '../../stores/sessionStore';
-import { SeatComponent } from '../../components/seats/SeatComponent';
+import { useSessionStore } from '../../features/sessions/stores/sessionStore';
+import { SeatComponent } from '../../features/seats/components/SeatComponent';
 import { LinearGradient } from 'expo-linear-gradient';
 import { 
   Seat,
@@ -11,7 +11,7 @@ import {
   ROOM_FEATURES,
   DISCOUNTS,
   WEEKDAYS
-} from '../../types/seats';
+} from '../../features/seats/types/seats';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];

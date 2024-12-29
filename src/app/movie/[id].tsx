@@ -2,9 +2,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Image } from 'react-native';
 import { Button, Title, Paragraph, Chip, Portal, Modal } from 'react-native-paper';
-import { useMovies } from '../../hooks/useMovies';
-import { MovieDetails } from '../../types/tmdb';
-import { IMAGE_BASE_URL, POSTER_SIZES } from '../../config/api';
+import { useMovies } from '../../features/movies/hooks/useMovies';
+import { MovieDetails } from '../../core/types/tmdb';
+import { API_CONFIG, SIZES } from '../../core/config/api';
 
 export default function MovieDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -34,7 +34,7 @@ export default function MovieDetailsScreen() {
     <ScrollView style={styles.container}>
       <Image
         source={{ 
-          uri: `${IMAGE_BASE_URL}/${POSTER_SIZES.original}${movie.backdrop_path}` 
+          uri: `${API_CONFIG.IMAGE_BASE_URL}/${SIZES.original}${movie.backdrop_path}` 
         }}
         style={styles.backdrop}
       />

@@ -2,13 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Image, Pressable, StatusBar, Dimensions, NativeSyntheticEvent, NativeScrollEvent, PixelRatio } from 'react-native';
 import { Text, Button, Chip, Card, Divider, Portal, Modal, IconButton } from 'react-native-paper';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useSessionStore } from '../../stores/sessionStore';
-import { useMovieStore } from '../../stores/movieStore';
+import { useSessionStore } from '../../features/sessions/stores/sessionStore';
+import { useMovieStore } from '../../features/movies/stores/movieStore';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { API_CONFIG, SIZES } from '../../config/api';
+import { API_CONFIG, SIZES } from '../../core/config/api';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SEAT_TYPES } from '../../types/seats';
+import { SEAT_TYPES } from '../../features/seats/types/seats';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');

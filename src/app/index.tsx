@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { View, ScrollView, StyleSheet, Dimensions, ActivityIndicator, RefreshControl, StatusBar } from 'react-native';
 import { Text, Button } from 'react-native-paper';
-import { FeaturedMovie } from '../components/FeaturedMovie';
-import { useMovieStore } from '../stores/movieStore';
-import { FeaturedMovieSkeleton } from '../components/FeaturedMovieSkeleton';
-import { Skeleton } from '../components/Skeleton';
-import { cache } from '../services/cache';
-import type { MovieState } from '../stores/movieStore';
-import { MovieRow } from '../components/MovieRow';
-import { testConnection } from '../services/tmdb';
+import { FeaturedMovie } from '../features/movies/components/FeaturedMovie';
+import { useMovieStore } from '../features/movies/stores/movieStore';
+import { FeaturedMovieSkeleton } from '../features/movies/components/FeaturedMovieSkeleton';
+import { Skeleton } from '../shared/components/Skeleton';
+import { cache } from '../core/services/cache';
+import type { MovieState } from '../features/movies/types/movie';
+import { MovieRow } from '../features/movies/components/MovieRow';
+import { testConnection } from '../core/api/tmdb';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width * 0.28;
