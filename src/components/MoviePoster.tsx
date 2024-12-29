@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, Dimensions } from 'react-native';
 import { Link } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -14,11 +14,11 @@ interface MoviePosterProps {
   size?: 'small' | 'large';
 }
 
-export function MoviePoster({ movie, size = 'small' }: MoviePosterProps) {
+export const MoviePoster = memo(function MoviePoster({ movie, size = 'small' }: MoviePosterProps) {
   return (
     <Link href={`/movie/${movie.id}`} asChild>
       <Animated.View 
-        entering={FadeInDown} 
+        entering={FadeInDown.delay(200)} 
         style={[
           styles.container,
           size === 'large' ? styles.largePoster : styles.smallPoster
@@ -30,11 +30,13 @@ export function MoviePoster({ movie, size = 'small' }: MoviePosterProps) {
             styles.poster,
             size === 'large' ? styles.largePoster : styles.smallPoster
           ]}
+          loading="lazy"
+          cachePolicy="memory-disk"
         />
       </Animated.View>
     </Link>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -62,30 +62,33 @@ export default function SessionsScreen() {
       </View>
 
       <ScrollView style={styles.container}>
-        {MOCK_SESSIONS.map(session => (
-          <Card
-            key={session.id}
-            style={[
-              styles.sessionCard,
-              selectedSession === session.id && styles.selectedCard
-            ]}
-            onPress={() => handleSessionSelect(session.id)}
-          >
-            <Card.Content>
-              <Title>{session.room}</Title>
-              <Paragraph>{formatDateTime(session.datetime)}</Paragraph>
-              <View style={styles.sessionInfo}>
-                <Chip icon="cash" style={styles.chip}>
-                  R$ {session.price.toFixed(2)}
-                </Chip>
-                <Chip icon="seat" style={styles.chip}>
-                  {session.availableSeats} lugares
-                </Chip>
-              </View>
-            </Card.Content>
-          </Card>
-        ))}
+        <View style={styles.sessionList}>
+          {MOCK_SESSIONS.map(session => (
+            <Card
+              key={session.id}
+              style={[
+                styles.sessionCard,
+                selectedSession === session.id && styles.selectedCard
+              ]}
+              onPress={() => handleSessionSelect(session.id)}
+            >
+              <Card.Content>
+                <Title>{session.room}</Title>
+                <Paragraph>{formatDateTime(session.datetime)}</Paragraph>
+                <View style={styles.sessionInfo}>
+                  <Chip icon="cash" style={styles.chip}>
+                    R$ {session.price.toFixed(2)}
+                  </Chip>
+                  <Chip icon="seat" style={styles.chip}>
+                    {session.availableSeats} lugares
+                  </Chip>
+                </View>
+              </Card.Content>
+            </Card>
+          ))}
+        </View>
       </ScrollView>
+
       <View style={styles.footer}>
         <Button
           mode="contained"
@@ -123,24 +126,32 @@ const styles = StyleSheet.create({
   },
   sessionCard: {
     marginBottom: 16,
+    elevation: 4,
+    borderRadius: 8,
   },
   selectedCard: {
-    borderColor: '#6200ee',
+    borderColor: '#E50914',
     borderWidth: 2,
   },
   sessionInfo: {
     flexDirection: 'row',
     marginTop: 8,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   chip: {
     marginRight: 8,
+    backgroundColor: '#E5091422',
   },
   footer: {
     padding: 16,
     backgroundColor: '#fff',
     elevation: 8,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   button: {
     width: '100%',
+    backgroundColor: '#E50914',
   },
 }); 

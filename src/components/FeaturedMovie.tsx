@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { memo, useEffect, useCallback } from 'react';
 import { StyleSheet, Dimensions, View, Pressable } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Movie } from '../types/tmdb';
@@ -11,7 +11,8 @@ import Animated, {
   withSpring,
   withTiming,
   interpolate,
-  Extrapolate
+  Extrapolate,
+  runOnJS
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -29,9 +30,38 @@ interface FeaturedMovieProps {
   onNext?: () => void;
 }
 
-export function FeaturedMovie({ movie, onNext }: FeaturedMovieProps) {
+export const FeaturedMovie = memo(function FeaturedMovie({ movie, onNext }: FeaturedMovieProps) {
   const translateX = useSharedValue(0);
   const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const handleTransition = useCallback(() => {
+    try {
+      opacity.value = withTiming(0, { duration: 200 }, (finished) => {
+        if (finished) {
+          translateX.value = 0;
+          scale.value = 1;
+          runOnJS(onNext)();
+          opacity.value = withTiming(1, { duration: 200 });
+        }
+      });
+    } catch (error) {
+      console.error('Erro na transição:', error);
+    }
+  }, [onNext]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      handleTransition();
+    }, 5000);
+
+    return () => {
+      clearInterval(timer);
+      translateX.value = 0;
+      scale.value = 1;
+      opacity.value = 1;
+    };
+  }, [handleTransition]);
 
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
@@ -39,17 +69,13 @@ export function FeaturedMovie({ movie, onNext }: FeaturedMovieProps) {
       scale.value = interpolate(
         Math.abs(event.translationX),
         [0, 100],
-        [1, 0.9],
+        [1, 0.95],
         Extrapolate.CLAMP
       );
     })
     .onEnd((event) => {
       if (Math.abs(event.translationX) > width * 0.3) {
-        translateX.value = withTiming(
-          event.translationX > 0 ? width : -width,
-          {},
-          () => onNext?.()
-        );
+        handleTransition();
       } else {
         translateX.value = withSpring(0);
         scale.value = withSpring(1);
@@ -60,22 +86,15 @@ export function FeaturedMovie({ movie, onNext }: FeaturedMovieProps) {
     transform: [
       { translateX: translateX.value },
       { scale: scale.value }
-    ]
+    ],
+    opacity: opacity.value
   }));
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      onNext?.();
-    }, 5000); // Autoplay a cada 5 segundos
-
-    return () => clearInterval(timer);
-  }, [onNext]);
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <GestureDetector gesture={panGesture}>
         <Animated.View 
-          entering={FadeIn}
+          entering={FadeIn.duration(300)}
           style={[styles.featuredContainer, animatedStyle]}
         >
           <Animated.Image
@@ -108,7 +127,7 @@ export function FeaturedMovie({ movie, onNext }: FeaturedMovieProps) {
       </GestureDetector>
     </GestureHandlerRootView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
