@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Image, Pressable, StatusBar, Dimensions } from 'react-native';
-import { Text, Button, Chip, Card, Divider, Portal, Modal } from 'react-native-paper';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Image, Pressable, StatusBar, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { Text, Button, Chip, Card, Divider, Portal, Modal, IconButton } from 'react-native-paper';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useMovieStore } from '../../stores/movieStore';
@@ -29,12 +29,18 @@ export default function SessionsScreen() {
   });
 
   const [selectedSeatType, setSelectedSeatType] = useState<keyof typeof SEAT_TYPES | null>(null);
+  const [showBackButton, setShowBackButton] = useState(false);
 
   useEffect(() => {
     if (movieId) {
       loadSessions(Number(movieId));
     }
   }, [movieId]);
+
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    setShowBackButton(scrollY > 50);
+  }, []);
 
   if (loading) {
     return (
@@ -111,18 +117,28 @@ export default function SessionsScreen() {
   );
 
   return (
-    <>
-      <Stack.Screen
+    <View style={styles.container}>
+      <Stack.Screen 
         options={{
-          headerTransparent: true,
-          headerTitle: '',
-          headerTintColor: '#fff',
-          headerShadowVisible: false,
-          headerBackTitle: ' ',
+          headerShown: false,
         }}
       />
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      <ScrollView style={styles.container}>
+      
+      {showBackButton && (
+        <Pressable 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={28} color="#fff" />
+        </Pressable>
+      )}
+
+      <ScrollView 
+        style={styles.container}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         <View style={styles.header}>
           <Image 
             source={{ 
@@ -208,7 +224,7 @@ export default function SessionsScreen() {
 
         {renderSeatTypeModal()}
       </ScrollView>
-    </>
+    </View>
   );
 }
 
@@ -376,5 +392,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     flex: 1,
+  },
+  backButton: {
+    position: 'absolute',
+    top: STATUS_BAR_HEIGHT + 16,
+    left: 16,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 
