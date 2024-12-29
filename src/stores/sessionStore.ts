@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { MovieDetails } from '../types/tmdb';
+import { tmdbAPI } from '../services/tmdb';
 
 interface SessionStore {
   movieDetails: MovieDetails | null;

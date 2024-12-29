@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView, Image } from 'react-native';
 import { Card, Title, Text, Button, Chip, ActivityIndicator } from 'react-native-paper';
 import { format } from 'date-fns';
@@ -49,6 +49,17 @@ export default function SessionsScreen() {
       loadMovieDetails(Number(movieId));
     }
   }, [movieId]);
+
+  const handleSelectSession = useCallback((sessionId: string) => {
+    router.push({
+      pathname: '/seats/[sessionId]',
+      params: { 
+        sessionId,
+        movieId: movieDetails?.id,
+        movieTitle: movieDetails?.title
+      }
+    });
+  }, [movieDetails]);
 
   if (loading || !movieDetails) {
     return (
@@ -122,7 +133,7 @@ export default function SessionsScreen() {
                   styles.sessionCard,
                   selectedSession === session.id && styles.selectedSession
                 ]}
-                onPress={() => setSelectedSession(session.id)}
+                onPress={() => handleSelectSession(session.id)}
               >
                 <Card.Content>
                   <View style={styles.sessionHeader}>

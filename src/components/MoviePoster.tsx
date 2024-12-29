@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { Link } from 'expo-router';
 import Animated, { 
@@ -11,6 +11,7 @@ import { Movie } from '../types/tmdb';
 import { IMAGE_BASE_URL, POSTER_SIZES } from '../config/api';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width * 0.28;
@@ -23,6 +24,7 @@ interface MoviePosterProps {
 
 export const MoviePoster = memo(function MoviePoster({ movie, size = 'small' }: MoviePosterProps) {
   const scale = useSharedValue(1);
+  const router = useRouter();
 
   const gesture = Gesture.Tap()
     .onBegin(() => {
@@ -36,29 +38,40 @@ export const MoviePoster = memo(function MoviePoster({ movie, size = 'small' }: 
     transform: [{ scale: scale.value }]
   }));
 
+  const handlePress = useCallback(() => {
+    router.push({
+      pathname: '/sessions/[movieId]',
+      params: { movieId: movie.id }
+    });
+  }, [movie.id]);
+
   return (
-    <Link href={`/sessions/${movie.id}`} asChild>
-      <Pressable>
-        <Animated.View 
-          entering={FadeInDown.delay(200)} 
+    <Pressable 
+      onPress={handlePress}
+      style={({ pressed }) => [
+        styles.container,
+        pressed && { opacity: 0.7 }
+      ]}
+    >
+      <Animated.View 
+        entering={FadeInDown.delay(200)} 
+        style={[
+          styles.container,
+          size === 'large' ? styles.largePoster : styles.smallPoster,
+          animatedStyle
+        ]}
+      >
+        <Animated.Image
+          source={{ uri: `${IMAGE_BASE_URL}/${POSTER_SIZES.medium}${movie.poster_path}` }}
           style={[
-            styles.container,
-            size === 'large' ? styles.largePoster : styles.smallPoster,
-            animatedStyle
+            styles.poster,
+            size === 'large' ? styles.largePoster : styles.smallPoster
           ]}
-        >
-          <Animated.Image
-            source={{ uri: `${IMAGE_BASE_URL}/${POSTER_SIZES.medium}${movie.poster_path}` }}
-            style={[
-              styles.poster,
-              size === 'large' ? styles.largePoster : styles.smallPoster
-            ]}
-            loading="lazy"
-            cachePolicy="memory-disk"
-          />
-        </Animated.View>
-      </Pressable>
-    </Link>
+          loading="lazy"
+          cachePolicy="memory-disk"
+        />
+      </Animated.View>
+    </Pressable>
   );
 });
 

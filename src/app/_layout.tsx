@@ -1,38 +1,50 @@
 import { Stack } from 'expo-router';
-import { PaperProvider } from 'react-native-paper';
-import { theme } from '../theme';
 import { StatusBar } from 'expo-status-bar';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
 
-export default function Layout() {
+export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <PaperProvider theme={theme}>
-        <StatusBar style="light" translucent />
-        <Stack screenOptions={{
-          headerShown: false,
-          animation: 'fade',
-          contentStyle: { backgroundColor: '#000' }
-        }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen 
-            name="movie/[id]" 
-            options={{ 
-              presentation: 'modal',
-              animation: 'slide_from_bottom'
-            }} 
-          />
-          <Stack.Screen name="sessions/[movieId]" />
-          <Stack.Screen name="seats/[sessionId]" />
-        </Stack>
-      </PaperProvider>
-    </GestureHandlerRootView>
+    <>
+      <StatusBar style="light" />
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#000',
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="sessions/[movieId]"
+          options={{
+            title: 'Sessões',
+            headerTransparent: true,
+            headerBlurEffect: 'dark',
+          }}
+        />
+        <Stack.Screen
+          name="seats/[sessionId]"
+          options={{
+            title: 'Escolha seus assentos',
+          }}
+        />
+        <Stack.Screen
+          name="checkout"
+          options={{
+            title: 'Finalizar Compra',
+            headerBackTitle: 'Voltar',
+          }}
+        />
+      </Stack>
+    </>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  }
-}); 
+} 

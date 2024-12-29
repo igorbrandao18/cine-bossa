@@ -20,6 +20,7 @@ import {
   GestureDetector,
   GestureHandlerRootView
 } from 'react-native-gesture-handler';
+import { useRouter } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 const BANNER_HEIGHT = height * 0.4;
@@ -36,6 +37,7 @@ export const FeaturedMovie = memo(function FeaturedMovie({
   const translateX = useSharedValue(0);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+  const router = useRouter();
 
   const handleTransition = useCallback(() => {
     try {
@@ -92,6 +94,13 @@ export const FeaturedMovie = memo(function FeaturedMovie({
     opacity: opacity.value
   }));
 
+  const handlePress = useCallback(() => {
+    router.push({
+      pathname: '/sessions/[movieId]',
+      params: { movieId: movie.id }
+    });
+  }, [movie.id]);
+
   return (
     <View style={styles.container}>
       <GestureHandlerRootView style={styles.gestureContainer}>
@@ -120,11 +129,13 @@ export const FeaturedMovie = memo(function FeaturedMovie({
                 <Text variant="bodyMedium" style={styles.featuredOverview} numberOfLines={2}>
                   {movie.overview}
                 </Text>
-                <Link href={`/sessions/${movie.id}`} asChild>
-                  <Pressable style={styles.playButton}>
-                    <Text style={styles.playButtonText}>Comprar Ingresso</Text>
-                  </Pressable>
-                </Link>
+                <Pressable 
+                  style={styles.playButton}
+                  onPress={handlePress}
+                  android_ripple={{ color: 'rgba(255, 255, 255, 0.1)' }}
+                >
+                  <Text style={styles.playButtonText}>Comprar Ingresso</Text>
+                </Pressable>
               </View>
             </LinearGradient>
           </Animated.View>
