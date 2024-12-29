@@ -7,7 +7,8 @@ import Animated, {
   useSharedValue,
   withSequence
 } from 'react-native-reanimated';
-import { Seat } from '../../types/seats';
+import { Seat, SEAT_TYPES } from '../../types/seats';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface SeatProps {
   seat: Seat;
@@ -15,6 +16,21 @@ interface SeatProps {
   disabled?: boolean;
   selected?: boolean;
 }
+
+const getSeatIcon = (type: Seat['type']) => {
+  switch (type) {
+    case 'd-box':
+      return 'seat-recline-extra';
+    case 'imax':
+      return 'theater';
+    case 'vip':
+      return 'seat-legroom-extra';
+    case 'couple':
+      return 'sofa';
+    default:
+      return 'seat';
+  }
+};
 
 export const SeatComponent = React.memo(({ 
   seat, 
@@ -42,23 +58,23 @@ export const SeatComponent = React.memo(({
   const getBackgroundColor = () => {
     if (disabled) return '#666';
     if (selected) return '#E50914';
-    return '#333';
+    return SEAT_TYPES[seat.type].color;
   };
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
       <IconButton
-        icon="seat"
-        size={24}
+        icon={getSeatIcon(seat.type)}
+        size={28}
         onPress={handlePress}
         disabled={disabled}
-        iconColor={disabled ? '#999' : '#fff'}
+        iconColor={disabled ? '#999' : '#000'}
         style={[
           styles.seat,
           { backgroundColor: getBackgroundColor() }
         ]}
       />
-      <Text style={styles.label}>{`${seat.row}${seat.number}`}</Text>
+      <Text style={styles.label}>{`${seat.row}${seat.number.toString().padStart(2, '0')}`}</Text>
     </Animated.View>
   );
 });
@@ -72,10 +88,13 @@ const styles = StyleSheet.create({
     margin: 0,
     backgroundColor: '#333',
     borderRadius: 8,
+    width: 44,
+    height: 44,
   },
   label: {
     fontSize: 12,
     color: '#999',
     marginTop: 4,
+    fontFamily: 'monospace',
   }
 }); 

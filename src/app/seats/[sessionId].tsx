@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Portal, Modal, Text, Card, Chip, Divider } from 'react-native-paper';
+import { Button, Portal, Modal, Text, Card, Chip, Divider, Surface } from 'react-native-paper';
 import { useSessionStore } from '../../stores/sessionStore';
 import { SeatComponent } from '../../components/seats/SeatComponent';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,48 @@ import {
   WEEKDAYS
 } from '../../types/seats';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const COLUMNS = 12;
+const COLUMNS_PER_SECTION = 6; // 6 assentos de cada lado do corredor
+
+const SEAT_TYPES_BY_POSITION = (row: string, col: number): keyof typeof SEAT_TYPES => {
+  // D-BOX nas primeiras duas fileiras
+  if (row === 'A' || row === 'B') {
+    return 'd-box';
+  }
+  
+  // IMAX nas fileiras C e D, posições centrais
+  if ((row === 'C' || row === 'D')) {
+    // Posições centrais em cada seção
+    if ((col >= 2 && col <= 5) || (col >= 8 && col <= 11)) {
+      return 'imax';
+    }
+  }
+
+  // Love Seats nas últimas fileiras, posições pares
+  if ((row === 'G' || row === 'H')) {
+    // Agrupa os assentos em pares em cada seção
+    if (((col % 2 === 0) && col <= COLUMNS_PER_SECTION) || 
+        ((col % 2 === 0) && col > COLUMNS_PER_SECTION)) {
+      return 'couple';
+    }
+  }
+
+  // VIP nas fileiras C-F, exceto posições IMAX
+  if (row >= 'C' && row <= 'F') {
+    // Posições laterais em cada seção
+    if ((col <= 1 || col >= 6) && col <= COLUMNS_PER_SECTION) {
+      return 'vip';
+    }
+    if ((col <= 7 || col >= 12) && col > COLUMNS_PER_SECTION) {
+      return 'vip';
+    }
+  }
+
+  // Standard para o resto
+  return 'standard';
+};
 
 export default function SeatsScreen() {
   const { sessionId } = useLocalSearchParams();
@@ -29,21 +71,19 @@ export default function SeatsScreen() {
   useEffect(() => {
     if (session) {
       const generatedSeats: Seat[] = [];
-      for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-          const seatId = `${String.fromCharCode(65 + row)}${col + 1}`;
-          const type = row < 2 ? 'vip' : 
-                      row === 2 ? 'imax' :
-                      col >= 6 ? 'couple' : 'standard';
+      ROWS.forEach((rowLetter) => {
+        for (let col = 1; col <= COLUMNS; col++) {
+          const seatId = `${rowLetter}${col.toString().padStart(2, '0')}`;
+          const type = SEAT_TYPES_BY_POSITION(rowLetter, col);
           generatedSeats.push({
             id: seatId,
-            row: String(row + 1),
-            number: col + 1,
+            row: rowLetter,
+            number: col,
             type,
-            status: Math.random() > 0.8 ? 'occupied' : 'available'
+            status: Math.random() > 0.85 ? 'occupied' : 'available'
           });
         }
-      }
+      });
       setSeats(generatedSeats);
     }
   }, [session]);
@@ -58,7 +98,6 @@ export default function SeatsScreen() {
   const getApplicableDiscounts = () => {
     const discounts = [];
     
-    // Desconto por quantidade
     if (selectedSeats.length >= 6) {
       discounts.push(DISCOUNTS.quantity[6]);
     } else if (selectedSeats.length >= 4) {
@@ -67,7 +106,6 @@ export default function SeatsScreen() {
       discounts.push(DISCOUNTS.quantity[2]);
     }
 
-    // Desconto por pacote
     const hasVip = selectedSeats.some(seat => seat.type === 'vip');
     const hasCouple = selectedSeats.some(seat => seat.type === 'couple');
     const hasImax = selectedSeats.some(seat => seat.type === 'imax');
@@ -79,7 +117,6 @@ export default function SeatsScreen() {
       discounts.push(DISCOUNTS.package.imaxVip);
     }
 
-    // Desconto por dia da semana
     const today = new Date().getDay() as keyof typeof WEEKDAYS;
     const weekday = WEEKDAYS[today].id as keyof typeof DISCOUNTS.weekday;
     if (DISCOUNTS.weekday[weekday]) {
@@ -129,35 +166,78 @@ export default function SeatsScreen() {
           <Text style={styles.screenText}>TELA</Text>
         </View>
 
-        <View style={styles.seatsGrid}>
-          {seats.map(seat => (
-            <SeatComponent
-              key={seat.id}
-              seat={seat}
-              selected={selectedSeats.some(s => s.id === seat.id)}
-              disabled={seat.status === 'occupied'}
-              onPress={() => handleSeatPress(seat)}
-            />
-          ))}
-        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View>
+            <View style={styles.columnNumbers}>
+              <View style={styles.rowLabel} />
+              {Array.from({ length: COLUMNS_PER_SECTION }, (_, i) => (
+                <Text key={i} style={styles.numberLabel}>
+                  {(i + 1).toString().padStart(2, '0')}
+                </Text>
+              ))}
+              <View style={styles.corridorLabel}>
+                <MaterialCommunityIcons name="stairs" size={20} color="#666" />
+              </View>
+              {Array.from({ length: COLUMNS_PER_SECTION }, (_, i) => (
+                <Text key={i + COLUMNS_PER_SECTION} style={styles.numberLabel}>
+                  {(i + COLUMNS_PER_SECTION + 1).toString().padStart(2, '0')}
+                </Text>
+              ))}
+            </View>
+
+            {ROWS.map((rowLetter) => (
+              <View key={rowLetter} style={styles.row}>
+                <Text style={styles.rowLabel}>{rowLetter}</Text>
+                <View style={styles.seatsRow}>
+                  {seats
+                    .filter(seat => seat.row === rowLetter && seat.number <= COLUMNS_PER_SECTION)
+                    .map(seat => (
+                      <SeatComponent
+                        key={seat.id}
+                        seat={seat}
+                        selected={selectedSeats.some(s => s.id === seat.id)}
+                        disabled={seat.status === 'occupied'}
+                        onPress={() => handleSeatPress(seat)}
+                      />
+                    ))}
+                  
+                  <View style={styles.corridor} />
+
+                  {seats
+                    .filter(seat => seat.row === rowLetter && seat.number > COLUMNS_PER_SECTION)
+                    .map(seat => (
+                      <SeatComponent
+                        key={seat.id}
+                        seat={seat}
+                        selected={selectedSeats.some(s => s.id === seat.id)}
+                        disabled={seat.status === 'occupied'}
+                        onPress={() => handleSeatPress(seat)}
+                      />
+                    ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
       </View>
 
       <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendSeat, { backgroundColor: SEAT_TYPES.standard.color }]} />
-          <Text style={styles.legendText}>Standard</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendSeat, { backgroundColor: SEAT_TYPES.vip.color }]} />
-          <Text style={styles.legendText}>VIP</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendSeat, { backgroundColor: SEAT_TYPES.imax.color }]} />
-          <Text style={styles.legendText}>IMAX</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendSeat, { backgroundColor: SEAT_TYPES.couple.color }]} />
-          <Text style={styles.legendText}>Casal</Text>
+        <View style={styles.legendSection}>
+          <Text style={styles.legendTitle}>Status dos Assentos:</Text>
+          <View style={styles.legendGrid}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendSeat, { backgroundColor: '#333' }]} />
+              <Text style={styles.legendText}>Disponível</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendSeat, { backgroundColor: '#E50914' }]} />
+              <Text style={styles.legendText}>Selecionado</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendSeat, { backgroundColor: '#666' }]} />
+              <Text style={styles.legendText}>Ocupado</Text>
+            </View>
+          </View>
         </View>
       </View>
     </>
@@ -165,29 +245,6 @@ export default function SeatsScreen() {
 
   const renderInfo = () => (
     <View style={styles.infoContainer}>
-      {Object.entries(SEAT_TYPES).map(([type, info]) => (
-        <Card key={type} style={styles.infoCard}>
-          <Card.Title
-            title={info.title}
-            subtitle={`Multiplicador: ${info.priceMultiplier}x`}
-            left={(props) => (
-              <View style={[styles.cardIcon, { backgroundColor: info.color }]} />
-            )}
-          />
-          <Card.Content>
-            <Text style={styles.cardDescription}>{info.description}</Text>
-            <View style={styles.benefitsList}>
-              {info.benefits.map((benefit, index) => (
-                <View key={index} style={styles.benefitItem}>
-                  <MaterialCommunityIcons name="check-circle" size={18} color="#E50914" />
-                  <Text style={styles.benefitText}>{benefit}</Text>
-                </View>
-              ))}
-            </View>
-          </Card.Content>
-        </Card>
-      ))}
-
       <Card style={styles.infoCard}>
         <Card.Title title="Recursos da Sala" />
         <Card.Content>
@@ -210,46 +267,84 @@ export default function SeatsScreen() {
           </View>
         </Card.Content>
       </Card>
+
+      <Card style={styles.infoCard}>
+        <Card.Title title="Promoções e Descontos" />
+        <Card.Content>
+          <View style={styles.discountCategories}>
+            <View style={styles.discountCategory}>
+              <Text style={styles.discountCategoryTitle}>Por Quantidade</Text>
+              {Object.entries(DISCOUNTS.quantity).reverse().map(([quantity, info]) => (
+                <View key={quantity} style={styles.discountItem}>
+                  <MaterialCommunityIcons name="ticket-percent" size={20} color="#E50914" />
+                  <Text style={styles.discountText}>{info.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.discountCategory}>
+              <Text style={styles.discountCategoryTitle}>Pacotes Especiais</Text>
+              {Object.entries(DISCOUNTS.package).map(([key, info]) => (
+                <View key={key} style={styles.discountItem}>
+                  <MaterialCommunityIcons name="ticket-confirmation" size={20} color="#E50914" />
+                  <Text style={styles.discountText}>{info.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.discountCategory}>
+              <Text style={styles.discountCategoryTitle}>Dias da Semana</Text>
+              {Object.entries(DISCOUNTS.weekday).map(([day, info]) => (
+                <View key={day} style={styles.discountItem}>
+                  <MaterialCommunityIcons name="calendar-check" size={20} color="#E50914" />
+                  <Text style={styles.discountText}>{info.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </Card.Content>
+      </Card>
     </View>
   );
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Selecione seus assentos</Text>
-        <Text style={styles.subtitle}>
-          {session.room} • {session.time}
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Selecione seus assentos</Text>
+          <Text style={styles.subtitle}>
+            {session.room} • {session.time}
+          </Text>
+        </View>
 
-      <View style={styles.tabs}>
-        <Button
-          mode={activeTab === 'map' ? 'contained' : 'outlined'}
-          onPress={() => setActiveTab('map')}
-          style={styles.tab}
-          buttonColor={activeTab === 'map' ? '#E50914' : 'transparent'}
-          textColor={activeTab === 'map' ? '#fff' : '#E50914'}
-        >
-          Mapa de Assentos
-        </Button>
-        <Button
-          mode={activeTab === 'info' ? 'contained' : 'outlined'}
-          onPress={() => setActiveTab('info')}
-          style={styles.tab}
-          buttonColor={activeTab === 'info' ? '#E50914' : 'transparent'}
-          textColor={activeTab === 'info' ? '#fff' : '#E50914'}
-        >
-          Informações
-        </Button>
-      </View>
+        <View style={styles.tabs}>
+          <Button
+            mode={activeTab === 'map' ? 'contained' : 'outlined'}
+            onPress={() => setActiveTab('map')}
+            style={styles.tab}
+            buttonColor={activeTab === 'map' ? '#E50914' : 'transparent'}
+            textColor={activeTab === 'map' ? '#fff' : '#E50914'}
+          >
+            Mapa de Assentos
+          </Button>
+          <Button
+            mode={activeTab === 'info' ? 'contained' : 'outlined'}
+            onPress={() => setActiveTab('info')}
+            style={styles.tab}
+            buttonColor={activeTab === 'info' ? '#E50914' : 'transparent'}
+            textColor={activeTab === 'info' ? '#fff' : '#E50914'}
+          >
+            Informações
+          </Button>
+        </View>
 
-      {activeTab === 'map' ? renderSeatMap() : renderInfo()}
+        {activeTab === 'map' ? renderSeatMap() : renderInfo()}
+      </ScrollView>
 
-      <View style={styles.footer}>
-        {selectedSeats.length > 0 && (
+      {selectedSeats.length > 0 && (
+        <Surface style={styles.footer} elevation={4}>
           <View style={styles.discountsContainer}>
-            <Text style={styles.discountsTitle}>Descontos Aplicáveis:</Text>
-            <View style={styles.discountsList}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {getApplicableDiscounts().map((discount, index) => (
                 <Chip
                   key={index}
@@ -260,30 +355,29 @@ export default function SeatsScreen() {
                   {discount.label}
                 </Chip>
               ))}
-            </View>
+            </ScrollView>
           </View>
-        )}
-        
-        <Divider style={styles.divider} />
-        
-        <View style={styles.priceInfo}>
-          <Text style={styles.priceLabel}>Total:</Text>
-          <Text style={styles.priceValue}>
-            R$ {calculateTotal().toFixed(2)}
-          </Text>
-        </View>
-        
-        <Button
-          mode="contained"
-          onPress={handleConfirmSelection}
-          disabled={selectedSeats.length === 0}
-          buttonColor="#E50914"
-          textColor="#fff"
-          style={styles.confirmButton}
-        >
-          Confirmar Seleção ({selectedSeats.length})
-        </Button>
-      </View>
+          
+          <View style={styles.footerContent}>
+            <View style={styles.priceInfo}>
+              <Text style={styles.priceLabel}>Total:</Text>
+              <Text style={styles.priceValue}>
+                R$ {calculateTotal().toFixed(2)}
+              </Text>
+            </View>
+            
+            <Button
+              mode="contained"
+              onPress={handleConfirmSelection}
+              buttonColor="#E50914"
+              textColor="#fff"
+              style={styles.confirmButton}
+            >
+              Confirmar ({selectedSeats.length})
+            </Button>
+          </View>
+        </Surface>
+      )}
 
       <Portal>
         <Modal
@@ -293,8 +387,9 @@ export default function SeatsScreen() {
         >
           <Text style={styles.modalTitle}>Confirmar Seleção</Text>
           <Text style={styles.modalText}>
-            Você selecionou {selectedSeats.length} assento(s).
-            {'\n'}Total: R$ {calculateTotal().toFixed(2)}
+            Você selecionou {selectedSeats.length} assento(s):
+            {'\n'}{selectedSeats.map(s => s.id).join(', ')}
+            {'\n\n'}Total: R$ {calculateTotal().toFixed(2)}
             {getApplicableDiscounts().length > 0 && (
               <>
                 {'\n\n'}Descontos disponíveis:{'\n'}
@@ -326,7 +421,7 @@ export default function SeatsScreen() {
           </View>
         </Modal>
       </Portal>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -334,6 +429,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     padding: 16,
@@ -375,34 +473,79 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
   },
-  seatsGrid: {
+  columnNumbers: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    marginBottom: 8,
+    paddingLeft: 24,
+  },
+  numberLabel: {
+    width: 40,
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 12,
+    fontFamily: 'monospace',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  rowLabel: {
+    width: 24,
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 12,
+  },
+  seatsRow: {
+    flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 16,
   },
   legend: {
+    padding: 16,
+    gap: 24,
+  },
+  legendSection: {
+    gap: 12,
+  },
+  legendTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  legendGrid: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
     flexWrap: 'wrap',
     gap: 16,
-    padding: 16,
   },
   legendItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
+    minWidth: 150,
+    marginBottom: 12,
   },
   legendSeat: {
     width: 20,
     height: 20,
     borderRadius: 4,
   },
+  legendInfo: {
+    flex: 1,
+  },
   legendText: {
-    color: '#999',
+    color: '#fff',
     fontSize: 14,
+    fontWeight: 'bold',
+  },
+  legendPrice: {
+    color: '#E50914',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  legendDescription: {
+    color: '#999',
+    fontSize: 12,
+    marginTop: 2,
   },
   infoContainer: {
     padding: 16,
@@ -410,27 +553,6 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     backgroundColor: '#1a1a1a',
-    marginBottom: 16,
-  },
-  cardIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  cardDescription: {
-    color: '#ccc',
-    marginBottom: 12,
-  },
-  benefitsList: {
-    gap: 8,
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  benefitText: {
-    color: '#ccc',
   },
   featuresGrid: {
     flexDirection: 'row',
@@ -454,54 +576,61 @@ const styles = StyleSheet.create({
     color: '#ccc',
     fontSize: 12,
   },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
+  discountCategories: {
+    gap: 24,
   },
-  discountsContainer: {
-    marginBottom: 16,
+  discountCategory: {
+    gap: 8,
   },
-  discountsTitle: {
+  discountCategoryTitle: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  discountsList: {
+  discountItem: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: 8,
+  },
+  discountText: {
+    color: '#ccc',
+    flex: 1,
+  },
+  footer: {
+    backgroundColor: '#1a1a1a',
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    padding: 16,
+    gap: 12,
+  },
+  footerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  discountsContainer: {
+    marginBottom: 8,
   },
   discountChip: {
     backgroundColor: 'rgba(229, 9, 20, 0.1)',
     borderColor: '#E50914',
-  },
-  discountText: {
-    color: '#fff',
-    fontSize: 12,
-  },
-  divider: {
-    backgroundColor: '#333',
-    marginVertical: 16,
+    marginRight: 8,
   },
   priceInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    flex: 1,
   },
   priceLabel: {
-    fontSize: 18,
-    color: '#fff',
+    fontSize: 14,
+    color: '#999',
   },
   priceValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#E50914',
   },
   confirmButton: {
-    width: '100%',
+    minWidth: 140,
   },
   modal: {
     backgroundColor: '#1a1a1a',
@@ -533,5 +662,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 16,
-  }
+  },
+  topLegend: {
+    backgroundColor: '#1a1a1a',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
+    width: '100%',
+  },
+  legendItemCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 120,
+  },
+  legendInfoCompact: {
+    flex: 1,
+  },
+  corridor: {
+    width: 40,
+    marginHorizontal: 8,
+  },
+  corridorLabel: {
+    width: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 }); 

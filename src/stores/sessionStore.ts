@@ -10,6 +10,7 @@ interface Session {
   room: string;
   price: number;
   availableSeats: number;
+  seatTypes: Array<'standard' | 'vip' | 'imax' | 'couple' | 'd-box'>;
 }
 
 interface SessionState {
@@ -37,36 +38,40 @@ const mockSessions = (movieId: number): Session[] => [
     movieId,
     date: '2024-03-20',
     time: '14:30',
-    room: 'Sala 1',
+    room: 'Sala IMAX',
     price: 32.00,
-    availableSeats: 48
+    availableSeats: 48,
+    seatTypes: ['imax', 'vip', 'standard']
   },
   {
     id: '2',
     movieId,
     date: '2024-03-20',
     time: '17:00',
-    room: 'Sala 2',
+    room: 'Sala Premium',
     price: 32.00,
-    availableSeats: 36
+    availableSeats: 36,
+    seatTypes: ['d-box', 'vip', 'couple']
   },
   {
     id: '3',
     movieId,
     date: '2024-03-20',
     time: '19:30',
-    room: 'Sala 1',
+    room: 'Sala VIP',
     price: 36.00,
-    availableSeats: 42
+    availableSeats: 42,
+    seatTypes: ['vip', 'couple', 'standard']
   },
   {
     id: '4',
     movieId,
     date: '2024-03-20',
     time: '22:00',
-    room: 'Sala 3',
+    room: 'Sala IMAX',
     price: 36.00,
-    availableSeats: 56
+    availableSeats: 56,
+    seatTypes: ['imax', 'vip', 'standard']
   }
 ];
 

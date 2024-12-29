@@ -3,7 +3,7 @@ export interface Seat {
   row: string;
   number: number;
   status: 'available' | 'occupied' | 'selected';
-  type: 'standard' | 'vip' | 'imax' | 'couple';
+  type: 'standard' | 'vip' | 'imax' | 'couple' | 'd-box';
 }
 
 export interface SeatTypeInfo {
@@ -15,45 +15,65 @@ export interface SeatTypeInfo {
 }
 
 export const SEAT_TYPES: Record<Seat['type'], SeatTypeInfo> = {
-  standard: {
-    title: 'Standard',
-    description: 'Assento tradicional com todo o conforto necessário',
-    benefits: ['Assento reclinável', 'Suporte para copos'],
-    color: '#fff',
-    priceMultiplier: 1
-  },
-  vip: {
-    title: 'VIP',
-    description: 'Experiência premium com mais espaço e conforto',
+  'd-box': {
+    title: 'D-BOX',
+    description: 'Experiência 4D com movimentos sincronizados ao filme',
     benefits: [
-      'Assento mais largo',
-      'Apoio para pernas',
-      'Serviço de comidas e bebidas'
+      'Movimentos sincronizados',
+      'Vibração e efeitos táteis',
+      'Sistema de áudio individual',
+      'Controle de intensidade'
     ],
-    color: '#FFD700',
-    priceMultiplier: 1.5
+    color: '#FF4500', // Laranja vibrante
+    priceMultiplier: 3
   },
   imax: {
     title: 'IMAX',
-    description: 'A melhor experiência audiovisual do cinema',
+    description: 'A melhor experiência audiovisual com tela gigante',
     benefits: [
-      'Tela gigante IMAX',
-      'Som imersivo',
+      'Tela IMAX de 26m',
+      'Som Dolby Atmos 3D',
+      'Resolução 4K HDR',
       'Ângulo perfeito de visão'
     ],
-    color: '#00FF00',
+    color: '#00CED1', // Turquesa
     priceMultiplier: 2
   },
+  vip: {
+    title: 'VIP',
+    description: 'Conforto premium com serviços exclusivos',
+    benefits: [
+      'Poltrona reclinável 180°',
+      'Apoio elétrico para pernas',
+      'Menu gastronômico exclusivo',
+      'Atendimento personalizado'
+    ],
+    color: '#FFD700', // Dourado
+    priceMultiplier: 1.75
+  },
   couple: {
-    title: 'Casal',
-    description: 'Assentos especiais para momentos românticos',
+    title: 'LOVE SEAT',
+    description: 'Assentos duplos especiais para casais',
     benefits: [
       'Assento duplo sem divisória',
+      'Apoio de braço retrátil',
       'Maior privacidade',
-      'Localização especial'
+      'Serviço de champagne'
     ],
-    color: '#FF69B4',
+    color: '#FF69B4', // Rosa
     priceMultiplier: 2.5
+  },
+  standard: {
+    title: 'CLASSIC',
+    description: 'Conforto tradicional com ótimo custo-benefício',
+    benefits: [
+      'Poltrona reclinável',
+      'Porta-copos',
+      'Encosto de braço',
+      'Espaço adequado'
+    ],
+    color: '#4169E1', // Azul royal
+    priceMultiplier: 1
   }
 };
 
