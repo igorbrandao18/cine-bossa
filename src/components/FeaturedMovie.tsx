@@ -120,7 +120,7 @@ export const FeaturedMovie = memo(function FeaturedMovie({
                 <Text variant="bodyMedium" style={styles.featuredOverview} numberOfLines={2}>
                   {movie.overview}
                 </Text>
-                <Link href={`/movie/${movie.id}`} asChild>
+                <Link href={`/sessions/${movie.id}`} asChild>
                   <Pressable style={styles.playButton}>
                     <Text style={styles.playButtonText}>Comprar Ingresso</Text>
                   </Pressable>

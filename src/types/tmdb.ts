@@ -10,12 +10,19 @@ export interface Movie {
 }
 
 export interface MovieDetails extends Movie {
-  genres: Array<{ id: number; name: string }>;
   runtime: number;
+  genres: {
+    id: number;
+    name: string;
+  }[];
+  release_date: string;
+  vote_average: number;
+  production_companies: {
+    id: number;
+    name: string;
+    logo_path: string | null;
+  }[];
   status: string;
-  tagline: string;
-  budget: number;
-  revenue: number;
 }
 
 export interface MoviesResponse {

@@ -38,7 +38,7 @@ export const tmdbAPI = {
 
   // Detalhes do filme
   getMovieDetails: (movieId: number) => 
-    api.get(`/movie/${movieId}`),
+    api.get<MovieDetails>(`/movie/${movieId}`),
 
   // Lista de gêneros
   getGenres: () => 

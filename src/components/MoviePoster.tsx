@@ -10,6 +10,7 @@ import Animated, {
 import { Movie } from '../types/tmdb';
 import { IMAGE_BASE_URL, POSTER_SIZES } from '../config/api';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Pressable } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width * 0.28;
@@ -36,8 +37,8 @@ export const MoviePoster = memo(function MoviePoster({ movie, size = 'small' }: 
   }));
 
   return (
-    <Link href={`/movie/${movie.id}`} asChild>
-      <GestureDetector gesture={gesture}>
+    <Link href={`/sessions/${movie.id}`} asChild>
+      <Pressable>
         <Animated.View 
           entering={FadeInDown.delay(200)} 
           style={[
@@ -56,7 +57,7 @@ export const MoviePoster = memo(function MoviePoster({ movie, size = 'small' }: 
             cachePolicy="memory-disk"
           />
         </Animated.View>
-      </GestureDetector>
+      </Pressable>
     </Link>
   );
 });
