@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Image, Pressable } from 'react-native';
 import { Text, Button, Chip, Card, Divider, Portal, Modal } from 'react-native-paper';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useMovieStore } from '../../stores/movieStore';
 import { format } from 'date-fns';
@@ -15,9 +15,14 @@ export default function SessionsScreen() {
   const { movieId } = useLocalSearchParams();
   const router = useRouter();
   const { sessions, loading, error, loadSessions } = useSessionStore();
-  const movie = useMovieStore(state => 
-    state.sections.nowPlaying.data.find(m => m.id === Number(movieId))
-  );
+  const movie = useMovieStore(state => {
+    const sections = state.sections;
+    for (const section of Object.values(sections)) {
+      const found = section.data.find(m => m.id === Number(movieId));
+      if (found) return found;
+    }
+    return null;
+  });
 
   const [selectedSeatType, setSelectedSeatType] = useState<keyof typeof SEAT_TYPES | null>(null);
 
@@ -99,92 +104,102 @@ export default function SessionsScreen() {
   );
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Image 
-          source={{ 
-            uri: `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.large}${movie.backdrop_path}` 
-          }}
-          style={styles.backdrop}
-        />
-        <LinearGradient
-          colors={['transparent', '#000']}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.movieInfo}>
-          <Text style={styles.title}>{movie.title}</Text>
-          <Text style={styles.overview} numberOfLines={2}>
-            {movie.overview}
-          </Text>
-          <View style={styles.tags}>
-            <Chip 
-              mode="outlined" 
-              textStyle={styles.chipText}
-              style={styles.chip}
-            >
-              {format(new Date(movie.release_date), 'yyyy')}
-            </Chip>
-            <Chip 
-              mode="outlined" 
-              textStyle={styles.chipText}
-              style={styles.chip}
-            >
-              {movie.vote_average.toFixed(1)} ⭐
-            </Chip>
+    <>
+      <Stack.Screen
+        options={{
+          headerTransparent: true,
+          headerTitle: '',
+          headerTintColor: '#fff',
+          headerShadowVisible: false,
+          headerBackTitle: ' ',
+        }}
+      />
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Image 
+            source={{ 
+              uri: `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.large}${movie.backdrop_path}` 
+            }}
+            style={styles.backdrop}
+          />
+          <LinearGradient
+            colors={['rgba(0,0,0,0.4)', 'transparent', '#000']}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.movieInfo}>
+            <Text style={styles.title}>{movie.title}</Text>
+            <Text style={styles.overview} numberOfLines={2}>
+              {movie.overview}
+            </Text>
+            <View style={styles.tags}>
+              <Chip 
+                mode="outlined" 
+                textStyle={styles.chipText}
+                style={styles.chip}
+              >
+                {format(new Date(movie.release_date), 'yyyy')}
+              </Chip>
+              <Chip 
+                mode="outlined" 
+                textStyle={styles.chipText}
+                style={styles.chip}
+              >
+                {movie.vote_average.toFixed(1)} ⭐
+              </Chip>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.sessions}>
-        <Text style={styles.sectionTitle}>Sessões Disponíveis</Text>
-        {sessions.map(session => (
-          <Pressable
-            key={session.id}
-            onPress={() => router.push(`/seats/${session.id}`)}
-            style={({ pressed }) => [
-              styles.sessionCard,
-              pressed && styles.sessionCardPressed
-            ]}
-          >
-            <View style={styles.sessionHeader}>
-              <Text style={styles.time}>{session.time}</Text>
-              <Text style={styles.price}>R$ {session.price.toFixed(2)}</Text>
-            </View>
+        <View style={styles.sessions}>
+          {sessions.map(session => (
+            <Pressable
+              key={session.id}
+              onPress={() => router.push(`/seats/${session.id}`)}
+              style={({ pressed }) => [
+                styles.sessionCard,
+                pressed && styles.sessionCardPressed
+              ]}
+            >
+              <View style={styles.sessionHeader}>
+                <Text style={styles.time}>{session.time}</Text>
+                <Text style={styles.price}>R$ {session.price.toFixed(2)}</Text>
+              </View>
 
-            <View style={styles.roomContainer}>
-              <MaterialCommunityIcons 
-                name={session.room.includes('IMAX') ? 'theater' : 
-                     session.room.includes('Premium') ? 'star-circle' : 
-                     'crown'}
-                size={18} 
-                color="#E50914" 
-              />
-              <Text style={styles.room}>{session.room}</Text>
-            </View>
+              <View style={styles.roomContainer}>
+                <MaterialCommunityIcons 
+                  name={session.room.includes('IMAX') ? 'theater' : 
+                       session.room.includes('Premium') ? 'star-circle' : 
+                       'crown'}
+                  size={18} 
+                  color="#E50914" 
+                />
+                <Text style={styles.room}>{session.room}</Text>
+              </View>
 
-            <View style={styles.seatTypes}>
-              {session.seatTypes.map(type => (
-                <View key={type} style={[styles.seatTypeTag, { backgroundColor: `${SEAT_TYPES[type].color}15` }]}>
-                  <MaterialCommunityIcons
-                    name={type === 'd-box' ? 'seat-recline-extra' :
-                          type === 'imax' ? 'theater' :
-                          type === 'vip' ? 'seat-legroom-extra' :
-                          type === 'couple' ? 'sofa' : 'seat'}
-                    size={14}
-                    color={SEAT_TYPES[type].color}
-                  />
-                  <Text style={[styles.seatTypeText, { color: SEAT_TYPES[type].color }]}>
-                    {SEAT_TYPES[type].title}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </Pressable>
-        ))}
-      </View>
+              <View style={styles.seatTypes}>
+                {session.seatTypes.map(type => (
+                  <View key={type} style={[styles.seatTypeTag, { backgroundColor: `${SEAT_TYPES[type].color}15` }]}>
+                    <MaterialCommunityIcons
+                      name={type === 'd-box' ? 'seat-recline-extra' :
+                            type === 'imax' ? 'theater' :
+                            type === 'vip' ? 'seat-legroom-extra' :
+                            type === 'couple' ? 'sofa' : 'seat'}
+                      size={14}
+                      color={SEAT_TYPES[type].color}
+                    />
+                    <Text style={[styles.seatTypeText, { color: SEAT_TYPES[type].color }]}>
+                      {SEAT_TYPES[type].title}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </Pressable>
+          ))}
+        </View>
 
-      {renderSeatTypeModal()}
-    </ScrollView>
+        {renderSeatTypeModal()}
+      </ScrollView>
+    </>
   );
 }
 
@@ -196,6 +211,7 @@ const styles = StyleSheet.create({
   header: {
     height: 300,
     position: 'relative',
+    marginBottom: 16,
   },
   backdrop: {
     width: '100%',
@@ -231,14 +247,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   sessions: {
-    padding: 16,
+    paddingHorizontal: 16,
     gap: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
   },
   sessionCard: {
     backgroundColor: '#1A1A1A',
