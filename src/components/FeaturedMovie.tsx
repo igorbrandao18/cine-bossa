@@ -23,7 +23,7 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 
 const { width, height } = Dimensions.get('window');
-const BANNER_HEIGHT = height * 0.5;
+const BANNER_HEIGHT = height * 0.65;
 const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 0;
 
 const DEFAULT_BACKDROP = 'https://image.tmdb.org/t/p/original/wwemzKWzjKYJFfCeiB57q3r4Bcm.png';

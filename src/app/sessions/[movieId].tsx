@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Image, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Image, Pressable, StatusBar, Dimensions } from 'react-native';
 import { Text, Button, Chip, Card, Divider, Portal, Modal } from 'react-native-paper';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSessionStore } from '../../stores/sessionStore';
@@ -10,6 +10,10 @@ import { API_CONFIG, SIZES } from '../../config/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SEAT_TYPES } from '../../types/seats';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+const { height } = Dimensions.get('window');
+const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 0;
+const HEADER_HEIGHT = height * 0.4;
 
 export default function SessionsScreen() {
   const { movieId } = useLocalSearchParams();
@@ -35,6 +39,7 @@ export default function SessionsScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
+        <StatusBar translucent backgroundColor="transparent" />
         <ActivityIndicator size="large" color="#E50914" />
       </View>
     );
@@ -43,6 +48,7 @@ export default function SessionsScreen() {
   if (error) {
     return (
       <View style={styles.container}>
+        <StatusBar translucent backgroundColor="transparent" />
         <Text style={styles.errorText}>{error}</Text>
         <Button 
           mode="contained" 
@@ -59,6 +65,7 @@ export default function SessionsScreen() {
   if (!movie) {
     return (
       <View style={styles.container}>
+        <StatusBar translucent backgroundColor="transparent" />
         <Text style={styles.errorText}>Filme não encontrado</Text>
       </View>
     );
@@ -114,6 +121,7 @@ export default function SessionsScreen() {
           headerBackTitle: ' ',
         }}
       />
+      <StatusBar translucent backgroundColor="transparent" />
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Image 
@@ -210,14 +218,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   header: {
-    height: 300,
+    height: HEADER_HEIGHT,
     position: 'relative',
     marginBottom: 16,
-    paddingTop: 32,
+    marginTop: -STATUS_BAR_HEIGHT,
   },
   backdrop: {
     width: '100%',
     height: '100%',
+    position: 'absolute',
+    top: 0,
   },
   movieInfo: {
     position: 'absolute',
