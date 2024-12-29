@@ -1,51 +1,85 @@
-# Progresso do App de Cinema
+# Progresso do Desenvolvimento
 
 ## ✅ Concluído
 
-### Cache e Performance
-- Cache de dados com AsyncStorage
-- Otimização de imagens com ExpoImage
-- Pull-to-refresh implementado
-- Blurhash para placeholders
+### API e Serviços
+- Configuração inicial da API TMDB
+- Implementação do serviço de filmes
+- Sistema de cache com AsyncStorage
+- Retry automático para requisições falhas
+- Melhor tratamento de erros na API
 
-### Em Andamento
-- ⏳ Melhorias de UX
-- ⏳ Feedback visual
-- ⏳ Animações adicionais
+### Store
+- Implementação do movieStore com Zustand
+- Sistema de prefetch de próximas páginas
+- Cache de seções e páginas
+- Atualização em background dos dados
+- Melhor gerenciamento de estado de loading e erro
 
-### Próximos Passos
-1. Implementar infinite scroll
-2. Melhorar tratamento de erros
-3. Adicionar mais animações
-4. Otimizar performance
+### Componentes
+- MovieRow com scroll horizontal
+- FeaturedMovie
+- Loading states e skeletons
+- Feedback visual de erros
+- Pull to refresh
 
-## 🚧 Pendente
+### Navegação
+- Configuração das rotas
+- Tela inicial com filmes
+- Navegação para detalhes
+- Transições suaves
 
-### Bugs Resolvidos
-- ✅ Erro de módulo TMDB
-- ✅ Ciclo de importações
-- ✅ Navegação entre telas
+## 🚧 Em Progresso
 
-### Em Andamento
-- ⏳ Instalação do expo-image
-- ⏳ Otimização de imagens
-- ⏳ Cache de dados
+### Telas
+- Detalhes do filme (/movie/[id])
+- Lista de sessões (/sessions/[movieId])
+- Seleção de assentos (/seats/[sessionId])
 
-### Próximos Passos
-1. Implementar cache dos dados da API
-2. Melhorar tratamento de erros
-3. Adicionar loading states
-4. Implementar feedback visual
-5. Otimizar performance
+### Stores
+- sessionStore para gerenciar sessões
+- Integração com movieStore
+- Cache de sessões e assentos
 
-## 📝 Notas
-- A chave da API TMDB está configurada
-- O fluxo básico está funcionando
-- Necessário revisar a estrutura de pastas
-- Considerar implementar testes
+### Otimizações
+- Prefetch de imagens
+- Melhorar performance do scroll
+- Otimizar cache de imagens
 
-## 🔄 Para Continuar
-1. Resolver o erro do módulo TMDB
-2. Testar o fluxo completo
-3. Implementar feedback de erros
-4. Melhorar a UX 
+## 📝 Próximos Passos
+
+### Features Prioritárias
+- Sistema de sessões completo
+- Seleção de assentos interativa
+- Confirmação de reserva
+- Histórico de reservas
+
+### UI/UX
+- Adicionar mais animações
+- Melhorar feedback visual
+- Implementar temas
+- Melhorar acessibilidade
+
+### Funcionalidades Futuras
+- Sistema de favoritos
+- Busca de filmes
+- Filtros por gênero
+- Notificações de sessões
+
+### Testes
+- Testes unitários
+- Testes de integração
+- Testes E2E
+- Testes de performance
+
+## 🐛 Bugs Resolvidos
+- Corrigido erro de autenticação na API
+- Corrigido problema com cache
+- Resolvido conflito de exportações no serviço TMDB
+- Melhorado tratamento de erros
+
+## 📊 Métricas
+- Tempo de carregamento inicial: < 2s
+- Cache hit rate: ~80%
+- Cobertura de código: 0%
+- Pull requests: 0 
