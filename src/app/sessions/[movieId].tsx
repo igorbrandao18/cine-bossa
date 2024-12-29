@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Image, Pressable, StatusBar, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Image, Pressable, StatusBar, Dimensions, NativeSyntheticEvent, NativeScrollEvent, PixelRatio } from 'react-native';
 import { Text, Button, Chip, Card, Divider, Portal, Modal, IconButton } from 'react-native-paper';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSessionStore } from '../../stores/sessionStore';
@@ -11,9 +11,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SEAT_TYPES } from '../../types/seats';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-const { height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 0;
 const HEADER_HEIGHT = height * 0.65;
+
+// Utility function to convert REM to pixels
+const rem = (value: number) => {
+  return PixelRatio.roundToNearestPixel(value * 16);
+};
 
 export default function SessionsScreen() {
   const { movieId } = useLocalSearchParams();
@@ -128,10 +133,15 @@ export default function SessionsScreen() {
       
       {showBackButton && (
         <Pressable 
-          style={styles.backButton}
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && styles.backButtonPressed
+          ]}
           onPress={() => router.back()}
         >
-          <MaterialCommunityIcons name="arrow-left" size={28} color="#fff" />
+          <View style={styles.backButtonInner}>
+            <MaterialCommunityIcons name="chevron-left" size={28} color="#fff" />
+          </View>
         </Pressable>
       )}
 
@@ -237,7 +247,7 @@ const styles = StyleSheet.create({
   header: {
     height: HEADER_HEIGHT,
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: rem(1),
     marginTop: -STATUS_BAR_HEIGHT,
   },
   backdrop: {
@@ -251,8 +261,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
-    paddingBottom: 32,
+    padding: rem(1),
+    paddingBottom: rem(2),
   },
   gradient: {
     position: 'absolute',
@@ -263,19 +273,19 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   title: {
-    fontSize: 28,
+    fontSize: rem(1.75),
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: rem(0.5),
   },
   overview: {
-    fontSize: 14,
+    fontSize: rem(0.875),
     color: '#ccc',
-    marginBottom: 12,
+    marginBottom: rem(0.75),
   },
   tags: {
     flexDirection: 'row',
-    gap: 8,
+    gap: rem(0.5),
   },
   chip: {
     backgroundColor: 'rgba(229, 9, 20, 0.2)',
@@ -285,14 +295,15 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   sessions: {
-    paddingHorizontal: 16,
-    gap: 16,
+    paddingHorizontal: rem(1),
+    gap: rem(1),
+    paddingBottom: rem(6),
   },
   sessionCard: {
     backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 20,
-    gap: 12,
+    borderRadius: rem(0.75),
+    padding: rem(1.25),
+    gap: rem(0.75),
     borderWidth: 1,
     borderColor: '#333',
   },
@@ -305,105 +316,126 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   time: {
-    fontSize: 32,
+    fontSize: rem(2),
     fontWeight: '600',
     color: '#fff',
     letterSpacing: -0.5,
   },
   price: {
-    fontSize: 16,
+    fontSize: rem(1),
     color: '#E50914',
     fontWeight: '500',
   },
   roomContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingBottom: 12,
+    gap: rem(0.375),
+    paddingBottom: rem(0.75),
     borderBottomWidth: 1,
     borderBottomColor: '#333',
   },
   room: {
-    fontSize: 15,
+    fontSize: rem(0.9375),
     color: '#E50914',
     fontWeight: '500',
   },
   seatTypes: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 4,
+    gap: rem(0.375),
+    marginTop: rem(0.25),
   },
   seatTypeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
+    gap: rem(0.25),
+    paddingHorizontal: rem(0.625),
+    paddingVertical: rem(0.375),
+    borderRadius: rem(0.375),
   },
   seatTypeText: {
-    fontSize: 13,
+    fontSize: rem(0.8125),
     fontWeight: '500',
   },
   errorText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: rem(1.125),
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: rem(1),
   },
   modal: {
     backgroundColor: '#1a1a1a',
-    margin: 20,
-    padding: 20,
-    borderRadius: 8,
+    margin: rem(1.25),
+    padding: rem(1.25),
+    borderRadius: rem(0.5),
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
+    gap: rem(0.75),
+    marginBottom: rem(1),
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: rem(1.25),
     fontWeight: 'bold',
     color: '#fff',
   },
   modalDescription: {
-    fontSize: 16,
+    fontSize: rem(1),
     color: '#ccc',
-    marginBottom: 16,
+    marginBottom: rem(1),
   },
   modalBenefits: {
-    gap: 8,
+    gap: rem(0.5),
   },
   seatTypeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: rem(3),
+    height: rem(3),
+    borderRadius: rem(1.5),
     justifyContent: 'center',
     alignItems: 'center',
   },
   benefitItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: rem(0.5),
   },
   benefitText: {
-    fontSize: 14,
+    fontSize: rem(0.875),
     color: '#999',
     flex: 1,
   },
   backButton: {
     position: 'absolute',
-    top: STATUS_BAR_HEIGHT + 60,
-    left: 16,
+    top: STATUS_BAR_HEIGHT + rem(3.75),
+    left: rem(1.25),
     zIndex: 10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: rem(2.75),
+    height: rem(2.75),
+    borderRadius: rem(0.875),
+    backgroundColor: 'rgba(28, 28, 30, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.32,
+    shadowRadius: 5.46,
+    elevation: 9,
+    overflow: 'hidden',
+    backdropFilter: 'blur(10px)',
+  },
+  backButtonInner: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: rem(0.875),
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  backButtonPressed: {
+    transform: [{ scale: 0.92 }],
   },
 }); 
