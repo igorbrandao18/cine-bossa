@@ -1,20 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useMovies } from '../hooks/useMovies';
 import { Movie } from '../types/tmdb';
-import { IMAGE_BASE_URL, POSTER_SIZES } from '../config/api';
-import { Link } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { FeaturedMovie } from '../components/FeaturedMovie';
 import { MoviePoster } from '../components/MoviePoster';
+import { FeaturedMovie } from '../components/FeaturedMovie';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width * 0.28;
-const ITEM_HEIGHT = ITEM_WIDTH * 1.5;
-const BANNER_HEIGHT = width * 0.8;
 
 export default function HomeScreen() {
   const { 
@@ -27,7 +19,6 @@ export default function HomeScreen() {
     loadGenres 
   } = useMovies();
 
-  const [featured, setFeatured] = useState<Movie | null>(null);
   const [sections, setSections] = useState<{
     nowPlaying: Movie[];
     popular: Movie[];
@@ -47,6 +38,7 @@ export default function HomeScreen() {
 
   const loadAllData = async () => {
     try {
+      console.log('Iniciando carregamento dos dados...');
       const [
         nowPlayingData,
         popularData,
@@ -59,9 +51,12 @@ export default function HomeScreen() {
         getTopRated()
       ]);
 
-      if (nowPlayingData?.results) {
-        setFeatured(nowPlayingData.results[0]);
-      }
+      console.log('Dados carregados:', {
+        nowPlaying: nowPlayingData?.results?.length,
+        popular: popularData?.results?.length,
+        upcoming: upcomingData?.results?.length,
+        topRated: topRatedData?.results?.length
+      });
 
       setSections({
         nowPlaying: nowPlayingData?.results || [],
@@ -84,36 +79,30 @@ export default function HomeScreen() {
     }
   }, [sections.nowPlaying]);
 
-  const MoviePoster = ({ movie, size = 'small' }: { movie: Movie; size?: 'small' | 'large' }) => (
-    <Link href={`/movie/${movie.id}`} asChild>
-      <Animated.View 
-        entering={FadeInDown} 
-        style={[
-          styles.posterContainer,
-          size === 'large' ? styles.largePoster : styles.smallPoster
-        ]}
-      >
-        <Animated.Image
-          source={{ uri: `${IMAGE_BASE_URL}/${POSTER_SIZES.medium}${movie.poster_path}` }}
-          style={[
-            styles.poster,
-            size === 'large' ? styles.largePoster : styles.smallPoster
-          ]}
-        />
-      </Animated.View>
-    </Link>
-  );
-
   const MovieRow = ({ title, movies }: { title: string; movies: Movie[] }) => (
     <View style={styles.row}>
       <Text variant="titleMedium" style={styles.rowTitle}>{title}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {movies.map(movie => (
-          <MoviePoster key={movie.id} movie={movie} />
-        ))}
-      </ScrollView>
+      {movies.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {movies.map(movie => (
+            <MoviePoster key={movie.id} movie={movie} />
+          ))}
+        </ScrollView>
+      ) : (
+        <View style={styles.emptyRow}>
+          <Text style={styles.emptyText}>Nenhum filme disponível</Text>
+        </View>
+      )}
     </View>
   );
+
+  if (loading && !sections.nowPlaying.length) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E50914" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -164,20 +153,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  posterContainer: {
-    marginHorizontal: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
   },
-  poster: {
-    borderRadius: 4,
+  emptyRow: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  smallPoster: {
-    width: ITEM_WIDTH,
-    height: ITEM_HEIGHT,
-  },
-  largePoster: {
-    width: ITEM_WIDTH * 1.5,
-    height: ITEM_HEIGHT * 1.5,
+  emptyText: {
+    color: '#666',
+    fontSize: 16,
   },
 }); 

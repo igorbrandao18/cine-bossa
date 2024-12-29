@@ -6,4 +6,10 @@ export const POSTER_SIZES = {
   medium: 'w342',
   large: 'w500',
   original: 'original'
-}; 
+};
+
+// Adicione isso para debug
+console.log('API Config:', {
+  BASE_URL,
+  API_KEY: API_KEY.substring(0, 4) + '...' // Por segurança, não logue a chave inteira
+}); 

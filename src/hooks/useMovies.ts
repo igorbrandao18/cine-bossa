@@ -20,8 +20,10 @@ export const useMovies = () => {
     try {
       setLoading(true);
       const response = await tmdbAPI.getNowPlaying(page);
+      console.log('getNowPlaying response:', response.data);
       return response.data as MoviesResponse;
     } catch (err) {
+      console.error('Erro em getNowPlaying:', err);
       setError('Erro ao carregar filmes em cartaz');
       return null;
     } finally {
