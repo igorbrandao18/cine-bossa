@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   row: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   rowTitle: {
     color: '#fff',
@@ -157,8 +157,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   rowContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 12,
   },
   scrollView: {
     marginTop: 8,

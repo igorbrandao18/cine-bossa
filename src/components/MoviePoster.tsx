@@ -40,12 +40,13 @@ export const MoviePoster = memo(function MoviePoster({ movie, size = 'small' }: 
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 8,
-    borderRadius: 4,
+    marginHorizontal: 6,
+    borderRadius: 8,
     overflow: 'hidden',
+    marginVertical: 4,
   },
   poster: {
-    borderRadius: 4,
+    borderRadius: 8,
   },
   smallPoster: {
     width: ITEM_WIDTH,
