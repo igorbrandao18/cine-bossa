@@ -15,7 +15,7 @@ const ITEM_WIDTH = width * 0.28;
 const ITEM_HEIGHT = ITEM_WIDTH * 1.5;
 
 export default function HomeScreen() {
-  const { sections, loading, error, loadMovies, loadMoreMovies } = useMovieStore();
+  const { sections, loading, error, loadNowPlaying, loadPopular, loadUpcoming, loadTopRated } = useMovieStore();
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -23,7 +23,10 @@ export default function HomeScreen() {
     const init = async () => {
       const isConnected = await testConnection();
       if (isConnected) {
-        loadMovies();
+        loadNowPlaying();
+        loadPopular();
+        loadUpcoming();
+        loadTopRated();
       }
     };
     init();
@@ -32,65 +35,67 @@ export default function HomeScreen() {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await loadMovies();
+      await Promise.all([
+        loadNowPlaying(),
+        loadPopular(),
+        loadUpcoming(),
+        loadTopRated()
+      ]);
     } finally {
       setRefreshing(false);
     }
-  }, [loadMovies]);
+  }, [loadNowPlaying, loadPopular, loadUpcoming, loadTopRated]);
 
   const nextFeatured = useCallback(() => {
-    if (sections?.nowPlaying?.data?.length > 0) {
+    if (sections?.nowPlaying?.movies?.length > 0) {
       setFeaturedIndex(prev => 
-        prev === sections.nowPlaying.data.length - 1 ? 0 : prev + 1
+        prev === sections.nowPlaying.movies.length - 1 ? 0 : prev + 1
       );
     }
-  }, [sections?.nowPlaying?.data?.length]);
+  }, [sections?.nowPlaying?.movies?.length]);
 
   const featuredMovie = useMemo(() => {
-    if (sections?.nowPlaying?.data?.length > 0) {
+    if (sections?.nowPlaying?.movies?.length > 0) {
       return (
         <FeaturedMovie 
-          movie={sections.nowPlaying.data[featuredIndex]} 
+          movie={sections.nowPlaying.movies[featuredIndex]} 
           onNext={nextFeatured}
         />
       );
     }
     return null;
-  }, [sections?.nowPlaying?.data, featuredIndex, nextFeatured]);
-
-  const handleLoadMore = useCallback((section: keyof MovieState['sections']) => {
-    return loadMoreMovies(section);
-  }, [loadMoreMovies]);
+  }, [sections?.nowPlaying?.movies, featuredIndex, nextFeatured]);
 
   const memoizedSections = useMemo(() => {
     if (!sections) return {};
     
     return {
       nowPlaying: {
-        title: "Em Cartaz",
-        data: sections.nowPlaying.data,
-        hasMore: sections.nowPlaying.page < sections.nowPlaying.totalPages
+        title: sections.nowPlaying.title,
+        data: sections.nowPlaying.movies,
+        loading: sections.nowPlaying.loading,
+        error: sections.nowPlaying.error
       },
       popular: {
-        title: "Populares",
-        data: sections.popular.data,
-        hasMore: sections.popular.page < sections.popular.totalPages
+        title: sections.popular.title,
+        data: sections.popular.movies,
+        loading: sections.popular.loading,
+        error: sections.popular.error
       },
       upcoming: {
-        title: "Em Breve",
-        data: sections.upcoming.data,
-        hasMore: sections.upcoming.page < sections.upcoming.totalPages
+        title: sections.upcoming.title,
+        data: sections.upcoming.movies,
+        loading: sections.upcoming.loading,
+        error: sections.upcoming.error
       },
       topRated: {
-        title: "Mais Bem Avaliados",
-        data: sections.topRated.data,
-        hasMore: sections.topRated.page < sections.topRated.totalPages
+        title: sections.topRated.title,
+        data: sections.topRated.movies,
+        loading: sections.topRated.loading,
+        error: sections.topRated.error
       }
     };
   }, [sections]);
-
-  console.log('Sections:', sections);
-  console.log('Memoized Sections:', memoizedSections);
 
   if (loading) {
     return (
@@ -125,7 +130,7 @@ export default function HomeScreen() {
         <Text style={styles.errorText}>{error}</Text>
         <Button 
           mode="contained" 
-          onPress={loadMovies}
+          onPress={handleRefresh}
           textColor="#fff"
           buttonColor="#E50914"
         >
@@ -135,7 +140,7 @@ export default function HomeScreen() {
     );
   }
 
-  if (!sections || !sections.nowPlaying.data.length) {
+  if (!sections || !sections.nowPlaying.movies.length) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E50914" />
@@ -166,8 +171,6 @@ export default function HomeScreen() {
             key={key}
             title={section.title}
             movies={section.data}
-            onLoadMore={() => handleLoadMore(key as keyof MovieState['sections'])}
-            hasMore={section.hasMore}
           />
         ))}
       </ScrollView>

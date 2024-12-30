@@ -1,76 +1,80 @@
 import { create } from 'zustand';
-import type { Ticket, TicketState } from '../types/ticket';
+import type { TicketStore } from '../types/ticket';
+import { ticketService } from '../services/ticketService';
 
-interface TicketStore extends TicketState {
-  addTicket: (ticket: Ticket) => void;
-  updateTicketStatus: (ticketId: number, status: Ticket['status']) => void;
-  loadUserTickets: (userId: string) => Promise<void>;
-}
-
-export const useTicketStore = create<TicketStore>((set, get) => ({
+export const useTicketStore = create<TicketStore>((set) => ({
   tickets: [],
   loading: false,
   error: null,
 
-  addTicket: (ticket) => {
-    set((state) => ({
-      tickets: [...state.tickets, ticket],
-    }));
-  },
-
-  updateTicketStatus: (ticketId, status) => {
-    set((state) => ({
-      tickets: state.tickets.map((ticket) =>
-        ticket.id === ticketId ? { ...ticket, status } : ticket
-      ),
-    }));
-  },
-
-  loadUserTickets: async (userId) => {
-    set({ loading: true, error: null });
+  loadTickets: async () => {
     try {
-      // TODO: Implementar chamada à API
-      // Por enquanto, usando dados mockados
-      const mockTickets: Ticket[] = [
-        {
-          id: 1,
-          movieId: 872585,
-          movieTitle: 'Oppenheimer',
-          posterPath: '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
-          date: '2024-01-05',
-          time: '19:30',
-          room: 'IMAX 1',
-          seats: ['F12', 'F13'],
-          status: 'upcoming',
-          qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TICKET_001',
-          price: 56.90,
-          userId,
-          sessionId: 1,
-          purchaseDate: '2023-12-29'
-        },
-        {
-          id: 2,
-          movieId: 569094,
-          movieTitle: 'Homem-Aranha: Através do Aranhaverso',
-          posterPath: '/6a7NItazspSV8Fl7u46ccxwPKk4.jpg',
-          date: '2023-12-28',
-          time: '21:00',
-          room: 'Sala 3',
-          seats: ['D5'],
-          status: 'used',
-          qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TICKET_002',
-          price: 32.90,
-          userId,
-          sessionId: 2,
-          purchaseDate: '2023-12-15'
-        }
-      ];
-
-      set({ tickets: mockTickets });
+      set({ loading: true, error: null });
+      const tickets = await ticketService.getTickets();
+      set({ tickets, loading: false });
     } catch (error) {
-      set({ error: 'Erro ao carregar ingressos' });
-    } finally {
-      set({ loading: false });
+      set({
+        error: error instanceof Error ? error.message : 'Failed to load tickets',
+        loading: false,
+      });
     }
+  },
+
+  addTicket: async (ticket) => {
+    try {
+      set({ loading: true, error: null });
+      const newTicket = await ticketService.createTicket(ticket);
+      set((state) => ({
+        tickets: [...state.tickets, newTicket],
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to add ticket',
+        loading: false,
+      });
+    }
+  },
+
+  updateTicketStatus: async (id, status) => {
+    try {
+      set({ loading: true, error: null });
+      const updatedTicket = await ticketService.updateTicketStatus(id, status);
+      set((state) => ({
+        tickets: state.tickets.map((t) =>
+          t.id === id ? updatedTicket : t
+        ),
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to update ticket',
+        loading: false,
+      });
+    }
+  },
+
+  deleteTicket: async (id) => {
+    try {
+      set({ loading: true, error: null });
+      await ticketService.deleteTicket(id);
+      set((state) => ({
+        tickets: state.tickets.filter((t) => t.id !== id),
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to delete ticket',
+        loading: false,
+      });
+    }
+  },
+
+  clearTickets: () => {
+    set({ tickets: [], error: null });
+  },
+
+  setError: (error) => {
+    set({ error });
   },
 })); 

@@ -1,61 +1,63 @@
 import { Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function StackLayout() {
-  return (
-    <GestureHandlerRootView style={styles.container}>
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#000',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-          contentStyle: {
-            backgroundColor: '#000',
-          },
-          animation: 'slide_from_right',
-        }}
-      >
-        <Stack.Screen
-          name="movie/[id]"
-          options={{
-            title: 'Detalhes do Filme',
-            headerTransparent: true,
-            headerBlurEffect: 'dark',
-          }}
-        />
-        <Stack.Screen
-          name="sessions/[movieId]"
-          options={{
-            title: 'Sessões',
-            headerTransparent: true,
-            headerBlurEffect: 'dark',
-          }}
-        />
-        <Stack.Screen
-          name="seats/[sessionId]"
-          options={{
-            title: 'Escolha seus assentos',
-          }}
-        />
-        <Stack.Screen
-          name="checkout"
-          options={{
-            title: 'Finalizar Compra',
-            headerBackTitle: 'Voltar',
-          }}
-        />
-      </Stack>
-    </GestureHandlerRootView>
-  );
-}
+  const router = useRouter();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  }
-}); 
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#1a1a1a',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+        headerLeft: () => (
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.5 : 1,
+              padding: 8,
+              marginLeft: 8,
+            })}
+          >
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+          </Pressable>
+        ),
+      }}
+    >
+      <Stack.Screen
+        name="movie/[id]"
+        options={{
+          title: 'Detalhes do Filme',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="sessions/[movieId]"
+        options={{
+          title: 'Sessões',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="seats/[sessionId]"
+        options={{
+          title: 'Escolha de Assentos',
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="checkout"
+        options={{
+          title: 'Finalizar Compra',
+          headerShown: true,
+        }}
+      />
+    </Stack>
+  );
+} 

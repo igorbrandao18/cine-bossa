@@ -1,140 +1,219 @@
 import { create } from 'zustand';
-import { MovieState, MovieSection } from '../types/movie';
+import type { MovieState, MovieSection } from '../types/movie';
 import { movieService } from '../services/movieService';
 
 const initialSection: MovieSection = {
-  data: [],
-  page: 1,
-  totalPages: 1,
+  title: '',
+  movies: [],
   loading: false,
   error: null,
 };
 
 const initialState: MovieState = {
   sections: {
-    nowPlaying: { ...initialSection },
-    popular: { ...initialSection },
-    upcoming: { ...initialSection },
-    topRated: { ...initialSection },
+    nowPlaying: { ...initialSection, title: 'Em Cartaz' },
+    popular: { ...initialSection, title: 'Populares' },
+    upcoming: { ...initialSection, title: 'Em Breve' },
+    topRated: { ...initialSection, title: 'Mais Bem Avaliados' },
   },
   loading: false,
   error: null,
 };
 
-export const useMovieStore = create<
-  MovieState & {
-    loadMovies: () => Promise<void>;
-    loadMoreMovies: (section: keyof MovieState['sections']) => Promise<void>;
-  }
->((set, get) => ({
+export const useMovieStore = create<MovieState & {
+  loadNowPlaying: () => Promise<void>;
+  loadPopular: () => Promise<void>;
+  loadUpcoming: () => Promise<void>;
+  loadTopRated: () => Promise<void>;
+  getMoviesByGenre: (genreId: number) => Promise<any>;
+  searchMovies: (query: string) => Promise<any>;
+  clearError: () => void;
+}>((set, get) => ({
   ...initialState,
 
-  loadMovies: async () => {
-    set({ loading: true, error: null });
+  loadNowPlaying: async () => {
     try {
-      const [nowPlaying, popular, upcoming, topRated] = await Promise.all([
-        movieService.getNowPlaying(),
-        movieService.getPopular(),
-        movieService.getUpcoming(),
-        movieService.getTopRated(),
-      ]);
-
-      set({
+      set((state) => ({
         sections: {
+          ...state.sections,
           nowPlaying: {
-            data: nowPlaying.results,
-            page: nowPlaying.page,
-            totalPages: nowPlaying.total_pages,
-            loading: false,
+            ...state.sections.nowPlaying,
+            loading: true,
+            error: null,
           },
-          popular: {
-            data: popular.results,
-            page: popular.page,
-            totalPages: popular.total_pages,
-            loading: false,
-          },
-          upcoming: {
-            data: upcoming.results,
-            page: upcoming.page,
-            totalPages: upcoming.total_pages,
-            loading: false,
-          },
-          topRated: {
-            data: topRated.results,
-            page: topRated.page,
-            totalPages: topRated.total_pages,
+        },
+      }));
+
+      const response = await movieService.getNowPlaying();
+
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          nowPlaying: {
+            ...state.sections.nowPlaying,
+            movies: response.results,
             loading: false,
           },
         },
-        loading: false,
-      });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to load movies',
-        loading: false,
-      });
-    }
-  },
-
-  loadMoreMovies: async (section: keyof MovieState['sections']) => {
-    const currentSection = get().sections[section];
-    if (
-      currentSection.loading ||
-      currentSection.page >= currentSection.totalPages
-    ) {
-      return;
-    }
-
-    set((state) => ({
-      sections: {
-        ...state.sections,
-        [section]: { ...currentSection, loading: true },
-      },
-    }));
-
-    try {
-      const nextPage = currentSection.page + 1;
-      let response;
-
-      switch (section) {
-        case 'nowPlaying':
-          response = await movieService.getNowPlaying(nextPage);
-          break;
-        case 'popular':
-          response = await movieService.getPopular(nextPage);
-          break;
-        case 'upcoming':
-          response = await movieService.getUpcoming(nextPage);
-          break;
-        case 'topRated':
-          response = await movieService.getTopRated(nextPage);
-          break;
-      }
-
-      if (response) {
-        set((state) => ({
-          sections: {
-            ...state.sections,
-            [section]: {
-              data: [...currentSection.data, ...response.results],
-              page: response.page,
-              totalPages: response.total_pages,
-              loading: false,
-            },
-          },
-        }));
-      }
+      }));
     } catch (error) {
       set((state) => ({
         sections: {
           ...state.sections,
-          [section]: {
-            ...currentSection,
+          nowPlaying: {
+            ...state.sections.nowPlaying,
             loading: false,
-            error: error instanceof Error ? error.message : 'Failed to load more movies',
+            error: error instanceof Error ? error.message : 'Unknown error',
           },
         },
       }));
     }
+  },
+
+  loadPopular: async () => {
+    try {
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          popular: {
+            ...state.sections.popular,
+            loading: true,
+            error: null,
+          },
+        },
+      }));
+
+      const response = await movieService.getPopular();
+
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          popular: {
+            ...state.sections.popular,
+            movies: response.results,
+            loading: false,
+          },
+        },
+      }));
+    } catch (error) {
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          popular: {
+            ...state.sections.popular,
+            loading: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        },
+      }));
+    }
+  },
+
+  loadUpcoming: async () => {
+    try {
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          upcoming: {
+            ...state.sections.upcoming,
+            loading: true,
+            error: null,
+          },
+        },
+      }));
+
+      const response = await movieService.getUpcoming();
+
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          upcoming: {
+            ...state.sections.upcoming,
+            movies: response.results,
+            loading: false,
+          },
+        },
+      }));
+    } catch (error) {
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          upcoming: {
+            ...state.sections.upcoming,
+            loading: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        },
+      }));
+    }
+  },
+
+  loadTopRated: async () => {
+    try {
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          topRated: {
+            ...state.sections.topRated,
+            loading: true,
+            error: null,
+          },
+        },
+      }));
+
+      const response = await movieService.getTopRated();
+
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          topRated: {
+            ...state.sections.topRated,
+            movies: response.results,
+            loading: false,
+          },
+        },
+      }));
+    } catch (error) {
+      set((state) => ({
+        sections: {
+          ...state.sections,
+          topRated: {
+            ...state.sections.topRated,
+            loading: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        },
+      }));
+    }
+  },
+
+  getMoviesByGenre: async (genreId: number) => {
+    try {
+      return await movieService.getMoviesByGenre(genreId);
+    } catch (error) {
+      console.error('Error getting movies by genre:', error);
+      throw error;
+    }
+  },
+
+  searchMovies: async (query: string) => {
+    try {
+      return await movieService.searchMovies(query);
+    } catch (error) {
+      console.error('Error searching movies:', error);
+      throw error;
+    }
+  },
+
+  clearError: () => {
+    set((state) => ({
+      sections: {
+        ...state.sections,
+        nowPlaying: { ...state.sections.nowPlaying, error: null },
+        popular: { ...state.sections.popular, error: null },
+        upcoming: { ...state.sections.upcoming, error: null },
+        topRated: { ...state.sections.topRated, error: null },
+      },
+    }));
   },
 })); 

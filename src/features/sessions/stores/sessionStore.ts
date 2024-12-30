@@ -1,100 +1,90 @@
 import { create } from 'zustand';
-import { movieService } from '../services/tmdb';
-import { cache } from '../services/cache';
+import type { SessionStore } from '../types/session';
+import { sessionService } from '../services/sessionService';
 
-interface Session {
-  id: string;
-  movieId: number;
-  date: string;
-  time: string;
-  room: string;
-  price: number;
-  availableSeats: number;
-  seatTypes: Array<'standard' | 'vip' | 'imax' | 'couple' | 'd-box'>;
-}
-
-interface SessionState {
-  sessions: Session[];
-  loading: boolean;
-  error: string | null;
-}
-
-interface SessionActions {
-  loadSessions: (movieId: number) => Promise<void>;
-  clearError: () => void;
-  reset: () => void;
-}
-
-const initialState: SessionState = {
+export const useSessionStore = create<SessionStore>((set) => ({
   sessions: [],
+  selectedSession: null,
+  selectedSeats: [],
   loading: false,
-  error: null
-};
+  error: null,
 
-// Mock de dados para desenvolvimento
-const mockSessions = (movieId: number): Session[] => [
-  {
-    id: '1',
-    movieId,
-    date: '2024-03-20',
-    time: '14:30',
-    room: 'Sala IMAX',
-    price: 32.00,
-    availableSeats: 48,
-    seatTypes: ['imax', 'vip', 'standard']
-  },
-  {
-    id: '2',
-    movieId,
-    date: '2024-03-20',
-    time: '17:00',
-    room: 'Sala Premium',
-    price: 32.00,
-    availableSeats: 36,
-    seatTypes: ['d-box', 'vip', 'couple']
-  },
-  {
-    id: '3',
-    movieId,
-    date: '2024-03-20',
-    time: '19:30',
-    room: 'Sala VIP',
-    price: 36.00,
-    availableSeats: 42,
-    seatTypes: ['vip', 'couple', 'standard']
-  },
-  {
-    id: '4',
-    movieId,
-    date: '2024-03-20',
-    time: '22:00',
-    room: 'Sala IMAX',
-    price: 36.00,
-    availableSeats: 56,
-    seatTypes: ['imax', 'vip', 'standard']
-  }
-];
-
-export const useSessionStore = create<SessionState & SessionActions>((set) => ({
-  ...initialState,
-
-  loadSessions: async (movieId: number) => {
-    set({ loading: true, error: null });
+  loadSessions: async (movieId) => {
     try {
-      // TODO: Integrar com API real
-      // Simulando delay de rede
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const sessions = mockSessions(movieId);
+      set({ loading: true, error: null });
+      const sessions = await sessionService.getSessions(movieId);
       set({ sessions, loading: false });
-    } catch (error: any) {
-      set({ 
-        error: error.message || 'Erro ao carregar sessões',
-        loading: false 
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to load sessions',
+        loading: false,
       });
     }
   },
 
-  clearError: () => set({ error: null }),
-  reset: () => set(initialState)
+  selectSession: (session) => {
+    set({ selectedSession: session, selectedSeats: [] });
+  },
+
+  selectSeat: (seat) => {
+    set((state) => ({
+      selectedSeats: [...state.selectedSeats, seat],
+    }));
+  },
+
+  unselectSeat: (seat) => {
+    set((state) => ({
+      selectedSeats: state.selectedSeats.filter(
+        (s) => !(s.row === seat.row && s.number === seat.number)
+      ),
+    }));
+  },
+
+  clearSelectedSeats: () => {
+    set({ selectedSeats: [] });
+  },
+
+  reserveSeats: async (sessionId, seats) => {
+    try {
+      set({ loading: true, error: null });
+      await sessionService.reserveSeats(sessionId, seats);
+      const updatedSession = await sessionService.getSessionById(sessionId);
+      set((state) => ({
+        sessions: state.sessions.map((s) =>
+          s.id === sessionId ? updatedSession : s
+        ),
+        selectedSession: updatedSession,
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to reserve seats',
+        loading: false,
+      });
+    }
+  },
+
+  releaseSeats: async (sessionId, seats) => {
+    try {
+      set({ loading: true, error: null });
+      await sessionService.releaseSeats(sessionId, seats);
+      const updatedSession = await sessionService.getSessionById(sessionId);
+      set((state) => ({
+        sessions: state.sessions.map((s) =>
+          s.id === sessionId ? updatedSession : s
+        ),
+        selectedSession: updatedSession,
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to release seats',
+        loading: false,
+      });
+    }
+  },
+
+  setError: (error) => {
+    set({ error });
+  },
 })); 
