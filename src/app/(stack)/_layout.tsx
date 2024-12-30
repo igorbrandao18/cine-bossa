@@ -8,11 +8,48 @@ export default function StackLayout() {
         contentStyle: { backgroundColor: '#000' },
       }}
     >
-      <Stack.Screen name="movie/[id]" />
-      <Stack.Screen name="sessions/[movieId]" />
-      <Stack.Screen name="seats/[sessionId]" />
-      <Stack.Screen name="checkout" />
-      <Stack.Screen name="success" />
+      <Stack.Screen 
+        name="index"
+        options={{
+          href: null,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen 
+        name="movie/[id]"
+        options={{
+          href: null,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen 
+        name="sessions/[movieId]"
+        options={{
+          href: null,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen 
+        name="seats/[sessionId]"
+        options={{
+          href: null,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen 
+        name="checkout"
+        options={{
+          href: null,
+          headerShown: false
+        }}
+      />
+      <Stack.Screen 
+        name="success"
+        options={{
+          href: null,
+          headerShown: false
+        }}
+      />
     </Stack>
   );
 } 
