@@ -11,43 +11,47 @@ export default function StackLayout() {
       <Stack.Screen 
         name="index"
         options={{
-          href: null,
-          headerShown: false
+          headerShown: false,
         }}
       />
       <Stack.Screen 
         name="movie/[id]"
         options={{
-          href: null,
-          headerShown: false
+          headerShown: false,
+          animation: 'slide_from_right',
+          presentation: 'card'
         }}
       />
       <Stack.Screen 
         name="sessions/[movieId]"
         options={{
-          href: null,
-          headerShown: false
+          headerShown: false,
+          animation: 'slide_from_right',
+          presentation: 'card'
         }}
       />
       <Stack.Screen 
         name="seats/[sessionId]"
         options={{
-          href: null,
-          headerShown: false
+          headerShown: false,
+          animation: 'slide_from_right',
+          presentation: 'card'
         }}
       />
       <Stack.Screen 
         name="checkout"
         options={{
-          href: null,
-          headerShown: false
+          headerShown: false,
+          animation: 'slide_from_right',
+          presentation: 'card'
         }}
       />
       <Stack.Screen 
         name="success"
         options={{
-          href: null,
-          headerShown: false
+          headerShown: false,
+          animation: 'slide_from_right',
+          presentation: 'card'
         }}
       />
     </Stack>
