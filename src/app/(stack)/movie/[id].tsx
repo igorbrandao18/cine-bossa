@@ -89,11 +89,16 @@ export default function MovieScreen() {
           />
           <View style={styles.movieInfo}>
             <Text style={styles.title}>{movie.title}</Text>
-            <Text style={styles.overview}>{movie.overview}</Text>
-            <View style={styles.rating}>
-              <MaterialCommunityIcons name="star" size={20} color="#FFD700" />
-              <Text style={styles.ratingText}>{movie.vote_average.toFixed(1)}</Text>
+            <View style={styles.movieMeta}>
+              <View style={styles.rating}>
+                <MaterialCommunityIcons name="star" size={20} color="#FFD700" />
+                <Text style={styles.ratingText}>{movie.vote_average.toFixed(1)}</Text>
+              </View>
+              <View style={styles.classification}>
+                <Text style={styles.classificationText}>14</Text>
+              </View>
             </View>
+            <Text style={styles.overview}>{movie.overview}</Text>
           </View>
         </View>
 
@@ -109,64 +114,107 @@ export default function MovieScreen() {
               ]}
               onPress={() => router.push(`/seats/${session.id}`)}
             >
-              <View style={styles.sessionHeader}>
-                <Text style={styles.sessionTime}>{session.time}</Text>
-                <Text style={styles.sessionPrice}>R$ {session.price.toFixed(2)}</Text>
-              </View>
+              <LinearGradient
+                colors={['#1A1A1A', '#262626']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.sessionGradient}
+              >
+                <View style={styles.sessionMainInfo}>
+                  <View style={styles.timeContainer}>
+                    <Text style={styles.sessionTime}>{session.time}</Text>
+                    <View style={styles.sessionBadge}>
+                      <Text style={styles.sessionBadgeText}>HOJE</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.priceContainer}>
+                    <Text style={styles.priceLabel}>A partir de</Text>
+                    <View style={styles.priceWrapper}>
+                      <Text style={styles.priceCurrency}>R$</Text>
+                      <Text style={styles.sessionPrice}>{session.price.toFixed(2)}</Text>
+                    </View>
+                  </View>
+                </View>
 
-              <View style={styles.sessionRoom}>
-                <MaterialCommunityIcons 
-                  name="door" 
-                  size={16} 
-                  color="#666"
-                />
-                <Text style={styles.roomText}>{session.room}</Text>
-              </View>
+                <View style={styles.sessionDivider} />
 
-              <View style={styles.sessionTypes}>
-                {session.seatTypes.map((type) => (
-                  <View 
-                    key={type} 
-                    style={[
-                      styles.typeTag,
-                      { backgroundColor: `${SESSION_TYPES[type].color}15` }
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      name={SESSION_TYPES[type].icon as any}
-                      size={14}
-                      color={SESSION_TYPES[type].color}
-                    />
-                    <Text 
+                <View style={styles.sessionTypes}>
+                  {session.seatTypes.map((type) => (
+                    <View 
+                      key={type} 
                       style={[
-                        styles.typeText,
-                        { color: SESSION_TYPES[type].color }
+                        styles.typeTag,
+                        { backgroundColor: `${SESSION_TYPES[type].color}20` }
                       ]}
                     >
-                      {SESSION_TYPES[type].label}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+                      <MaterialCommunityIcons
+                        name={SESSION_TYPES[type].icon as any}
+                        size={18}
+                        color={SESSION_TYPES[type].color}
+                      />
+                      <Text 
+                        style={[
+                          styles.typeText,
+                          { color: SESSION_TYPES[type].color }
+                        ]}
+                      >
+                        {SESSION_TYPES[type].label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
 
-              <View style={styles.sessionFeatures}>
-                <View style={styles.featureItem}>
-                  <MaterialCommunityIcons 
-                    name="food" 
-                    size={16} 
-                    color="#666"
-                  />
-                  <Text style={styles.featureText}>Snack Bar</Text>
+                <View style={styles.sessionDetails}>
+                  <View style={styles.detailItem}>
+                    <MaterialCommunityIcons 
+                      name="door" 
+                      size={20} 
+                      color="#E50914"
+                    />
+                    <View>
+                      <Text style={styles.detailLabel}>Sala</Text>
+                      <Text style={styles.detailText}>{session.room}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailItem}>
+                    <MaterialCommunityIcons 
+                      name="seat" 
+                      size={20} 
+                      color="#E50914"
+                    />
+                    <View>
+                      <Text style={styles.detailLabel}>Lugares</Text>
+                      <Text style={styles.detailText}>Disponível</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailItem}>
+                    <MaterialCommunityIcons 
+                      name="surround-sound" 
+                      size={20} 
+                      color="#E50914"
+                    />
+                    <View>
+                      <Text style={styles.detailLabel}>Áudio</Text>
+                      <Text style={styles.detailText}>Dolby Atmos</Text>
+                    </View>
+                  </View>
                 </View>
-                <View style={styles.featureItem}>
-                  <MaterialCommunityIcons 
-                    name="parking" 
-                    size={16} 
-                    color="#666"
-                  />
-                  <Text style={styles.featureText}>Estacionamento</Text>
+
+                <View style={styles.sessionFooter}>
+                  <View style={styles.amenities}>
+                    <MaterialCommunityIcons name="food" size={16} color="#666" />
+                    <MaterialCommunityIcons name="parking" size={16} color="#666" />
+                    <MaterialCommunityIcons name="wheelchair-accessibility" size={16} color="#666" />
+                  </View>
+                  <View style={styles.buyButton}>
+                    <Text style={styles.buyButtonText}>Comprar</Text>
+                    <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
+                  </View>
                 </View>
-              </View>
+              </LinearGradient>
             </Pressable>
           ))}
         </View>
@@ -239,77 +287,128 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sessionCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#333',
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   sessionCardPressed: {
     opacity: 0.7,
   },
-  sessionHeader: {
+  sessionGradient: {
+    padding: 16,
+  },
+  sessionMainInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
   },
-  sessionTime: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  sessionPrice: {
-    fontSize: 18,
-    color: '#E50914',
-    fontWeight: '500',
-  },
-  sessionRoom: {
+  timeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    gap: 12,
   },
-  roomText: {
-    color: '#666',
-    fontSize: 14,
+  sessionTime: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  sessionBadge: {
+    backgroundColor: '#E50914',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  sessionBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  priceWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  priceCurrency: {
+    color: '#E50914',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  sessionPrice: {
+    fontSize: 32,
+    color: '#E50914',
+    fontWeight: 'bold',
+  },
+  sessionDivider: {
+    height: 1,
+    backgroundColor: '#333',
+    marginVertical: 16,
   },
   sessionTypes: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    marginBottom: 16,
   },
   typeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   typeText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  sessionFeatures: {
+  sessionDetails: {
     flexDirection: 'row',
-    gap: 16,
-    marginTop: 12,
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
-  featureItem: {
+  detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
   },
-  featureText: {
+  detailLabel: {
     color: '#666',
     fontSize: 12,
+  },
+  detailText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  sessionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  amenities: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  buyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#E50914',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  buyButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   backButton: {
     position: 'absolute',
@@ -322,5 +421,32 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  movieMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 12,
+  },
+  classification: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#E50914',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  classificationText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  priceLabel: {
+    color: '#666',
+    fontSize: 12,
+    marginBottom: 2,
   },
 }); 
