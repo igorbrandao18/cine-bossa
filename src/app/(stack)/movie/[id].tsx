@@ -12,6 +12,34 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width, height } = Dimensions.get('window');
 const BANNER_HEIGHT = height * 0.65;
 
+const SESSION_TYPES = {
+  imax: {
+    icon: 'theater',
+    label: 'IMAX',
+    color: '#1B95E0',
+  },
+  '3d': {
+    icon: '3d',
+    label: '3D',
+    color: '#8E44AD',
+  },
+  'dbox': {
+    icon: 'seat-recline-extra',
+    label: 'D-BOX',
+    color: '#E67E22',
+  },
+  'vip': {
+    icon: 'star',
+    label: 'VIP',
+    color: '#F1C40F',
+  },
+  'standard': {
+    icon: 'filmstrip',
+    label: '2D',
+    color: '#7F8C8D',
+  },
+} as const;
+
 export default function MovieScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -71,20 +99,75 @@ export default function MovieScreen() {
 
         <View style={styles.sessions}>
           <Text style={styles.sessionsTitle}>Sessões Disponíveis</Text>
+          
           {sessions.map(session => (
-            <Button
+            <Pressable
               key={session.id}
-              mode="contained"
-              style={styles.sessionButton}
-              contentStyle={styles.sessionButtonContent}
+              style={({ pressed }) => [
+                styles.sessionCard,
+                pressed && styles.sessionCardPressed
+              ]}
               onPress={() => router.push(`/seats/${session.id}`)}
             >
-              <View style={styles.sessionInfo}>
+              <View style={styles.sessionHeader}>
                 <Text style={styles.sessionTime}>{session.time}</Text>
-                <Text style={styles.sessionRoom}>{session.room}</Text>
                 <Text style={styles.sessionPrice}>R$ {session.price.toFixed(2)}</Text>
               </View>
-            </Button>
+
+              <View style={styles.sessionRoom}>
+                <MaterialCommunityIcons 
+                  name="door" 
+                  size={16} 
+                  color="#666"
+                />
+                <Text style={styles.roomText}>{session.room}</Text>
+              </View>
+
+              <View style={styles.sessionTypes}>
+                {session.seatTypes.map((type) => (
+                  <View 
+                    key={type} 
+                    style={[
+                      styles.typeTag,
+                      { backgroundColor: `${SESSION_TYPES[type].color}15` }
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name={SESSION_TYPES[type].icon as any}
+                      size={14}
+                      color={SESSION_TYPES[type].color}
+                    />
+                    <Text 
+                      style={[
+                        styles.typeText,
+                        { color: SESSION_TYPES[type].color }
+                      ]}
+                    >
+                      {SESSION_TYPES[type].label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.sessionFeatures}>
+                <View style={styles.featureItem}>
+                  <MaterialCommunityIcons 
+                    name="food" 
+                    size={16} 
+                    color="#666"
+                  />
+                  <Text style={styles.featureText}>Snack Bar</Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <MaterialCommunityIcons 
+                    name="parking" 
+                    size={16} 
+                    color="#666"
+                  />
+                  <Text style={styles.featureText}>Estacionamento</Text>
+                </View>
+              </View>
+            </Pressable>
           ))}
         </View>
       </ScrollView>
@@ -153,33 +236,78 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 16,
   },
-  sessionButton: {
+  sessionCard: {
     backgroundColor: '#1A1A1A',
-    marginBottom: 12,
     borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#333',
   },
-  sessionButtonContent: {
-    height: 72,
+  sessionCardPressed: {
+    opacity: 0.7,
   },
-  sessionInfo: {
-    flex: 1,
+  sessionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
   },
   sessionTime: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '600',
     color: '#fff',
   },
-  sessionRoom: {
-    fontSize: 14,
-    color: '#ccc',
-    marginTop: 4,
-  },
   sessionPrice: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#E50914',
     fontWeight: '500',
-    marginTop: 4,
+  },
+  sessionRoom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  roomText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  sessionTypes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  typeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  typeText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  sessionFeatures: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 12,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  featureText: {
+    color: '#666',
+    fontSize: 12,
   },
   backButton: {
     position: 'absolute',
