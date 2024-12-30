@@ -74,10 +74,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#000000',
     borderTopWidth: 1,
     borderTopColor: '#333',
-    paddingBottom: 16, // Espaço extra para iPhones com notch
+    paddingBottom: 16,
   },
   content: {
     flexDirection: 'row',
