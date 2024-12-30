@@ -7,7 +7,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
-const SEAT_SIZE = Math.floor((width - 64) / 8); // 8 assentos por fileira com margens
+const HORIZONTAL_PADDING = 32; // 16px de padding de cada lado
+const ROW_LETTER_WIDTH = 24; // largura da coluna com as letras das fileiras
+const SEAT_GAP = 8; // espaço entre os assentos
+const SEATS_PER_ROW = 8;
+
+const SEAT_SIZE = Math.floor(
+  (width - HORIZONTAL_PADDING - ROW_LETTER_WIDTH - (SEAT_GAP * (SEATS_PER_ROW - 1))) / SEATS_PER_ROW
+);
 
 const SEAT_TYPES = {
   standard: {
@@ -266,6 +273,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   seatsContainer: {
+    width: '100%',
     alignItems: 'center',
   },
   columnNumbers: {
@@ -286,17 +294,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-    paddingHorizontal: 16,
+    width: '100%',
   },
   rowLetter: {
     color: '#666',
     fontSize: 12,
-    width: 24,
+    width: ROW_LETTER_WIDTH,
     textAlign: 'center',
   },
   seatsGrid: {
     flexDirection: 'row',
-    gap: 8,
+    gap: SEAT_GAP,
+    flex: 1,
+    justifyContent: 'center',
   },
   seatWrapper: {
     width: SEAT_SIZE,
