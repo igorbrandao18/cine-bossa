@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, StatusBar, Platform, Pressable, Dimensions } from 'react-native';
-import { Text, SegmentedButtons, IconButton } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, StatusBar, Dimensions, Pressable } from 'react-native';
+import { Text, IconButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
-
-type SeatType = keyof typeof SEAT_TYPES;
+const SEAT_SIZE = Math.floor((width - 64) / 8); // 8 assentos por fileira com margens
 
 const SEAT_TYPES = {
   standard: {
@@ -35,12 +34,13 @@ const SEAT_TYPES = {
     label: 'Acessível',
     price: 35.00
   }
-};
+} as const;
+
+type SeatType = keyof typeof SEAT_TYPES;
 
 export default function SeatsScreen() {
   const router = useRouter();
   const { sessionId } = useLocalSearchParams();
-  const [tab, setTab] = useState('map');
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
   const getSeatType = (row: string, seatNumber: string) => {
@@ -73,58 +73,18 @@ export default function SeatsScreen() {
       
       <View style={styles.container}>
         {/* Header */}
-        <LinearGradient
-          colors={['#000', 'transparent']}
-          style={styles.headerGradient}
-        >
-          <View style={styles.header}>
-            <IconButton
-              icon="chevron-left"
-              iconColor="#fff"
-              size={28}
-              onPress={() => router.back()}
-              style={styles.backButton}
-            />
-            <View style={styles.headerInfo}>
-              <Text style={styles.movieTitle}>Wonka</Text>
-              <Text style={styles.sessionInfo}>Sala 1 - IMAX • 14:30</Text>
-            </View>
-          </View>
-        </LinearGradient>
-
-        {/* Tabs */}
-        <View style={styles.tabs}>
-          <SegmentedButtons
-            value={tab}
-            onValueChange={setTab}
-            buttons={[
-              {
-                value: 'map',
-                label: 'Mapa de Assentos',
-                style: [
-                  styles.tabButton,
-                  tab === 'map' && styles.activeTabButton
-                ],
-                labelStyle: [
-                  styles.tabLabel,
-                  tab === 'map' && styles.activeTabLabel
-                ]
-              },
-              {
-                value: 'info',
-                label: 'Informações',
-                style: [
-                  styles.tabButton,
-                  tab === 'info' && styles.activeTabButton
-                ],
-                labelStyle: [
-                  styles.tabLabel,
-                  tab === 'info' && styles.activeTabLabel
-                ]
-              }
-            ]}
-            style={styles.segmentedButtons}
+        <View style={styles.header}>
+          <IconButton
+            icon="chevron-left"
+            iconColor="#fff"
+            size={24}
+            onPress={() => router.back()}
+            style={styles.backButton}
           />
+          <View style={styles.headerInfo}>
+            <Text style={styles.movieTitle}>Wonka</Text>
+            <Text style={styles.sessionInfo}>Sala 1 - IMAX • 14:30</Text>
+          </View>
         </View>
 
         <ScrollView 
@@ -146,6 +106,7 @@ export default function SeatsScreen() {
           <View style={styles.seatsContainer}>
             {/* Column Numbers */}
             <View style={styles.columnNumbers}>
+              <View style={styles.rowLetterPlaceholder} />
               {Array.from({ length: 8 }, (_, i) => (
                 <Text key={i} style={styles.gridNumber}>
                   {String(i + 1).padStart(2, '0')}
@@ -157,8 +118,8 @@ export default function SeatsScreen() {
             {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((row) => (
               <View key={row} style={styles.seatRow}>
                 <Text style={styles.rowLetter}>{row}</Text>
-                <View style={styles.seats}>
-                  {Array.from({ length: 6 }, (_, i) => {
+                <View style={styles.seatsGrid}>
+                  {Array.from({ length: 8 }, (_, i) => {
                     const seatNumber = String(i + 1).padStart(2, '0');
                     const seatId = `${row}${seatNumber}`;
                     const type = getSeatType(row, seatNumber);
@@ -182,7 +143,7 @@ export default function SeatsScreen() {
                         >
                           <MaterialCommunityIcons
                             name={SEAT_TYPES[type].icon}
-                            size={20}
+                            size={16}
                             color="#fff"
                           />
                           <Text style={styles.seatNumber}>{seatNumber}</Text>
@@ -199,9 +160,16 @@ export default function SeatsScreen() {
           <View style={styles.legend}>
             {Object.entries(SEAT_TYPES).map(([key, value]) => (
               <View key={key} style={styles.legendItem}>
-                <View style={[styles.legendIcon, { backgroundColor: value.color }]}>
-                  <MaterialCommunityIcons name={value.icon} size={16} color="#fff" />
-                </View>
+                <LinearGradient
+                  colors={[value.color, value.color + '80']}
+                  style={styles.legendIcon}
+                >
+                  <MaterialCommunityIcons 
+                    name={value.icon} 
+                    size={12} 
+                    color="#fff" 
+                  />
+                </LinearGradient>
                 <Text style={styles.legendText}>{value.label}</Text>
               </View>
             ))}
@@ -252,13 +220,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  headerGradient: {
-    paddingBottom: 16,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1A1A1A',
   },
   backButton: {
     margin: 0,
@@ -268,41 +236,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   movieTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
   },
   sessionInfo: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#999',
     marginTop: 2,
-  },
-  tabs: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  segmentedButtons: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    gap: 0,
-  },
-  tabButton: {
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-    borderRadius: 8,
-    flex: 1,
-  },
-  activeTabButton: {
-    backgroundColor: '#E50914',
-  },
-  tabLabel: {
-    fontSize: 14,
-    color: '#999',
-    fontWeight: '500',
-  },
-  activeTabLabel: {
-    color: '#fff',
-    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -312,13 +253,14 @@ const styles = StyleSheet.create({
     paddingBottom: 200,
   },
   screen: {
-    padding: 12,
-    borderRadius: 8,
+    padding: 8,
+    borderRadius: 4,
     alignItems: 'center',
     marginBottom: 32,
+    width: '100%',
   },
   screenText: {
-    color: '#fff',
+    color: '#666',
     fontSize: 12,
     fontWeight: '500',
   },
@@ -327,20 +269,23 @@ const styles = StyleSheet.create({
   },
   columnNumbers: {
     flexDirection: 'row',
-    width: '85%',
-    justifyContent: 'space-around',
     marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  rowLetterPlaceholder: {
+    width: 24,
   },
   gridNumber: {
     color: '#666',
     fontSize: 12,
-    width: 24,
+    width: SEAT_SIZE,
     textAlign: 'center',
   },
   seatRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    paddingHorizontal: 16,
   },
   rowLetter: {
     color: '#666',
@@ -348,28 +293,29 @@ const styles = StyleSheet.create({
     width: 24,
     textAlign: 'center',
   },
-  seats: {
+  seatsGrid: {
     flexDirection: 'row',
     gap: 8,
   },
   seatWrapper: {
-    width: width * 0.11,
+    width: SEAT_SIZE,
     aspectRatio: 1,
-    padding: 2,
   },
   selectedSeatWrapper: {
     transform: [{ scale: 1.05 }],
   },
   seat: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 2,
   },
   seatNumber: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 8,
     marginTop: -2,
+    opacity: 0.8,
   },
   legend: {
     flexDirection: 'row',
@@ -377,6 +323,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16,
     marginTop: 32,
+    paddingHorizontal: 16,
   },
   legendItem: {
     flexDirection: 'row',
@@ -392,7 +339,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     color: '#999',
-    fontSize: 12,
+    fontSize: 13,
   },
   footerGradient: {
     position: 'absolute',
