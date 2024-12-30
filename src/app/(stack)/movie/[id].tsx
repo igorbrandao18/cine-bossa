@@ -182,6 +182,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    paddingBottom: 80,
   },
   header: {
     height: BANNER_HEIGHT,
@@ -229,6 +230,7 @@ const styles = StyleSheet.create({
   },
   sessions: {
     padding: 20,
+    paddingBottom: 100,
   },
   sessionsTitle: {
     fontSize: 24,
