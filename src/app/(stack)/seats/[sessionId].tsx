@@ -104,7 +104,7 @@ export default function SeatsScreen() {
 
           {/* Seats Grid */}
           <View style={styles.seatsContainer}>
-            {/* Column Numbers */}
+            {/* Remova ou comente este bloco
             <View style={styles.columnNumbers}>
               <View style={styles.rowLetterPlaceholder} />
               {Array.from({ length: 8 }, (_, i) => (
@@ -113,6 +113,7 @@ export default function SeatsScreen() {
                 </Text>
               ))}
             </View>
+            */}
 
             {/* Seats */}
             {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((row) => (
