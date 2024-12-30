@@ -1,4 +1,6 @@
-import { Stack } from 'expo-router';
+import { Stack, Tabs } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
@@ -9,49 +11,47 @@ export default function Layout() {
     <GestureHandlerRootView style={styles.container}>
       <StatusBar style="light" />
       <PaperProvider>
-        <Stack
+        <Tabs
           screenOptions={{
-            headerStyle: {
+            headerShown: false,
+            tabBarStyle: {
               backgroundColor: '#000',
+              borderTopColor: '#333',
+              height: Platform.OS === 'ios' ? 90 : 70,
+              paddingBottom: Platform.OS === 'ios' ? 30 : 10,
+              paddingTop: 10,
             },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-            contentStyle: {
-              backgroundColor: '#000',
-            },
-            animation: 'slide_from_right',
+            tabBarActiveTintColor: '#E50914',
+            tabBarInactiveTintColor: '#666',
           }}
         >
-          <Stack.Screen
+          <Tabs.Screen
             name="index"
             options={{
-              headerShown: false,
+              title: 'Início',
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="movie-open" size={size} color={color} />
+              ),
             }}
           />
-          <Stack.Screen
-            name="sessions/[movieId]"
+          
+          <Tabs.Screen
+            name="(stack)"
             options={{
-              title: 'Sessões',
-              headerTransparent: true,
-              headerBlurEffect: 'dark',
+              href: null,
             }}
           />
-          <Stack.Screen
-            name="seats/[sessionId]"
+
+          <Tabs.Screen
+            name="profile"
             options={{
-              title: 'Escolha seus assentos',
+              title: 'Perfil',
+              tabBarIcon: ({ color, size }) => (
+                <MaterialCommunityIcons name="account" size={size} color={color} />
+              ),
             }}
           />
-          <Stack.Screen
-            name="checkout"
-            options={{
-              title: 'Finalizar Compra',
-              headerBackTitle: 'Voltar',
-            }}
-          />
-        </Stack>
+        </Tabs>
       </PaperProvider>
     </GestureHandlerRootView>
   );
