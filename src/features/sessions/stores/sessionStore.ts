@@ -18,6 +18,8 @@ interface Session {
   room: string;
   technology: string;
   time: string;
+  date: string;
+  isToday: boolean;
   seats: Seat[];
   price: number;
   type: string;
@@ -81,11 +83,40 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   }
 }));
 
-// Função auxiliar para gerar horários aleatórios entre 10:00 e 23:00
-const generateRandomTime = () => {
+// Função auxiliar para gerar data e hora aleatória nos próximos 7 dias
+const generateRandomDateTime = (usedDateTimes: string[]) => {
+  const today = new Date();
+  const nextWeek = new Date();
+  nextWeek.setDate(today.getDate() + 7);
+  
+  // Gerar data aleatória entre hoje e próxima semana
+  const randomDate = new Date(
+    today.getTime() + Math.random() * (nextWeek.getTime() - today.getTime())
+  );
+  
+  // Gerar horário entre 10:00 e 23:00
   const hour = Math.floor(Math.random() * (23 - 10) + 10);
   const minute = Math.random() < 0.5 ? '00' : '30';
-  return `${hour.toString().padStart(2, '0')}:${minute}`;
+  
+  // Formatar data e hora
+  const date = randomDate.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+  });
+  const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+  const dateTime = `${date} ${time}`;
+  
+  // Se já existe essa data e hora, gerar outra
+  if (usedDateTimes.includes(dateTime)) {
+    return generateRandomDateTime(usedDateTimes);
+  }
+  
+  return {
+    date,
+    time,
+    dateTime,
+    isToday: date === today.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  };
 };
 
 // Função auxiliar para gerar uma sala aleatória
@@ -115,20 +146,16 @@ const generateRandomRoom = () => {
 // Mock para carregar lista de sessões
 const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Session[]> => {
   return new Promise((resolve) => {
-    // Gerar entre 3 e 6 sessões aleatórias
-    const numberOfSessions = Math.floor(Math.random() * 4) + 3;
+    // Gerar entre 8 e 15 sessões aleatórias (mais sessões pois agora são vários dias)
+    const numberOfSessions = Math.floor(Math.random() * 8) + 8;
     const sessions: Session[] = [];
     
-    // Array para controlar horários já usados para não repetir
-    const usedTimes: string[] = [];
+    // Array para controlar datas e horários já usados para não repetir
+    const usedDateTimes: string[] = [];
     
     for (let i = 0; i < numberOfSessions; i++) {
-      let time = generateRandomTime();
-      // Garantir que não teremos horários repetidos
-      while (usedTimes.includes(time)) {
-        time = generateRandomTime();
-      }
-      usedTimes.push(time);
+      const { date, time, dateTime, isToday } = generateRandomDateTime(usedDateTimes);
+      usedDateTimes.push(dateTime);
       
       const room = generateRandomRoom();
       
@@ -139,6 +166,8 @@ const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Se
         room: `Sala ${room.number}`,
         technology: room.technology,
         time,
+        date,
+        isToday,
         seats: generateSeats(),
         price: room.price,
         type: room.technology,
@@ -146,8 +175,12 @@ const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Se
       });
     }
     
-    // Ordenar sessões por horário
+    // Ordenar sessões primeiro por data e depois por horário
     sessions.sort((a, b) => {
+      const dateA = a.date.split('/').reverse().join('');
+      const dateB = b.date.split('/').reverse().join('');
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      
       const timeA = a.time.split(':').map(Number);
       const timeB = b.time.split(':').map(Number);
       return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
@@ -159,10 +192,11 @@ const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Se
   });
 };
 
-// Atualizar o mockFetchSession para usar a mesma lógica
+// Atualizar o mockFetchSession também
 const mockFetchSession = async (sessionId: string): Promise<Session> => {
   const [movieId, sessionNumber] = sessionId.split('-').map(Number);
   const room = generateRandomRoom();
+  const { date, time, isToday } = generateRandomDateTime([]);
 
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -172,7 +206,9 @@ const mockFetchSession = async (sessionId: string): Promise<Session> => {
         movieTitle: 'Filme',
         room: `Sala ${room.number}`,
         technology: room.technology,
-        time: generateRandomTime(),
+        time,
+        date,
+        isToday,
         seats: generateSeats(),
         price: room.price,
         type: room.technology,

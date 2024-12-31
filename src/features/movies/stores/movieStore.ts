@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { MovieState, MovieSection } from '../types/movie';
 import { movieService } from '../services/movieService';
+import { useSessionStore } from '@/features/sessions/stores/sessionStore';
 
 const initialSection: MovieSection = {
   title: '',
@@ -45,7 +46,7 @@ export const useMovieStore = create<MovieState & {
       }));
 
       const response = await movieService.getNowPlaying();
-
+      
       set((state) => ({
         sections: {
           ...state.sections,
@@ -84,7 +85,7 @@ export const useMovieStore = create<MovieState & {
       }));
 
       const response = await movieService.getPopular();
-
+      
       set((state) => ({
         sections: {
           ...state.sections,

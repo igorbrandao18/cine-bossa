@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Dimensions, Pressable, StatusBar } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -44,6 +44,7 @@ export default function MovieScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { sessions, loadSessions, setSelectedSession } = useSessionStore();
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   
   const movie = useMovieStore(state => {
     const sections = state.sections;
@@ -56,9 +57,14 @@ export default function MovieScreen() {
 
   useEffect(() => {
     if (movie) {
-      loadSessions(Number(id), movie.title);
+      const loadMovieSessions = async () => {
+        setIsLoadingSessions(true);
+        await loadSessions(Number(id), movie.title);
+        setIsLoadingSessions(false);
+      };
+      loadMovieSessions();
     }
-  }, [id, movie]);
+  }, [movie?.id]);
 
   const handleSessionPress = (sessionId: string) => {
     setSelectedSession(sessionId);
@@ -66,6 +72,8 @@ export default function MovieScreen() {
   };
 
   if (!movie) return null;
+
+  const movieSessions = sessions.filter(session => session.movieId === String(id));
 
   return (
     <View style={styles.container}>
@@ -110,118 +118,143 @@ export default function MovieScreen() {
         <View style={styles.sessions}>
           <Text style={styles.sessionsTitle}>Sessões Disponíveis</Text>
           
-          {sessions.map(session => (
-            <Pressable
-              key={session.id}
-              style={({ pressed }) => [
-                styles.sessionCard,
-                pressed && styles.sessionCardPressed
-              ]}
-              onPress={() => handleSessionPress(session.id)}
-            >
-              <LinearGradient
-                colors={['#1A1A1A', '#262626']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.sessionGradient}
+          {isLoadingSessions ? (
+            // Loading skeleton para as sessões
+            Array.from({ length: 3 }).map((_, index) => (
+              <View 
+                key={`skeleton-${index}`} 
+                style={[styles.sessionCard, styles.sessionSkeleton]}
               >
-                <View style={styles.sessionMainInfo}>
-                  <View style={styles.timeContainer}>
-                    <Text style={styles.sessionTime}>{session.time}</Text>
-                    <View style={styles.sessionBadge}>
-                      <Text style={styles.sessionBadgeText}>HOJE</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.priceContainer}>
-                    <Text style={styles.priceLabel}>A partir de</Text>
-                    <View style={styles.priceWrapper}>
-                      <Text style={styles.priceCurrency}>R$</Text>
-                      <Text style={styles.sessionPrice}>{session.price.toFixed(2)}</Text>
-                    </View>
-                  </View>
+                <View style={styles.skeletonAnimation}>
+                  <LinearGradient
+                    colors={['#1A1A1A', '#262626', '#1A1A1A']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.skeletonGradient}
+                  />
                 </View>
+              </View>
+            ))
+          ) : movieSessions.length > 0 ? (
+            movieSessions.map(session => (
+              <Pressable
+                key={session.id}
+                style={({ pressed }) => [
+                  styles.sessionCard,
+                  pressed && styles.sessionCardPressed
+                ]}
+                onPress={() => handleSessionPress(session.id)}
+              >
+                <LinearGradient
+                  colors={['#1A1A1A', '#262626']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.sessionGradient}
+                >
+                  <View style={styles.sessionMainInfo}>
+                    <View style={styles.timeContainer}>
+                      <Text style={styles.sessionTime}>{session.time}</Text>
+                      <View style={styles.sessionBadge}>
+                        <Text style={styles.sessionBadgeText}>
+                          {session.isToday ? 'HOJE' : session.date}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.priceContainer}>
+                      <Text style={styles.priceLabel}>A partir de</Text>
+                      <View style={styles.priceWrapper}>
+                        <Text style={styles.priceCurrency}>R$</Text>
+                        <Text style={styles.sessionPrice}>{session.price.toFixed(2)}</Text>
+                      </View>
+                    </View>
+                  </View>
 
-                <View style={styles.sessionDivider} />
+                  <View style={styles.sessionDivider} />
 
-                <View style={styles.sessionTypes}>
-                  {session.seatTypes.map((type) => (
-                    <View 
-                      key={type} 
-                      style={[
-                        styles.typeTag,
-                        { backgroundColor: `${SESSION_TYPES[type].color}20` }
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={SESSION_TYPES[type].icon as any}
-                        size={18}
-                        color={SESSION_TYPES[type].color}
-                      />
-                      <Text 
+                  <View style={styles.sessionTypes}>
+                    {session.seatTypes.map((type) => (
+                      <View 
+                        key={type} 
                         style={[
-                          styles.typeText,
-                          { color: SESSION_TYPES[type].color }
+                          styles.typeTag,
+                          { backgroundColor: `${SESSION_TYPES[type].color}20` }
                         ]}
                       >
-                        {SESSION_TYPES[type].label}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-
-                <View style={styles.sessionDetails}>
-                  <View style={styles.detailItem}>
-                    <MaterialCommunityIcons 
-                      name="door" 
-                      size={20} 
-                      color="#E50914"
-                    />
-                    <View>
-                      <Text style={styles.detailLabel}>Sala</Text>
-                      <Text style={styles.detailText}>{session.room}</Text>
-                    </View>
+                        <MaterialCommunityIcons
+                          name={SESSION_TYPES[type].icon as any}
+                          size={18}
+                          color={SESSION_TYPES[type].color}
+                        />
+                        <Text 
+                          style={[
+                            styles.typeText,
+                            { color: SESSION_TYPES[type].color }
+                          ]}
+                        >
+                          {SESSION_TYPES[type].label}
+                        </Text>
+                      </View>
+                    ))}
                   </View>
 
-                  <View style={styles.detailItem}>
-                    <MaterialCommunityIcons 
-                      name="seat" 
-                      size={20} 
-                      color="#E50914"
-                    />
-                    <View>
-                      <Text style={styles.detailLabel}>Lugares</Text>
-                      <Text style={styles.detailText}>Disponível</Text>
+                  <View style={styles.sessionDetails}>
+                    <View style={styles.detailItem}>
+                      <MaterialCommunityIcons 
+                        name="door" 
+                        size={20} 
+                        color="#E50914"
+                      />
+                      <View>
+                        <Text style={styles.detailLabel}>Sala</Text>
+                        <Text style={styles.detailText}>{session.room}</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.detailItem}>
+                      <MaterialCommunityIcons 
+                        name="seat" 
+                        size={20} 
+                        color="#E50914"
+                      />
+                      <View>
+                        <Text style={styles.detailLabel}>Lugares</Text>
+                        <Text style={styles.detailText}>Disponível</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.detailItem}>
+                      <MaterialCommunityIcons 
+                        name="surround-sound" 
+                        size={20} 
+                        color="#E50914"
+                      />
+                      <View>
+                        <Text style={styles.detailLabel}>Áudio</Text>
+                        <Text style={styles.detailText}>Dolby Atmos</Text>
+                      </View>
                     </View>
                   </View>
 
-                  <View style={styles.detailItem}>
-                    <MaterialCommunityIcons 
-                      name="surround-sound" 
-                      size={20} 
-                      color="#E50914"
-                    />
-                    <View>
-                      <Text style={styles.detailLabel}>Áudio</Text>
-                      <Text style={styles.detailText}>Dolby Atmos</Text>
+                  <View style={styles.sessionFooter}>
+                    <View style={styles.amenities}>
+                      <MaterialCommunityIcons name="food" size={16} color="#666" />
+                      <MaterialCommunityIcons name="parking" size={16} color="#666" />
+                      <MaterialCommunityIcons name="wheelchair-accessibility" size={16} color="#666" />
+                    </View>
+                    <View style={styles.buyButton}>
+                      <Text style={styles.buyButtonText}>Comprar</Text>
+                      <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
                     </View>
                   </View>
-                </View>
-
-                <View style={styles.sessionFooter}>
-                  <View style={styles.amenities}>
-                    <MaterialCommunityIcons name="food" size={16} color="#666" />
-                    <MaterialCommunityIcons name="parking" size={16} color="#666" />
-                    <MaterialCommunityIcons name="wheelchair-accessibility" size={16} color="#666" />
-                  </View>
-                  <View style={styles.buyButton}>
-                    <Text style={styles.buyButtonText}>Comprar</Text>
-                    <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
-                  </View>
-                </View>
-              </LinearGradient>
-            </Pressable>
-          ))}
+                </LinearGradient>
+              </Pressable>
+            ))
+          ) : (
+            <Text style={styles.noSessionsText}>
+              Nenhuma sessão disponível para este filme
+            </Text>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -453,5 +486,28 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 12,
     marginBottom: 2,
+  },
+  sessionSkeleton: {
+    height: 200, // Altura aproximada de um card de sessão
+    backgroundColor: '#1A1A1A',
+    overflow: 'hidden',
+  },
+  skeletonAnimation: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  skeletonGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
+  },
+  noSessionsText: {
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
   },
 }); 
