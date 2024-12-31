@@ -35,6 +35,15 @@ interface SessionState {
   fetchSession: (sessionId: string) => Promise<void>;
   loadSessions: (movieId: number, movieTitle: string) => Promise<void>;
   setSelectedSession: (sessionId: string) => void;
+  selectedSeats: string[];
+  orderSummary: {
+    sessionId: string;
+    movieTitle: string;
+    date: string;
+    time: string;
+    seats: string[];
+    totalPrice: number;
+  } | null;
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -43,6 +52,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   selectedSession: null,
   loading: false,
   error: null,
+  selectedSeats: [],
+  orderSummary: null,
   
   setSelectedSession: (sessionId: string) => {
     const session = get().sessions.find(s => s.id === sessionId);
@@ -80,7 +91,26 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     } catch (error) {
       set({ error: 'Erro ao carregar sessões', loading: false });
     }
-  }
+  },
+
+  confirmSeatsSelection: () => {
+    const { currentSession, selectedSeats } = get();
+    
+    if (!currentSession || selectedSeats.length === 0) return;
+
+    set({
+      orderSummary: {
+        sessionId: currentSession.id,
+        movieTitle: currentSession.movieTitle,
+        date: currentSession.date,
+        time: currentSession.time,
+        seats: selectedSeats,
+        totalPrice: selectedSeats.length * currentSession.price
+      }
+    });
+  },
+
+  clearOrderSummary: () => set({ orderSummary: null }),
 }));
 
 // Função auxiliar para gerar data e hora aleatória nos próximos 7 dias

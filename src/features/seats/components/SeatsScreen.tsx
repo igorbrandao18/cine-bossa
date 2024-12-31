@@ -1,77 +1,92 @@
-import React, { useState } from 'react'
-import { View, StyleSheet } from 'react-native'
-import { Text } from 'react-native-paper'
-import { useSessionStore } from '@/features/sessions/stores/sessionStore'
-import { useRouter } from 'expo-router'
-import { Button } from '@/shared/components/Button'
+import React from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text } from 'react-native-paper';
+import { useSessionStore } from '@/features/sessions/stores/sessionStore';
+import { useRouter } from 'expo-router';
+import { Button } from '@/shared/components/Button';
+import { useSeatStore } from '@/features/seats/stores/seatStore';
+import { rem } from '@/shared/utils/rem';
+import { SeatGrid } from './SeatGrid';
 
 interface SeatsScreenProps {
-  sessionId: string
+  sessionId: string;
 }
 
-const purchaseTickets = async (seats: string[]) => {
-  // Simula uma chamada à API
-  return new Promise((resolve) => {
-    setTimeout(resolve, 1000);
-  });
-};
-
 export function SeatsScreen({ sessionId }: SeatsScreenProps) {
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const router = useRouter();
-  const session = useSessionStore(state => {
-    console.log('Todas as sessões:', state.sessions)
-    const found = state.sessions.find(s => s.id === sessionId)
-    console.log('Sessão encontrada:', found)
-    return found
-  })
+  const { selectedSeats } = useSeatStore();
+  const session = useSessionStore(state => 
+    state.sessions.find(s => s.id === sessionId)
+  );
 
   if (!session) {
     return (
       <View style={styles.container}>
         <Text style={styles.text}>Sessão não encontrada</Text>
       </View>
-    )
+    );
   }
 
-  const handlePurchase = async () => {
-    try {
-      await purchaseTickets(selectedSeats);
-      router.push(`/confirmation/${sessionId}`);
-    } catch (error) {
-      console.error('Erro ao comprar ingressos:', error);
+  const handleConfirmSelection = () => {
+    if (selectedSeats.length > 0) {
+      router.push('/(stack)/payment');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Tela de Assentos</Text>
-      <Text style={styles.text}>Sessão: {session.id}</Text>
-      <Text style={styles.text}>Filme: {session.movieTitle}</Text>
-      <Text style={styles.text}>Horário: {session.time}</Text>
-      <Text style={styles.text}>Sala: {session.room}</Text>
-      <Button 
-        mode="contained"
-        onPress={handlePurchase}
-        disabled={selectedSeats.length === 0}
-      >
-        Comprar {selectedSeats.length} ingresso(s)
-      </Button>
-    </View>
-  )
+    <ScrollView style={styles.scrollView}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text variant="titleLarge" style={styles.title}>
+            {session.movieTitle}
+          </Text>
+          <Text style={styles.info}>Sessão: {session.time}</Text>
+          <Text style={styles.info}>Sala: {session.room}</Text>
+        </View>
+
+        <SeatGrid seats={session.seats || []} />
+
+        <View style={styles.footer}>
+          <Button 
+            mode="contained"
+            onPress={handleConfirmSelection}
+            disabled={selectedSeats.length === 0}
+            style={styles.button}
+          >
+            Continuar ({selectedSeats.length} {selectedSeats.length === 1 ? 'assento' : 'assentos'})
+          </Button>
+        </View>
+      </View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
     flex: 1,
     backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
   },
-  text: {
+  container: {
+    flex: 1,
+    padding: rem(1.25),
+  },
+  header: {
+    marginBottom: rem(2),
+  },
+  title: {
     color: '#FFF',
-    fontSize: 16,
-    marginBottom: 10,
+    fontSize: rem(1.5),
+    marginBottom: rem(1),
   },
-}) 
+  info: {
+    color: '#FFF',
+    fontSize: rem(1),
+    marginBottom: rem(0.5),
+  },
+  footer: {
+    marginTop: rem(2),
+  },
+  button: {
+    width: '100%',
+  },
+}); 

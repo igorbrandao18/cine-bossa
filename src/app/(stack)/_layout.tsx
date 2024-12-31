@@ -39,7 +39,7 @@ export default function StackLayout() {
         }}
       />
       <Stack.Screen 
-        name="checkout"
+        name="payment"
         options={{
           headerShown: false,
           animation: 'slide_from_right',

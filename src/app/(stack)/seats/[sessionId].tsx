@@ -221,18 +221,26 @@ export default function SeatsScreen() {
           <View style={styles.footer}>
             <View style={styles.priceInfo}>
               <Text style={styles.selectedCount}>
-                {selectedSeats.length} {selectedSeats.length === 1 ? 'assento' : 'assentos'}
+                {selectedSeats.length} {selectedSeats.length === 1 ? 'assento' : 'assentos'} selecionado{selectedSeats.length !== 1 ? 's' : ''}
               </Text>
               <Text style={styles.totalPrice}>
                 R$ {getTotalPrice().toFixed(2)}
               </Text>
             </View>
-            <Pressable 
-              style={styles.continueButton}
-              onPress={() => router.push('/(stack)/checkout' as any)}
+            <Pressable
+              style={[
+                styles.continueButton,
+                selectedSeats.length === 0 && { opacity: 0.5 }
+              ]}
+              onPress={() => {
+                if (selectedSeats.length > 0) {
+                  router.push('/(stack)/payment');
+                }
+              }}
+              disabled={selectedSeats.length === 0}
             >
               <Text style={styles.continueText}>Continuar</Text>
-              <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#fff" />
             </Pressable>
           </View>
 
