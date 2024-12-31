@@ -27,26 +27,49 @@ interface Session {
 interface SessionState {
   currentSession: Session | null;
   sessions: Session[];
+  selectedSession: Session | null;
   loading: boolean;
   error: string | null;
   fetchSession: (sessionId: string) => Promise<void>;
   loadSessions: (movieId: number, movieTitle: string) => Promise<void>;
+  setSelectedSession: (sessionId: string) => void;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
+export const useSessionStore = create<SessionState>((set, get) => ({
   currentSession: null,
   sessions: [],
+  selectedSession: null,
   loading: false,
   error: null,
+  
+  setSelectedSession: (sessionId: string) => {
+    const session = get().sessions.find(s => s.id === sessionId);
+    if (session) {
+      set({ selectedSession: session });
+    }
+  },
+
   fetchSession: async (sessionId: string) => {
     set({ loading: true, error: null });
     try {
+      // Primeiro verifica se já temos a sessão selecionada
+      const selectedSession = get().selectedSession;
+      if (selectedSession && selectedSession.id === sessionId) {
+        set({ 
+          currentSession: selectedSession,
+          loading: false 
+        });
+        return;
+      }
+
+      // Se não tiver, busca do mock
       const response = await mockFetchSession(sessionId);
       set({ currentSession: response, loading: false });
     } catch (error) {
       set({ error: 'Erro ao carregar sessão', loading: false });
     }
   },
+
   loadSessions: async (movieId: number, movieTitle: string) => {
     set({ loading: true, error: null });
     try {
@@ -106,23 +129,19 @@ const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Se
 
 // Mock temporário - substituir por API real
 const mockFetchSession = async (sessionId: string): Promise<Session> => {
-  // Primeiro vamos buscar a sessão na lista de sessões do store
-  const store = useSessionStore.getState();
-  const session = store.sessions.find(s => s.id === sessionId);
-
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         id: sessionId,
-        movieId: session?.movieId || '1',
-        movieTitle: session?.movieTitle || '', // Usando o título da sessão encontrada
-        room: session?.room || 'Sala 1',
-        technology: session?.technology || 'IMAX',
-        time: session?.time || '14:30',
+        movieId: '1',
+        movieTitle: 'Filme',
+        room: 'Sala 1',
+        technology: 'IMAX',
+        time: '14:30',
         seats: generateSeats(),
-        price: session?.price || 45.00,
-        type: session?.type || 'IMAX 3D',
-        seatTypes: session?.seatTypes || ['imax', '3d'],
+        price: 45.00,
+        type: 'IMAX 3D',
+        seatTypes: ['imax', '3d'],
       });
     }, 1000);
   });

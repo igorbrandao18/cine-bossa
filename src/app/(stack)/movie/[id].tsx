@@ -43,7 +43,7 @@ const SESSION_TYPES = {
 export default function MovieScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { sessions, loadSessions } = useSessionStore();
+  const { sessions, loadSessions, setSelectedSession } = useSessionStore();
   
   const movie = useMovieStore(state => {
     const sections = state.sections;
@@ -59,6 +59,11 @@ export default function MovieScreen() {
       loadSessions(Number(id), movie.title);
     }
   }, [id, movie]);
+
+  const handleSessionPress = (sessionId: string) => {
+    setSelectedSession(sessionId);
+    router.push(`/seats/${sessionId}`);
+  };
 
   if (!movie) return null;
 
@@ -112,7 +117,7 @@ export default function MovieScreen() {
                 styles.sessionCard,
                 pressed && styles.sessionCardPressed
               ]}
-              onPress={() => router.push(`/seats/${session.id}`)}
+              onPress={() => handleSessionPress(session.id)}
             >
               <LinearGradient
                 colors={['#1A1A1A', '#262626']}

@@ -77,16 +77,6 @@ export default function SeatsScreen() {
     }, 0);
   };
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={[styles.container, styles.centerContent]}>
-          <ActivityIndicator size="large" color="#E50914" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   if (error || !currentSession) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -145,56 +135,62 @@ export default function SeatsScreen() {
 
           {/* Seats Grid */}
           <View style={styles.seatsContainer}>
-            {rows.map((row) => (
-              <View key={row} style={styles.seatRow}>
-                <Text style={styles.rowLetter}>{row}</Text>
-                <View style={styles.seatsGrid}>
-                  {seats
-                    .filter(seat => seat.row === row)
-                    .map((seat) => {
-                      const isSelected = selectedSeats.includes(seat.id);
-                      const isOccupied = seat.status === 'occupied';
-
-                      return (
-                        <Pressable
-                          key={seat.id}
-                          style={[
-                            styles.seatWrapper,
-                            isSelected && styles.selectedSeatWrapper,
-                            isOccupied && styles.occupiedSeatWrapper
-                          ]}
-                          onPress={() => toggleSeat(seat.id)}
-                          disabled={isOccupied}
-                        >
-                          <LinearGradient
-                            colors={[
-                              isOccupied ? '#666' :
-                              isSelected ? '#E50914' : 
-                              SEAT_TYPES[seat.type].color,
-                              isOccupied ? '#444' :
-                              isSelected ? '#B71C1C' : 
-                              SEAT_TYPES[seat.type].color + '80'
-                            ]}
-                            style={styles.seat}
-                          >
-                            <MaterialCommunityIcons
-                              name={SEAT_TYPES[seat.type].icon}
-                              size={16}
-                              color={isOccupied ? '#333' : '#fff'}
-                            />
-                            <Text style={[
-                              styles.seatNumber,
-                              isOccupied && styles.occupiedSeatNumber
-                            ]}>
-                              {seat.number}
-                            </Text>
-                          </LinearGradient>
-                        </Pressable>
-                      );
-                    })}
-                </View>
+            {loading ? (
+              <View style={styles.inlineLoading}>
+                <ActivityIndicator size="large" color="#E50914" />
               </View>
-            ))}
+            ) : (
+              rows.map((row) => (
+                <View key={row} style={styles.seatRow}>
+                  <Text style={styles.rowLetter}>{row}</Text>
+                  <View style={styles.seatsGrid}>
+                    {currentSession.seats
+                      .filter(seat => seat.row === row)
+                      .map((seat) => {
+                        const isSelected = selectedSeats.includes(seat.id);
+                        const isOccupied = seat.status === 'occupied';
+
+                        return (
+                          <Pressable
+                            key={seat.id}
+                            style={[
+                              styles.seatWrapper,
+                              isSelected && styles.selectedSeatWrapper,
+                              isOccupied && styles.occupiedSeatWrapper
+                            ]}
+                            onPress={() => toggleSeat(seat.id)}
+                            disabled={isOccupied}
+                          >
+                            <LinearGradient
+                              colors={[
+                                isOccupied ? '#666' :
+                                isSelected ? '#E50914' : 
+                                SEAT_TYPES[seat.type].color,
+                                isOccupied ? '#444' :
+                                isSelected ? '#B71C1C' : 
+                                SEAT_TYPES[seat.type].color + '80'
+                              ]}
+                              style={styles.seat}
+                            >
+                              <MaterialCommunityIcons
+                                name={SEAT_TYPES[seat.type].icon}
+                                size={16}
+                                color={isOccupied ? '#333' : '#fff'}
+                              />
+                              <Text style={[
+                                styles.seatNumber,
+                                isOccupied && styles.occupiedSeatNumber
+                              ]}>
+                                {seat.number}
+                              </Text>
+                            </LinearGradient>
+                          </Pressable>
+                        );
+                    })}
+                  </View>
+                </View>
+              ))
+            )}
           </View>
 
           {/* Legend */}
@@ -469,5 +465,9 @@ const styles = StyleSheet.create({
   },
   occupiedSeatNumber: {
     color: '#333',
+  },
+  inlineLoading: {
+    padding: 20,
+    alignItems: 'center',
   },
 });
