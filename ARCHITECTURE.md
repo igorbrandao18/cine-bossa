@@ -2,6 +2,7 @@
 
 ## 📁 Estrutura de Pastas
 
+
 ```
 src/
 ├── app/                    # Expo Router pages
