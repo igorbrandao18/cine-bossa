@@ -55,10 +55,10 @@ export default function MovieScreen() {
   });
 
   useEffect(() => {
-    if (id) {
-      loadSessions(Number(id));
+    if (movie) {
+      loadSessions(Number(id), movie.title);
     }
-  }, [id]);
+  }, [id, movie]);
 
   if (!movie) return null;
 

@@ -30,7 +30,7 @@ interface SessionState {
   loading: boolean;
   error: string | null;
   fetchSession: (sessionId: string) => Promise<void>;
-  loadSessions: (movieId: number) => Promise<void>;
+  loadSessions: (movieId: number, movieTitle: string) => Promise<void>;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -47,10 +47,10 @@ export const useSessionStore = create<SessionState>((set) => ({
       set({ error: 'Erro ao carregar sessão', loading: false });
     }
   },
-  loadSessions: async (movieId: number) => {
+  loadSessions: async (movieId: number, movieTitle: string) => {
     set({ loading: true, error: null });
     try {
-      const response = await mockLoadSessions(movieId);
+      const response = await mockLoadSessions(movieId, movieTitle);
       set({ sessions: response, loading: false });
     } catch (error) {
       set({ error: 'Erro ao carregar sessões', loading: false });
@@ -59,14 +59,14 @@ export const useSessionStore = create<SessionState>((set) => ({
 }));
 
 // Mock para carregar lista de sessões
-const mockLoadSessions = async (movieId: number): Promise<Session[]> => {
+const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Session[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
         {
           id: '1',
           movieId: String(movieId),
-          movieTitle: 'Wonka',
+          movieTitle,
           room: 'Sala 1',
           technology: 'IMAX',
           time: '14:30',
@@ -78,7 +78,7 @@ const mockLoadSessions = async (movieId: number): Promise<Session[]> => {
         {
           id: '2',
           movieId: String(movieId),
-          movieTitle: 'Wonka',
+          movieTitle,
           room: 'Sala 2',
           technology: '3D',
           time: '16:45',
@@ -90,7 +90,7 @@ const mockLoadSessions = async (movieId: number): Promise<Session[]> => {
         {
           id: '3',
           movieId: String(movieId),
-          movieTitle: 'Wonka',
+          movieTitle,
           room: 'Sala 3',
           technology: '2D',
           time: '19:00',
@@ -106,19 +106,23 @@ const mockLoadSessions = async (movieId: number): Promise<Session[]> => {
 
 // Mock temporário - substituir por API real
 const mockFetchSession = async (sessionId: string): Promise<Session> => {
+  // Primeiro vamos buscar a sessão na lista de sessões do store
+  const store = useSessionStore.getState();
+  const session = store.sessions.find(s => s.id === sessionId);
+
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         id: sessionId,
-        movieId: '1',
-        movieTitle: 'Wonka',
-        room: 'Sala 1',
-        technology: 'IMAX',
-        time: '14:30',
+        movieId: session?.movieId || '1',
+        movieTitle: session?.movieTitle || '', // Usando o título da sessão encontrada
+        room: session?.room || 'Sala 1',
+        technology: session?.technology || 'IMAX',
+        time: session?.time || '14:30',
         seats: generateSeats(),
-        price: 45.00,
-        type: 'IMAX 3D',
-        seatTypes: ['imax', '3d'],
+        price: session?.price || 45.00,
+        type: session?.type || 'IMAX 3D',
+        seatTypes: session?.seatTypes || ['imax', '3d'],
       });
     }, 1000);
   });
