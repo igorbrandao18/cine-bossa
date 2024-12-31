@@ -81,67 +81,102 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   }
 }));
 
+// Função auxiliar para gerar horários aleatórios entre 10:00 e 23:00
+const generateRandomTime = () => {
+  const hour = Math.floor(Math.random() * (23 - 10) + 10);
+  const minute = Math.random() < 0.5 ? '00' : '30';
+  return `${hour.toString().padStart(2, '0')}:${minute}`;
+};
+
+// Função auxiliar para gerar uma sala aleatória
+const generateRandomRoom = () => {
+  const roomNumber = Math.floor(Math.random() * 8) + 1; // Salas de 1 a 8
+  const technologies = [
+    { tech: 'IMAX', types: ['imax', '3d'] },
+    { tech: '3D', types: ['3d', 'dbox'] },
+    { tech: 'VIP', types: ['vip', 'standard'] },
+    { tech: '2D', types: ['standard'] },
+    { tech: 'D-BOX', types: ['dbox', 'standard'] },
+  ];
+  
+  const selectedTech = technologies[Math.floor(Math.random() * technologies.length)];
+  
+  return {
+    number: roomNumber,
+    technology: selectedTech.tech,
+    seatTypes: selectedTech.types as SessionType[],
+    price: selectedTech.tech === 'IMAX' ? 45.00 :
+           selectedTech.tech === 'VIP' ? 50.00 :
+           selectedTech.tech === 'D-BOX' ? 40.00 :
+           selectedTech.tech === '3D' ? 35.00 : 25.00
+  };
+};
+
 // Mock para carregar lista de sessões
 const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Session[]> => {
   return new Promise((resolve) => {
+    // Gerar entre 3 e 6 sessões aleatórias
+    const numberOfSessions = Math.floor(Math.random() * 4) + 3;
+    const sessions: Session[] = [];
+    
+    // Array para controlar horários já usados para não repetir
+    const usedTimes: string[] = [];
+    
+    for (let i = 0; i < numberOfSessions; i++) {
+      let time = generateRandomTime();
+      // Garantir que não teremos horários repetidos
+      while (usedTimes.includes(time)) {
+        time = generateRandomTime();
+      }
+      usedTimes.push(time);
+      
+      const room = generateRandomRoom();
+      
+      sessions.push({
+        id: `${movieId}-${i + 1}`,
+        movieId: String(movieId),
+        movieTitle,
+        room: `Sala ${room.number}`,
+        technology: room.technology,
+        time,
+        seats: generateSeats(),
+        price: room.price,
+        type: room.technology,
+        seatTypes: room.seatTypes,
+      });
+    }
+    
+    // Ordenar sessões por horário
+    sessions.sort((a, b) => {
+      const timeA = a.time.split(':').map(Number);
+      const timeB = b.time.split(':').map(Number);
+      return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+    });
+
     setTimeout(() => {
-      resolve([
-        {
-          id: '1',
-          movieId: String(movieId),
-          movieTitle,
-          room: 'Sala 1',
-          technology: 'IMAX',
-          time: '14:30',
-          seats: generateSeats(),
-          price: 45.00,
-          type: 'IMAX 3D',
-          seatTypes: ['imax', '3d'],
-        },
-        {
-          id: '2',
-          movieId: String(movieId),
-          movieTitle,
-          room: 'Sala 2',
-          technology: '3D',
-          time: '16:45',
-          seats: generateSeats(),
-          price: 35.00,
-          type: '3D',
-          seatTypes: ['3d', 'dbox'],
-        },
-        {
-          id: '3',
-          movieId: String(movieId),
-          movieTitle,
-          room: 'Sala 3',
-          technology: '2D',
-          time: '19:00',
-          seats: generateSeats(),
-          price: 25.00,
-          type: '2D',
-          seatTypes: ['standard', 'vip'],
-        },
-      ]);
+      resolve(sessions);
     }, 1000);
   });
 };
 
-// Mock temporário - substituir por API real
+// Atualizar o mockFetchSession para usar a mesma lógica
 const mockFetchSession = async (sessionId: string): Promise<Session> => {
+  const [movieId, sessionNumber] = sessionId.split('-').map(Number);
+  const room = generateRandomRoom();
+
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         id: sessionId,
-        movieId: '1',
+        movieId: String(movieId),
         movieTitle: 'Filme',
-        room: 'Sala 1',
-        technology: 'IMAX',
-        time: '14:30',
+        room: `Sala ${room.number}`,
+        technology: room.technology,
+        time: generateRandomTime(),
         seats: generateSeats(),
-        price: 45.00,
-        type: 'IMAX 3D',
-        seatTypes: ['imax', '3d'],
+        price: room.price,
+        type: room.technology,
+        seatTypes: room.seatTypes,
       });
     }, 1000);
   });
