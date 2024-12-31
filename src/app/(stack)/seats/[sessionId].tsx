@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, StatusBar, Dimensions, Pressable } from 'react-native';
-import { Text, IconButton } from 'react-native-paper';
+import { Text, IconButton, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSessionStore, Seat } from '@/features/sessions/stores/sessionStore';
 
 const { width } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 32; // 16px de padding de cada lado
@@ -49,16 +50,19 @@ export default function SeatsScreen() {
   const router = useRouter();
   const { sessionId } = useLocalSearchParams();
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  
+  const { currentSession, loading, error, fetchSession } = useSessionStore();
 
-  const getSeatType = (row: string, seatNumber: string) => {
-    const position = `${row}${seatNumber}`;
-    if (['G02', 'G06'].includes(position)) return 'couple';
-    if (['E04', 'E05', 'F04', 'F05'].includes(position)) return 'premium';
-    if (['G01', 'G03', 'G05'].includes(position)) return 'wheelchair';
-    return 'standard';
-  };
+  useEffect(() => {
+    if (sessionId) {
+      fetchSession(String(sessionId));
+    }
+  }, [sessionId]);
 
   const toggleSeat = (seatId: string) => {
+    const seat = currentSession?.seats.find(s => s.id === seatId);
+    if (seat?.status === 'occupied') return;
+
     setSelectedSeats(prev => 
       prev.includes(seatId) 
         ? prev.filter(id => id !== seatId)
@@ -68,11 +72,39 @@ export default function SeatsScreen() {
 
   const getTotalPrice = () => {
     return selectedSeats.reduce((total, seatId) => {
-      const [row, number] = [seatId[0], seatId.slice(1)];
-      const type = getSeatType(row, number);
-      return total + SEAT_TYPES[type].price;
+      const seat = currentSession?.seats.find(s => s.id === seatId);
+      return total + (seat?.price || 0);
     }, 0);
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator size="large" color="#E50914" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !currentSession) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={[styles.container, styles.centerContent]}>
+          <Text style={styles.errorText}>Erro ao carregar sessão</Text>
+          <Pressable 
+            style={styles.retryButton} 
+            onPress={() => fetchSession(String(sessionId))}
+          >
+            <Text style={styles.retryText}>Tentar novamente</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const seats = currentSession.seats || [];
+  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -89,8 +121,10 @@ export default function SeatsScreen() {
             style={styles.backButton}
           />
           <View style={styles.headerInfo}>
-            <Text style={styles.movieTitle}>Wonka</Text>
-            <Text style={styles.sessionInfo}>Sala 1 - IMAX • 14:30</Text>
+            <Text style={styles.movieTitle}>{currentSession.movieTitle}</Text>
+            <Text style={styles.sessionInfo}>
+              {currentSession.room} - {currentSession.technology} • {currentSession.time}
+            </Text>
           </View>
         </View>
 
@@ -111,54 +145,53 @@ export default function SeatsScreen() {
 
           {/* Seats Grid */}
           <View style={styles.seatsContainer}>
-            {/* Remova ou comente este bloco
-            <View style={styles.columnNumbers}>
-              <View style={styles.rowLetterPlaceholder} />
-              {Array.from({ length: 8 }, (_, i) => (
-                <Text key={i} style={styles.gridNumber}>
-                  {String(i + 1).padStart(2, '0')}
-                </Text>
-              ))}
-            </View>
-            */}
-
-            {/* Seats */}
-            {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((row) => (
+            {rows.map((row) => (
               <View key={row} style={styles.seatRow}>
                 <Text style={styles.rowLetter}>{row}</Text>
                 <View style={styles.seatsGrid}>
-                  {Array.from({ length: 8 }, (_, i) => {
-                    const seatNumber = String(i + 1).padStart(2, '0');
-                    const seatId = `${row}${seatNumber}`;
-                    const type = getSeatType(row, seatNumber);
-                    const isSelected = selectedSeats.includes(seatId);
+                  {seats
+                    .filter(seat => seat.row === row)
+                    .map((seat) => {
+                      const isSelected = selectedSeats.includes(seat.id);
+                      const isOccupied = seat.status === 'occupied';
 
-                    return (
-                      <Pressable
-                        key={seatId}
-                        style={[
-                          styles.seatWrapper,
-                          isSelected && styles.selectedSeatWrapper
-                        ]}
-                        onPress={() => toggleSeat(seatId)}
-                      >
-                        <LinearGradient
-                          colors={[
-                            isSelected ? '#E50914' : SEAT_TYPES[type].color,
-                            isSelected ? '#B71C1C' : SEAT_TYPES[type].color + '80'
+                      return (
+                        <Pressable
+                          key={seat.id}
+                          style={[
+                            styles.seatWrapper,
+                            isSelected && styles.selectedSeatWrapper,
+                            isOccupied && styles.occupiedSeatWrapper
                           ]}
-                          style={styles.seat}
+                          onPress={() => toggleSeat(seat.id)}
+                          disabled={isOccupied}
                         >
-                          <MaterialCommunityIcons
-                            name={SEAT_TYPES[type].icon}
-                            size={16}
-                            color="#fff"
-                          />
-                          <Text style={styles.seatNumber}>{seatNumber}</Text>
-                        </LinearGradient>
-                      </Pressable>
-                    );
-                  })}
+                          <LinearGradient
+                            colors={[
+                              isOccupied ? '#666' :
+                              isSelected ? '#E50914' : 
+                              SEAT_TYPES[seat.type].color,
+                              isOccupied ? '#444' :
+                              isSelected ? '#B71C1C' : 
+                              SEAT_TYPES[seat.type].color + '80'
+                            ]}
+                            style={styles.seat}
+                          >
+                            <MaterialCommunityIcons
+                              name={SEAT_TYPES[seat.type].icon}
+                              size={16}
+                              color={isOccupied ? '#333' : '#fff'}
+                            />
+                            <Text style={[
+                              styles.seatNumber,
+                              isOccupied && styles.occupiedSeatNumber
+                            ]}>
+                              {seat.number}
+                            </Text>
+                          </LinearGradient>
+                        </Pressable>
+                      );
+                    })}
                 </View>
               </View>
             ))}
@@ -410,5 +443,31 @@ const styles = StyleSheet.create({
     color: '#E50914',
     fontSize: 14,
     fontWeight: '500',
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#E50914',
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#E50914',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  occupiedSeatWrapper: {
+    opacity: 0.5,
+  },
+  occupiedSeatNumber: {
+    color: '#333',
   },
 });
