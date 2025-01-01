@@ -53,12 +53,23 @@
   - [x] Componentes específicos para `features/seats/components/`
     - [x] `SeatComponent.tsx`
     - [x] `FeatureCard.tsx`
+    - [x] `SeatsHeader.tsx`
+    - [x] `ScreenIndicator.tsx`
+    - [x] `SeatItem.tsx`
+    - [x] `SeatRow.tsx`
+    - [x] `SeatMap.tsx`
   - [ ] Serviços para `features/seats/services/`
     - [ ] `seatService.ts`
   - [ ] Store para `features/seats/stores/`
     - [ ] `seatStore.ts`
   - [x] Tipos para `features/seats/types/`
     - [x] `seat.ts`
+  - [x] Estilos para `features/seats/components/styles/`
+    - [x] `seats-header.styles.ts`
+    - [x] `screen-indicator.styles.ts`
+    - [x] `seat-item.styles.ts`
+    - [x] `seat-row.styles.ts`
+    - [x] `seat-map.styles.ts`
 
 ## 5️⃣ Core
 - [x] Configurar core da aplicação
@@ -141,7 +152,10 @@
    - ✅ Screen atualizada
 5. ✅ Feature Seats (Parcial)
    - ✅ Types
-   - ✅ Components
+   - ✅ Components (Completo)
+     - ✅ Componentização da seleção de assentos
+     - ✅ Estilos separados por componente
+     - ✅ Padrões de projeto implementados (Component, Composition, Props Pattern)
    - ⏳ Services
    - ⏳ Store
    - ✅ Imports atualizados
