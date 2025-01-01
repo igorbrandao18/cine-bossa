@@ -32,10 +32,6 @@ export function SeatTypes() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 12,
     gap: 8,
   },
   sectionTitle: {
@@ -43,7 +39,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 4,
   },
   legend: {
     flexDirection: 'row',

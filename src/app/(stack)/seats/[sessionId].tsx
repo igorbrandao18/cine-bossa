@@ -6,7 +6,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSessionStore } from '@/features/sessions/stores/sessionStore';
-import { SeatTypes } from '@/features/seats/components/SeatTypes';
 import { PromotionBanner } from '@/features/seats/components/PromotionBanner';
 import { SelectionSummary } from '@/features/seats/components/SelectionSummary';
 
@@ -91,9 +90,6 @@ export default function SeatsScreen() {
           </View>
         </View>
 
-        {/* Seat Types */}
-        <SeatTypes />
-
         {/* Scrollable Content */}
         <ScrollView 
           style={styles.scrollContent} 
@@ -163,22 +159,27 @@ export default function SeatsScreen() {
             )}
           </View>
 
-          {/* Promotion Banner */}
-          <PromotionBanner />
+          {/* Bottom Info Container */}
+          <View style={styles.bottomInfoContainer}>
+            <PromotionBanner />
+            <SelectionSummary 
+              selectedSeats={selectedSeats}
+              totalPrice={getTotalPrice()}
+              onContinue={() => {
+                if (selectedSeats.length > 0) {
+                  router.push('/(stack)/payment');
+                }
+              }}
+            />
+          </View>
         </ScrollView>
 
-        {/* Bottom Section */}
-        <View style={styles.bottomSection}>
-          <SelectionSummary 
-            selectedSeats={selectedSeats}
-            totalPrice={getTotalPrice()}
-            onContinue={() => {
-              if (selectedSeats.length > 0) {
-                router.push('/(stack)/payment');
-              }
-            }}
-          />
-        </View>
+        {/* Footer Gradient */}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.95)', '#000']}
+          style={styles.bottomGradient}
+          pointerEvents="none"
+        />
       </View>
     </SafeAreaView>
   );
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
   seatsContainer: {
     alignItems: 'center',
     gap: 8,
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
   seatRow: {
     flexDirection: 'row',
@@ -276,10 +277,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   bottomSection: {
-    padding: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    pointerEvents: 'none',
+  },
+  bottomGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    zIndex: 1,
   },
   centerContent: {
     justifyContent: 'center',
@@ -312,6 +323,34 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100,
+  },
+  fixedBottomContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 16,
+    zIndex: 10,
+    elevation: 10,
+  },
+  selectionContainer: {
+    marginTop: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 8,
+    padding: 16,
+  },
+  bottomInfoContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    marginTop: 24,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
