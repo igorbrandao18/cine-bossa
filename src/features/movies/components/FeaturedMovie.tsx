@@ -140,7 +140,7 @@ export const FeaturedMovie = memo(function FeaturedMovie({
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.95)', '#000']}
               style={styles.gradient}
-              locations={[0, 0.5, 0.8]}
+              locations={[0.4, 0.8, 1]}
             >
               <View style={styles.contentContainer}>
                 <Text variant="headlineMedium" style={styles.featuredTitle}>
