@@ -6,8 +6,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSessionStore } from '@/features/sessions/stores/sessionStore';
-import { useSeatStore } from '@/features/seats/stores/seatStore';
-import { rem } from '@/shared/utils/rem';
+import { colors } from '@/core/theme/colors';
 
 const PAYMENT_METHODS = [
   { id: 'credit', label: 'Cartão de Crédito', icon: 'credit-card' },
@@ -17,10 +16,23 @@ const PAYMENT_METHODS = [
 
 export function PaymentScreen() {
   const router = useRouter();
-  const { currentSession } = useSessionStore();
-  const { selectedSeats, totalPrice } = useSeatStore();
+  const { currentSession, selectedSeats } = useSessionStore();
   const [selectedMethod, setSelectedMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('credit');
   const [loading, setLoading] = useState(false);
+
+  const getTotalPrice = () => {
+    return selectedSeats.reduce((total, seatId) => {
+      const seat = currentSession?.seats.find(s => s.id === seatId);
+      return total + (seat?.price || 0);
+    }, 0);
+  };
+
+  const getSelectedSeatsInfo = () => {
+    return selectedSeats.map(seatId => {
+      const seat = currentSession?.seats.find(s => s.id === seatId);
+      return seat ? `${seat.row}${seat.number}` : '';
+    }).join(', ');
+  };
 
   const handlePayment = async () => {
     setLoading(true);
@@ -37,7 +49,7 @@ export function PaymentScreen() {
         <View style={styles.header}>
           <IconButton
             icon="chevron-left"
-            iconColor="#fff"
+            iconColor={colors.text}
             size={24}
             onPress={() => router.back()}
             style={styles.backButton}
@@ -59,15 +71,38 @@ export function PaymentScreen() {
           <View style={styles.summary}>
             <Text style={styles.sectionTitle}>Resumo da Compra</Text>
             <View style={styles.summaryContent}>
-              <Text style={styles.movieTitle}>{currentSession.movieTitle}</Text>
+              <View style={styles.movieInfo}>
+                <Text style={styles.movieTitle}>{currentSession.movieTitle}</Text>
+                <Text style={styles.sessionDetails}>
+                  {currentSession.room} • {currentSession.technology} • {currentSession.time}
+                </Text>
+              </View>
+              
               <View style={styles.seatsInfo}>
-                {selectedSeats.map(seat => (
-                  <View key={seat.id} style={styles.seatBadge}>
-                    <Text style={styles.seatText}>
-                      {seat.row}{seat.number}
-                    </Text>
-                  </View>
-                ))}
+                <Text style={styles.seatsLabel}>Assentos selecionados:</Text>
+                <View style={styles.seatsGrid}>
+                  {selectedSeats.map(seatId => {
+                    const seat = currentSession.seats.find(s => s.id === seatId);
+                    return (
+                      <View key={seatId} style={styles.seatBadge}>
+                        <Text style={styles.seatText}>
+                          {seat?.row}{seat?.number}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.priceBreakdown}>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceLabel}>Ingressos ({selectedSeats.length}x)</Text>
+                  <Text style={styles.priceValue}>R$ {getTotalPrice().toFixed(2)}</Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceLabel}>Taxa de serviço</Text>
+                  <Text style={styles.priceValue}>R$ 0,00</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -146,18 +181,21 @@ export function PaymentScreen() {
 
         {/* Footer */}
         <LinearGradient
-          colors={['transparent', '#000']}
+          colors={colors.gradients.surface}
           style={styles.footerGradient}
         >
           <View style={styles.footer}>
             <View style={styles.priceInfo}>
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalPrice}>
-                R$ {totalPrice.toFixed(2)}
+                R$ {getTotalPrice().toFixed(2)}
               </Text>
             </View>
             <Pressable
-              style={styles.payButton}
+              style={[
+                styles.payButton,
+                loading && styles.payButtonDisabled
+              ]}
               onPress={handlePayment}
               disabled={loading}
             >
@@ -167,7 +205,7 @@ export function PaymentScreen() {
               <MaterialCommunityIcons 
                 name="chevron-right" 
                 size={20} 
-                color="#fff" 
+                color={colors.text}
               />
             </Pressable>
           </View>
@@ -345,5 +383,47 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  movieInfo: {
+    marginBottom: 16,
+  },
+  sessionDetails: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginTop: 4,
+  },
+  seatsLabel: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  seatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  priceBreakdown: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: 8,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  priceLabel: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  priceValue: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  payButtonDisabled: {
+    opacity: 0.7,
   },
 }); 
