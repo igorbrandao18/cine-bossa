@@ -54,7 +54,7 @@ export function PaymentScreen() {
       <Header
         title="Pagamento"
         subtitle={`${currentSession.room} • ${currentSession.time}`}
-        variant="filled"
+        variant="transparent"
       />
 
       <SafeAreaView style={styles.content} edges={['bottom']}>

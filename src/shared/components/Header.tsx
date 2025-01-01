@@ -88,14 +88,14 @@ export function Header({
 
 const styles = StyleSheet.create({
   container: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
   transparent: {
     backgroundColor: 'transparent',
   },
   filled: {
     backgroundColor: '#1a1a1a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
   },
   content: {
     flexDirection: 'row',

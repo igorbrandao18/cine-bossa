@@ -104,14 +104,27 @@
     - [x] `LoadingState.tsx`
     - [x] `FeaturedMovie.tsx`
     - [x] `MovieRow.tsx`
+    - [ ] `MovieCard.tsx`
+    - [ ] `MovieInfo.tsx`
   - [ ] Sessions
     - [x] `SessionCard.tsx`
+    - [ ] `SessionList.tsx`
+    - [ ] `SessionDetails.tsx`
   - [ ] Seats
     - [x] `SeatsGrid.tsx`
     - [x] `SeatMap.tsx`
+    - [x] `PaymentScreen.tsx`
+    - [ ] `TabSelector.tsx`
+    - [ ] `SeatLegend.tsx`
+    - [ ] `ColumnNumbers.tsx`
+    - [ ] `ConfirmationModal.tsx`
+    - [ ] `PurchaseSummary.tsx`
+    - [ ] `PaymentMethods.tsx`
   - [ ] Shared Components
     - [x] `Button.tsx`
     - [x] `Card.tsx`
+    - [x] `Header.tsx`
+    - [ ] `Skeleton.tsx`
 
 ## 8️⃣ Testes e Validação
 - [x] Verificar funcionamento após reorganização
@@ -196,9 +209,9 @@
 
 ## ⏭️ Próximos Passos
 1. Implementar componentes faltantes da feature Sessions
-2. Implementar serviços e store da feature Seats
-3. Converter medidas para REM
-4. Testar navegação e funcionalidades 
+2. Converter medidas restantes para REM
+3. Implementar tema global consistente
+4. Testar responsividade em diferentes dispositivos
 
 ## 🔄 Padronização de Headers
 - [x] Criar componente base Header em `shared/components/Header.tsx`
@@ -206,5 +219,39 @@
 - [x] Atualizar SeatsHeader para usar o componente base
 - [x] Atualizar HomeHeader para usar o componente base
 - [x] Criar utilitário de conversão REM em `core/theme/rem.ts`
+- [x] Adicionar variantes ao Header (transparent | filled)
+- [x] Atualizar PaymentScreen para usar Header padronizado
+- [x] Melhorar performance do Header removendo bordas desnecessárias
 - [ ] Converter todas as medidas para REM
-- [ ] Adicionar temas e cores consistentes 
+- [ ] Adicionar temas e cores consistentes
+
+## 🎯 Melhorias de Performance
+- [x] Remover borda do Header quando transparente
+- [x] Otimizar renderização do PaymentScreen
+- [ ] Otimizar outros componentes
+
+## 🚀 Otimizações Pendentes
+### Headers
+- [x] Remover estilos desnecessários do Header
+- [ ] Memoizar componente Header
+- [ ] Otimizar re-renders do Header
+
+### Movies
+- [ ] Lazy loading de imagens no FeaturedMovie
+- [ ] Virtualização da lista no MovieRow
+- [ ] Memoização de callbacks
+
+### Sessions
+- [ ] Otimizar renderização de listas
+- [ ] Cache de dados de sessões
+
+### Seats
+- [ ] Memoizar grid de assentos
+- [ ] Otimizar cálculos de preço
+- [ ] Reduzir re-renders do mapa de assentos
+
+### Geral
+- [ ] Implementar Suspense boundaries
+- [ ] Lazy loading de componentes pesados
+- [ ] Otimizar assets e imagens
+- [ ] Implementar cache de API 

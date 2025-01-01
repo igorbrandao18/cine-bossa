@@ -149,13 +149,6 @@ export const FeaturedMovie = memo(function FeaturedMovie({
                 <Text variant="bodyMedium" style={styles.featuredOverview} numberOfLines={2}>
                   {movie.overview || 'Sem descrição disponível'}
                 </Text>
-                <Pressable 
-                  style={styles.playButton}
-                  onPress={handlePress}
-                  android_ripple={{ color: 'rgba(255, 255, 255, 0.1)' }}
-                >
-                  <Text style={styles.playButtonText}>Comprar Ingresso</Text>
-                </Pressable>
               </View>
             </LinearGradient>
           </Animated.View>
@@ -202,20 +195,7 @@ const styles = StyleSheet.create({
   },
   featuredOverview: {
     color: '#fff',
-    marginBottom: rem(1),
     fontSize: rem(1),
     lineHeight: rem(1.5),
-  },
-  playButton: {
-    backgroundColor: '#E50914',
-    paddingHorizontal: rem(2),
-    paddingVertical: rem(0.75),
-    borderRadius: rem(0.25),
-    alignSelf: 'flex-start',
-  },
-  playButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: rem(1),
   },
 }); 
