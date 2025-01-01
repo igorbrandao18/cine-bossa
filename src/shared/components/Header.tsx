@@ -13,9 +13,16 @@ interface HeaderProps {
     text: string;
   }[];
   onBack?: () => void;
+  variant?: 'transparent' | 'filled';
 }
 
-export function Header({ title, subtitle, details, onBack }: HeaderProps) {
+export function Header({ 
+  title, 
+  subtitle, 
+  details,
+  onBack,
+  variant = 'transparent'
+}: HeaderProps) {
   const insets = useSafeAreaInsets();
 
   const handleBack = () => {
@@ -27,7 +34,11 @@ export function Header({ title, subtitle, details, onBack }: HeaderProps) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[
+      styles.container, 
+      styles[variant],
+      { paddingTop: insets.top }
+    ]}>
       <View style={styles.content}>
         <IconButton
           icon="arrow-left"
@@ -77,14 +88,19 @@ export function Header({ title, subtitle, details, onBack }: HeaderProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
     borderBottomColor: '#333',
+  },
+  transparent: {
+    backgroundColor: 'transparent',
+  },
+  filled: {
+    backgroundColor: '#1a1a1a',
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: rem(3.5), // 56px
+    height: rem(3.5),
     paddingHorizontal: rem(0.5),
   },
   backButton: {
