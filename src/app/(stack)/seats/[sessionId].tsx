@@ -24,12 +24,15 @@ export default function SeatsScreen() {
   const router = useRouter();
   const { sessionId } = useLocalSearchParams();
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-  const { currentSession, loading, error, fetchSession } = useSessionStore();
+  const { currentSession, loading, error, fetchSession, selectSeat, clearSelectedSeats } = useSessionStore();
 
   useEffect(() => {
     if (sessionId) {
       fetchSession(String(sessionId));
     }
+    return () => {
+      clearSelectedSeats();
+    };
   }, [sessionId]);
 
   const toggleSeat = (seatId: string) => {
@@ -167,6 +170,8 @@ export default function SeatsScreen() {
               selectedSeats={selectedSeats}
               onContinue={() => {
                 if (selectedSeats.length > 0) {
+                  clearSelectedSeats();
+                  selectedSeats.forEach(seatId => selectSeat(seatId));
                   router.push('/(stack)/payment');
                 }
               }}

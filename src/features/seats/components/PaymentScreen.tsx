@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Text, TextInput, IconButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,9 +16,18 @@ const PAYMENT_METHODS = [
 
 export function PaymentScreen() {
   const router = useRouter();
-  const { currentSession, selectedSeats } = useSessionStore();
+  const { currentSession, selectedSeats, clearSelectedSeats } = useSessionStore();
   const [selectedMethod, setSelectedMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('credit');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!currentSession || selectedSeats.length === 0) {
+      router.back();
+    }
+    return () => {
+      clearSelectedSeats();
+    };
+  }, [currentSession, selectedSeats.length]);
 
   const getTotalPrice = () => {
     return selectedSeats.reduce((total, seatId) => {
@@ -37,10 +46,13 @@ export function PaymentScreen() {
   const handlePayment = async () => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
+    clearSelectedSeats(); // Clear seats after successful payment
     router.push('/(stack)/success');
   };
 
-  if (!currentSession) return null;
+  if (!currentSession || selectedSeats.length === 0) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>

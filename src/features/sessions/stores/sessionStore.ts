@@ -36,6 +36,9 @@ interface SessionState {
   loadSessions: (movieId: number, movieTitle: string) => Promise<void>;
   setSelectedSession: (sessionId: string) => void;
   selectedSeats: string[];
+  selectSeat: (seatId: string) => void;
+  unselectSeat: (seatId: string) => void;
+  clearSelectedSeats: () => void;
   orderSummary: {
     sessionId: string;
     movieTitle: string;
@@ -55,6 +58,22 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   selectedSeats: [],
   orderSummary: null,
   
+  selectSeat: (seatId: string) => {
+    set(state => ({
+      selectedSeats: [...state.selectedSeats, seatId]
+    }));
+  },
+
+  unselectSeat: (seatId: string) => {
+    set(state => ({
+      selectedSeats: state.selectedSeats.filter(id => id !== seatId)
+    }));
+  },
+
+  clearSelectedSeats: () => {
+    set({ selectedSeats: [] });
+  },
+
   setSelectedSession: (sessionId: string) => {
     const session = get().sessions.find(s => s.id === sessionId);
     if (session) {
