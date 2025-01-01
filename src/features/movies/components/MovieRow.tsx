@@ -1,116 +1,63 @@
-import React, { memo, useCallback, useState, useRef } from 'react';
-import { View, ScrollView, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
-import { Text } from 'react-native-paper';
-import { MoviePoster } from './MoviePoster';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
+import { rem } from '../../../core/theme/rem';
 import type { Movie } from '../types/movie';
-import Animated, { FadeIn } from 'react-native-reanimated';
-
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width * 0.28;
-const ITEM_HEIGHT = ITEM_WIDTH * 1.5;
 
 interface MovieRowProps {
   title: string;
   movies: Movie[];
-  onLoadMore?: () => Promise<void>;
-  hasMore?: boolean;
 }
 
-export const MovieRow = memo(function MovieRow({ 
-  title, 
-  movies = [], 
-  onLoadMore, 
-  hasMore = false 
-}: MovieRowProps) {
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const loadingRef = useRef(false);
-
-  const handleScroll = useCallback(async (event: any) => {
-    if (loadingRef.current || !hasMore || !onLoadMore) return;
-
-    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-    const isEndReached = contentOffset.x + layoutMeasurement.width >= contentSize.width - 20;
-
-    if (isEndReached) {
-      loadingRef.current = true;
-      setIsLoadingMore(true);
-      try {
-        await onLoadMore();
-      } finally {
-        setIsLoadingMore(false);
-        loadingRef.current = false;
-      }
-    }
-  }, [hasMore, onLoadMore]);
-
+export function MovieRow({ title, movies }: MovieRowProps) {
   return (
-    <Animated.View 
-      entering={FadeIn.delay(200)}
-      style={styles.container}
-    >
-      <Text variant="titleMedium" style={styles.title}>{title}</Text>
-      
-      {movies.length > 0 ? (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          ref={scrollViewRef}
-          contentContainerStyle={styles.content}
-          removeClippedSubviews
-        >
-          {movies.map(movie => (
-            <MoviePoster 
-              key={movie.id} 
-              movie={movie}
-              width={ITEM_WIDTH}
-              height={ITEM_HEIGHT}
+    <View style={styles.container}>
+      <Text style={styles.title}>{title}</Text>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {movies.map((movie) => (
+          <Pressable
+            key={movie.id}
+            style={styles.movieCard}
+            onPress={() => router.push(`/movie/${movie.id}`)}
+          >
+            <Image
+              source={{ uri: `https://image.tmdb.org/t/p/w300${movie.poster_path}` }}
+              style={styles.poster}
+              contentFit="cover"
             />
-          ))}
-          {isLoadingMore && (
-            <View style={[styles.loadingContainer, { height: ITEM_HEIGHT }]}>
-              <ActivityIndicator color="#E50914" />
-            </View>
-          )}
-        </ScrollView>
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Nenhum filme disponível</Text>
-        </View>
-      )}
-    </Animated.View>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 32,
+    marginBottom: rem(1.5),
   },
   title: {
     color: '#fff',
-    marginLeft: 16,
-    marginBottom: 12,
-    fontSize: 18,
+    fontSize: rem(1.25),
     fontWeight: 'bold',
+    marginBottom: rem(0.75),
+    marginLeft: rem(1),
   },
-  content: {
-    paddingHorizontal: 10,
-    gap: 12,
+  scrollContent: {
+    paddingHorizontal: rem(1),
+    gap: rem(0.75),
   },
-  loadingContainer: {
-    width: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
+  movieCard: {
+    borderRadius: rem(0.5),
+    overflow: 'hidden',
+    elevation: 4,
   },
-  emptyContainer: {
-    height: ITEM_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
+  poster: {
+    width: rem(8), // 128px
+    height: rem(12), // 192px
   },
-  emptyText: {
-    color: '#666',
-    fontSize: 16,
-  }
 }); 

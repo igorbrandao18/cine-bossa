@@ -40,7 +40,6 @@
 - [x] Mover arquivos para nova estrutura
   - [ ] Componentes específicos para `features/sessions/components/`
     - [ ] `SessionCard.tsx`
-    - [ ] `SessionList.tsx`
   - [x] Serviços para `features/sessions/services/`
     - [x] `sessionService.ts`
   - [x] Store para `features/sessions/stores/`
@@ -101,15 +100,18 @@
 ## 7️⃣ Conversão para REM
 - [ ] Converter medidas fixas para REM
   - [ ] Movies
-    - [ ] `FeaturedMovie.tsx`
-    - [ ] `MovieRow.tsx`
+    - [x] `ErrorState.tsx`
+    - [x] `LoadingState.tsx`
+    - [x] `FeaturedMovie.tsx`
+    - [x] `MovieRow.tsx`
   - [ ] Sessions
-    - [ ] `SessionCard.tsx`
+    - [x] `SessionCard.tsx`
   - [ ] Seats
-    - [ ] `SeatMap.tsx`
+    - [x] `SeatsGrid.tsx`
+    - [x] `SeatMap.tsx`
   - [ ] Shared Components
-    - [ ] `Button.tsx`
-    - [ ] `Card.tsx`
+    - [x] `Button.tsx`
+    - [x] `Card.tsx`
 
 ## 8️⃣ Testes e Validação
 - [x] Verificar funcionamento após reorganização
@@ -165,8 +167,44 @@
    - ✅ Arquivos movidos para novas localizações
    - ✅ Imports atualizados em todas as features
 
+## 🔄 Componentização de Telas
+- [ ] HomeScreen (app/index.tsx)
+  - [x] Criar `features/movies/components/ErrorState.tsx`
+  - [x] Criar `features/movies/components/LoadingState.tsx`
+  - [x] Criar `features/movies/components/HomeHeader.tsx`
+  - [x] Criar `features/movies/components/MovieList.tsx`
+
+- [ ] MovieScreen (app/(stack)/movie/[id].tsx)
+  - [x] Criar `features/sessions/components/SessionDetails.tsx`
+  - [x] Criar `features/movies/components/MovieHeader.tsx`
+  - [x] Criar `features/movies/components/MovieInfo.tsx`
+
+- [ ] SeatsScreen (app/seats/[sessionId].tsx)
+  - [x] Criar `features/seats/components/SeatsHeader.tsx`
+  - [x] Criar `features/seats/components/TabSelector.tsx`
+  - [x] Criar `features/seats/components/SeatLegend.tsx`
+  - [x] Criar `features/seats/components/ColumnNumbers.tsx`
+  - [x] Criar `features/seats/components/SeatsGrid.tsx`
+  - [x] Criar `features/seats/components/ConfirmationModal.tsx`
+
+## ⏭️ Próximos Passos para Componentização
+1. Extrair componentes mantendo a funcionalidade existente
+2. Mover estilos para arquivos separados
+3. Implementar props adequadas para cada componente
+4. Manter estado global onde necessário
+5. Documentar componentes criados
+
 ## ⏭️ Próximos Passos
 1. Implementar componentes faltantes da feature Sessions
 2. Implementar serviços e store da feature Seats
 3. Converter medidas para REM
 4. Testar navegação e funcionalidades 
+
+## 🔄 Padronização de Headers
+- [x] Criar componente base Header em `shared/components/Header.tsx`
+- [x] Atualizar MovieHeader para usar o componente base
+- [x] Atualizar SeatsHeader para usar o componente base
+- [x] Atualizar HomeHeader para usar o componente base
+- [x] Criar utilitário de conversão REM em `core/theme/rem.ts`
+- [ ] Converter todas as medidas para REM
+- [ ] Adicionar temas e cores consistentes 

@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, ActivityIndicator, RefreshControl, StatusBar } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { HomeHeader } from '@/features/movies/components/HomeHeader';
+import { MovieList } from '@/features/movies/components/MovieList';
+import { ErrorState } from '@/features/movies/components/ErrorState';
+import { LoadingState } from '@/features/movies/components/LoadingState';
 import { FeaturedMovie } from '../features/movies/components/FeaturedMovie';
 import { useMovieStore } from '../features/movies/stores/movieStore';
 import { FeaturedMovieSkeleton } from '../features/movies/components/FeaturedMovieSkeleton';
@@ -98,82 +101,26 @@ export default function HomeScreen() {
   }, [sections]);
 
   if (loading) {
-    return (
-      <View style={styles.container}>
-        <StatusBar translucent backgroundColor="transparent" />
-        <ScrollView>
-          <FeaturedMovieSkeleton />
-          {Array.from({ length: 4 }).map((_, index) => (
-            <View key={index} style={styles.row}>
-              <Skeleton width={120} height={24} />
-              <View style={styles.rowContent}>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton 
-                    key={i}
-                    width={ITEM_WIDTH}
-                    height={ITEM_HEIGHT}
-                    borderRadius={8}
-                  />
-                ))}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
-    return (
-      <View style={styles.loadingContainer}>
-        <StatusBar translucent backgroundColor="transparent" />
-        <Text style={styles.errorText}>{error}</Text>
-        <Button 
-          mode="contained" 
-          onPress={handleRefresh}
-          textColor="#fff"
-          buttonColor="#E50914"
-        >
-          Tentar Novamente
-        </Button>
-      </View>
-    );
+    return <ErrorState error={error} onRetry={handleRefresh} />;
   }
 
   if (!sections || !sections.nowPlaying.movies.length) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E50914" />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" />
-      <ScrollView 
-        style={styles.scrollContent}
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#E50914"
-            colors={['#E50914']}
-            progressBackgroundColor="#1a1a1a"
-          />
-        }
-      >
-        {featuredMovie}
-
-        {Object.entries(memoizedSections).map(([key, section]) => (
-          <MovieRow 
-            key={key}
-            title={section.title}
-            movies={section.data}
-          />
-        ))}
-      </ScrollView>
+      <HomeHeader />
+      <MovieList 
+        sections={memoizedSections}
+        featuredMovie={featuredMovie}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+      />
     </View>
   );
 }
@@ -183,32 +130,4 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  scrollContent: {
-    paddingTop: 0,
-  },
-  content: {
-    paddingBottom: 20,
-    paddingTop: 0,
-  },
-  row: {
-    marginBottom: 32,
-  },
-  rowContent: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 12,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
-  },
-  errorText: {
-    color: '#fff',
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: 'center',
-    paddingHorizontal: 20
-  }
 }); 

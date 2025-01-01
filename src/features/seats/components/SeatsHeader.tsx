@@ -1,30 +1,15 @@
-import React from 'react';
-import { View } from 'react-native';
-import { Text, IconButton } from 'react-native-paper';
-import { Session } from '@/features/sessions/types/session';
-import { styles } from './styles/seats-header.styles';
+import { Header } from '@/shared/components/Header';
+import type { Session } from '@/features/sessions/types/session';
 
 interface SeatsHeaderProps {
-  currentSession: Session;
-  onBack: () => void;
+  session: Session;
 }
 
-export function SeatsHeader({ currentSession, onBack }: SeatsHeaderProps) {
+export function SeatsHeader({ session }: SeatsHeaderProps) {
   return (
-    <View style={styles.header}>
-      <IconButton
-        icon="chevron-left"
-        iconColor="#fff"
-        size={24}
-        onPress={onBack}
-        style={styles.backButton}
-      />
-      <View style={styles.headerInfo}>
-        <Text style={styles.movieTitle}>{currentSession.movieTitle}</Text>
-        <Text style={styles.sessionInfo}>
-          {currentSession.room} - {currentSession.technology} • {currentSession.time}
-        </Text>
-      </View>
-    </View>
+    <Header
+      title={session.movieTitle}
+      subtitle={`${session.room} • ${session.technology} • ${session.time}`}
+    />
   );
 } 
