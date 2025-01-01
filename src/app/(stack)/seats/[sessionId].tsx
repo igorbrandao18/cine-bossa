@@ -95,7 +95,11 @@ export default function SeatsScreen() {
         <SeatTypes />
 
         {/* Scrollable Content */}
-        <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContainer}>
+        <ScrollView 
+          style={styles.scrollContent} 
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Screen */}
           <LinearGradient
             colors={['#333', '#1A1A1A']}
@@ -158,11 +162,13 @@ export default function SeatsScreen() {
               ))
             )}
           </View>
+
+          {/* Promotion Banner */}
+          <PromotionBanner />
         </ScrollView>
 
         {/* Bottom Section */}
         <View style={styles.bottomSection}>
-          <PromotionBanner />
           <SelectionSummary 
             selectedSeats={selectedSeats}
             totalPrice={getTotalPrice()}
@@ -232,7 +238,7 @@ const styles = StyleSheet.create({
   seatsContainer: {
     alignItems: 'center',
     gap: 8,
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   seatRow: {
     flexDirection: 'row',
@@ -271,8 +277,7 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     padding: 16,
-    gap: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -307,5 +312,6 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     padding: 16,
+    paddingBottom: 32,
   },
 });

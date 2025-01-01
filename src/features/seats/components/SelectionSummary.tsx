@@ -24,13 +24,13 @@ export function SelectionSummary({ selectedSeats, totalPrice, onContinue }: Sele
       <Pressable
         style={[
           styles.continueButton,
-          selectedSeats.length === 0 && { opacity: 0.5 }
+          selectedSeats.length === 0 && styles.disabledButton
         ]}
         onPress={onContinue}
         disabled={selectedSeats.length === 0}
       >
-        <Text style={styles.continueText}>Continuar</Text>
-        <MaterialCommunityIcons name="chevron-right" size={20} color="#fff" />
+        <Text style={styles.continueText}>Avançar</Text>
+        <MaterialCommunityIcons name="chevron-right" size={24} color="#fff" />
       </Pressable>
     </View>
   );
@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
   selectedCount: {
     color: '#fff',
@@ -59,14 +60,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#E50914',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     borderRadius: 8,
     gap: 8,
   },
+  disabledButton: {
+    opacity: 0.5,
+    backgroundColor: '#666',
+  },
   continueText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
   },
 }); 
