@@ -14,6 +14,7 @@ interface HeaderProps {
   }[];
   onBack?: () => void;
   variant?: 'transparent' | 'filled';
+  alignment?: 'left' | 'center';
 }
 
 export function Header({ 
@@ -21,7 +22,8 @@ export function Header({
   subtitle, 
   details,
   onBack,
-  variant = 'transparent'
+  variant = 'transparent',
+  alignment = 'left'
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
 
@@ -48,8 +50,11 @@ export function Header({
           style={styles.backButton}
         />
         
-        <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={1}>
+        <View style={[styles.info, alignment === 'center' && styles.centerAlign]}>
+          <Text 
+            style={[styles.title, alignment === 'center' && styles.centerText]} 
+            numberOfLines={1}
+          >
             {title}
           </Text>
           
@@ -141,5 +146,12 @@ const styles = StyleSheet.create({
   separator: {
     color: '#666',
     marginHorizontal: rem(0.25),
+  },
+  centerAlign: {
+    alignItems: 'center',
+    marginLeft: -rem(2.5),
+  },
+  centerText: {
+    textAlign: 'center',
   },
 }); 

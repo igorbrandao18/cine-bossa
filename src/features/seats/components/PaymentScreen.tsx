@@ -53,8 +53,8 @@ export function PaymentScreen() {
     <View style={styles.container}>
       <Header
         title="Pagamento"
-        subtitle={`${currentSession.room} • ${currentSession.time}`}
         variant="transparent"
+        alignment="center"
       />
 
       <SafeAreaView style={styles.content} edges={['bottom']}>

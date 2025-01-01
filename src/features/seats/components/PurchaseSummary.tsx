@@ -15,7 +15,6 @@ interface PurchaseSummaryProps {
 export function PurchaseSummary({ currentSession, selectedSeats, getTotalPrice }: PurchaseSummaryProps) {
   return (
     <View style={styles.summary}>
-      <Text style={styles.sectionTitle}>Resumo da Compra</Text>
       <View style={styles.summaryContent}>
         <View style={styles.movieInfo}>
           <Text style={styles.movieTitle}>{currentSession.movieTitle}</Text>
