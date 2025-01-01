@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
-import { Text, IconButton } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { Text } from 'react-native-paper';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSessionStore } from '@/features/sessions/stores/sessionStore';
 import { colors } from '@/core/theme/colors';
 import { PurchaseSummary } from './PurchaseSummary';
 import { PaymentMethods } from './PaymentMethods';
+import { Header } from '../../../shared/components/Header';
 import { styles } from './styles/payment-screen.styles';
 
 const PAYMENT_METHODS = [
@@ -17,7 +18,6 @@ const PAYMENT_METHODS = [
 ] as const;
 
 export function PaymentScreen() {
-  const router = useRouter();
   const { currentSession, selectedSeats, clearSelectedSeats } = useSessionStore();
   const [selectedMethod, setSelectedMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('credit');
   const [loading, setLoading] = useState(false);
@@ -50,27 +50,15 @@ export function PaymentScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <IconButton
-            icon="chevron-left"
-            iconColor={colors.text}
-            size={24}
-            onPress={() => router.back()}
-            style={styles.backButton}
-          />
-          <View style={styles.headerInfo}>
-            <Text style={styles.title}>Pagamento</Text>
-            <Text style={styles.subtitle}>
-              {currentSession.room} • {currentSession.time}
-            </Text>
-          </View>
-        </View>
+    <View style={styles.container}>
+      <Header
+        title="Pagamento"
+        subtitle={`${currentSession.room} • ${currentSession.time}`}
+        variant="filled"
+      />
 
+      <SafeAreaView style={styles.content} edges={['bottom']}>
         <ScrollView 
-          style={styles.content}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
@@ -86,7 +74,6 @@ export function PaymentScreen() {
           />
         </ScrollView>
 
-        {/* Footer */}
         <LinearGradient
           colors={colors.gradients.surface}
           style={styles.footerGradient}
@@ -112,7 +99,7 @@ export function PaymentScreen() {
             </Pressable>
           </View>
         </LinearGradient>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 } 

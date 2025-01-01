@@ -1,82 +1,53 @@
 import { StyleSheet } from 'react-native';
-import { colors } from '@/core/theme/colors';
+import { rem } from '../../../../core/theme/rem';
 
 export const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  backButton: {
-    marginRight: 8,
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 4,
+    backgroundColor: '#000',
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    padding: 16,
+    padding: rem(1),
+    gap: rem(1.5),
   },
   footerGradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingTop: 32,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    padding: rem(1),
+    paddingBottom: 0,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingBottom: rem(1),
   },
   priceInfo: {
     flex: 1,
   },
   totalLabel: {
-    color: colors.textSecondary,
-    fontSize: 14,
+    color: '#999',
+    fontSize: rem(0.875),
   },
   totalPrice: {
-    color: colors.text,
-    fontSize: 24,
+    color: '#fff',
+    fontSize: rem(1.5),
     fontWeight: 'bold',
   },
   payButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    gap: 8,
-  },
-  payButtonText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+    backgroundColor: '#E50914',
+    paddingVertical: rem(0.75),
+    paddingHorizontal: rem(1.5),
+    borderRadius: rem(0.5),
+    marginLeft: rem(1),
   },
   payButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.5,
+  },
+  payButtonText: {
+    color: '#fff',
+    fontSize: rem(1),
+    fontWeight: 'bold',
   },
 }); 
