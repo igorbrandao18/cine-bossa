@@ -165,7 +165,6 @@ export default function SeatsScreen() {
             <PromotionBanner />
             <SelectionSummary 
               selectedSeats={selectedSeats}
-              totalPrice={getTotalPrice()}
               onContinue={() => {
                 if (selectedSeats.length > 0) {
                   router.push('/(stack)/payment');
