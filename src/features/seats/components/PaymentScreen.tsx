@@ -85,20 +85,47 @@ export function PaymentScreen() {
             <View style={styles.summaryContent}>
               <View style={styles.movieInfo}>
                 <Text style={styles.movieTitle}>{currentSession.movieTitle}</Text>
-                <Text style={styles.sessionDetails}>
-                  {currentSession.room} • {currentSession.technology} • {currentSession.time}
-                </Text>
+                <View style={styles.sessionDetails}>
+                  <View style={styles.detailItem}>
+                    <MaterialCommunityIcons name="calendar" size={16} color={colors.textSecondary} />
+                    <Text style={styles.sessionDetailsText}>{currentSession.date}</Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <MaterialCommunityIcons name="clock-outline" size={16} color={colors.textSecondary} />
+                    <Text style={styles.sessionDetailsText}>{currentSession.time}</Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <MaterialCommunityIcons name="door" size={16} color={colors.textSecondary} />
+                    <Text style={styles.sessionDetailsText}>{currentSession.room}</Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <MaterialCommunityIcons name="video" size={16} color={colors.textSecondary} />
+                    <Text style={styles.sessionDetailsText}>{currentSession.technology}</Text>
+                  </View>
+                </View>
               </View>
               
               <View style={styles.seatsInfo}>
-                <Text style={styles.seatsLabel}>Assentos selecionados:</Text>
+                <Text style={styles.seatsLabel}>Assentos selecionados</Text>
                 <View style={styles.seatsGrid}>
                   {selectedSeats.map(seatId => {
                     const seat = currentSession.seats.find(s => s.id === seatId);
+                    if (!seat) return null;
+                    
                     return (
-                      <View key={seatId} style={styles.seatBadge}>
-                        <Text style={styles.seatText}>
-                          {seat?.row}{seat?.number}
+                      <View key={seatId} style={styles.seatCard}>
+                        <View style={styles.seatBadge}>
+                          <Text style={styles.seatText}>
+                            {seat.row}{seat.number}
+                          </Text>
+                        </View>
+                        <Text style={styles.seatType}>
+                          {seat.type === 'couple' ? 'Namorados' :
+                           seat.type === 'premium' ? 'Premium' :
+                           seat.type === 'wheelchair' ? 'Acessível' : 'Padrão'}
+                        </Text>
+                        <Text style={styles.seatPrice}>
+                          R$ {seat.price.toFixed(2)}
                         </Text>
                       </View>
                     );
@@ -112,8 +139,15 @@ export function PaymentScreen() {
                   <Text style={styles.priceValue}>R$ {getTotalPrice().toFixed(2)}</Text>
                 </View>
                 <View style={styles.priceRow}>
-                  <Text style={styles.priceLabel}>Taxa de serviço</Text>
-                  <Text style={styles.priceValue}>R$ 0,00</Text>
+                  <Text style={styles.priceLabel}>Taxa de conveniência</Text>
+                  <Text style={styles.priceValue}>R$ {(getTotalPrice() * 0.1).toFixed(2)}</Text>
+                </View>
+                <View style={styles.divider} />
+                <View style={[styles.priceRow, styles.totalRow]}>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <Text style={styles.totalValue}>
+                    R$ {(getTotalPrice() * 1.1).toFixed(2)}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -272,29 +306,108 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   summaryContent: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
+    gap: 24,
+  },
+  movieInfo: {
+    gap: 12,
   },
   movieTitle: {
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
   },
-  seatsInfo: {
+  sessionDetails: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 16,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sessionDetailsText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  seatsInfo: {
+    gap: 12,
+  },
+  seatsLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  seatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  seatCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
     gap: 8,
+    minWidth: 100,
   },
   seatBadge: {
-    backgroundColor: '#333',
+    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
   seatText: {
-    color: '#fff',
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  seatType: {
+    color: colors.textSecondary,
+    fontSize: 12,
+  },
+  seatPrice: {
+    color: colors.text,
     fontSize: 14,
+    fontWeight: '500',
+  },
+  priceBreakdown: {
+    gap: 12,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  priceLabel: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  priceValue: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 4,
+  },
+  totalRow: {
+    marginTop: 4,
+  },
+  totalLabel: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  totalValue: {
+    color: colors.primary,
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   paymentMethods: {
     marginBottom: 24,
@@ -395,45 +508,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  movieInfo: {
-    marginBottom: 16,
-  },
-  sessionDetails: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  seatsLabel: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  seatsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  priceBreakdown: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    gap: 8,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  priceLabel: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  priceValue: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '500',
   },
   payButtonDisabled: {
     opacity: 0.7,
