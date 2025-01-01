@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSessionStore } from '@/features/sessions/stores/sessionStore';
 import { PromotionBanner } from '@/features/seats/components/PromotionBanner';
 import { SelectionSummary } from '@/features/seats/components/SelectionSummary';
+import { colors } from '@/core/theme/colors';
 
 const { width, height } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 32;
@@ -188,11 +189,11 @@ export default function SeatsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: colors.border,
     height: 56,
   },
   backButton: {
@@ -213,11 +214,11 @@ const styles = StyleSheet.create({
   movieTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colors.text,
   },
   sessionInfo: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   mainContent: {
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   screenText: {
-    color: '#666',
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   rowLetter: {
-    color: '#666',
+    color: colors.textMuted,
     fontSize: 12,
     width: ROW_LETTER_WIDTH,
     textAlign: 'center',
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   seatNumber: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 10,
     fontWeight: '500',
   },
@@ -297,18 +298,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#E50914',
+    color: colors.error,
     fontSize: 16,
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E50914',
+    backgroundColor: colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   retryText: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -316,7 +317,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   occupiedSeatNumber: {
-    color: '#333',
+    color: colors.textMuted,
   },
   scrollContent: {
     flex: 1,
@@ -344,13 +345,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   bottomInfoContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: colors.overlay.darker,
     borderRadius: 12,
     padding: 16,
     gap: 12,
     marginTop: 24,
     marginBottom: 32,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: colors.border,
   },
 });

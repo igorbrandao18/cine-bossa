@@ -2,6 +2,8 @@ import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'react-native-linear-gradient';
+import { colors } from '@/core/theme/colors';
 
 interface SelectionSummaryProps {
   selectedSeats: string[];
@@ -22,15 +24,23 @@ export function SelectionSummary({ selectedSeats, totalPrice, onContinue }: Sele
       </View>
 
       <Pressable
-        style={[
+        style={({ pressed }) => [
           styles.continueButton,
-          selectedSeats.length === 0 && styles.disabledButton
+          selectedSeats.length === 0 && styles.disabledButton,
+          pressed && styles.buttonPressed
         ]}
         onPress={onContinue}
         disabled={selectedSeats.length === 0}
       >
-        <Text style={styles.continueText}>AVANÇAR</Text>
-        <MaterialCommunityIcons name="chevron-right" size={24} color="#fff" />
+        <LinearGradient
+          colors={colors.gradients.button}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.buttonGradient}
+        >
+          <Text style={styles.continueText}>FINALIZAR SELEÇÃO</Text>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={colors.text} />
+        </LinearGradient>
       </Pressable>
     </View>
   );
@@ -45,41 +55,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay.dark,
     padding: 12,
     borderRadius: 8,
   },
   selectedCount: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 14,
   },
   totalPrice: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 24,
     fontWeight: 'bold',
   },
   continueButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#E50914',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
     borderRadius: 8,
-    gap: 8,
+    overflow: 'hidden',
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: colors.background,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
+  buttonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
   disabledButton: {
     opacity: 0.5,
-    backgroundColor: '#666',
   },
   continueText: {
-    color: '#fff',
-    fontSize: 18,
+    color: colors.text,
+    fontSize: 16,
     fontWeight: '700',
     letterSpacing: 1,
   },
