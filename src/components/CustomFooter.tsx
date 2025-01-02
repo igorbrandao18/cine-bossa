@@ -6,24 +6,28 @@ import { useRouter, usePathname } from 'expo-router';
 
 const TABS = [
   {
-    name: 'index',
+    name: 'home',
     label: 'Home',
     icon: 'movie-open',
+    path: '/',
   },
   {
     name: 'explore',
     label: 'Explorar',
     icon: 'compass',
+    path: '/explore',
   },
   {
     name: 'tickets',
     label: 'Ingressos',
     icon: 'ticket',
+    path: '/tickets',
   },
   {
     name: 'profile',
     label: 'Perfil',
     icon: 'account',
+    path: '/profile',
   },
 ] as const;
 
@@ -35,8 +39,8 @@ export function CustomFooter() {
     <View style={styles.footer}>
       <View style={styles.content}>
         {TABS.map((tab) => {
-          const isActive = pathname === `/${tab.name}` || 
-                          (pathname === '/' && tab.name === 'index');
+          const isActive = pathname === tab.path || 
+                          (pathname === '/' && tab.name === 'home');
           
           return (
             <Pressable
@@ -45,7 +49,7 @@ export function CustomFooter() {
                 styles.tab,
                 pressed && styles.tabPressed
               ]}
-              onPress={() => router.push(`/${tab.name}`)}
+              onPress={() => router.push(tab.path)}
             >
               <MaterialCommunityIcons
                 name={tab.icon as any}

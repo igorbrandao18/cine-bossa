@@ -3,13 +3,44 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { rem } from '../../../core/theme/rem';
 import type { Movie } from '../types/movie';
+import { useMovieStore } from '../stores/movieStore';
+import { ActivityIndicator } from 'react-native-paper';
 
 interface MovieRowProps {
   title: string;
-  movies: Movie[];
+  type: 'nowPlaying' | 'popular' | 'upcoming' | 'topRated';
 }
 
-export function MovieRow({ title, movies }: MovieRowProps) {
+export function MovieRow({ title, type }: MovieRowProps) {
+  const { sections } = useMovieStore();
+  const section = sections[type];
+
+  if (section.loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color="#E50914" />
+        </View>
+      </View>
+    );
+  }
+
+  if (section.error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Erro ao carregar filmes</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!section.movies?.length) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
@@ -18,7 +49,7 @@ export function MovieRow({ title, movies }: MovieRowProps) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {movies.map((movie) => (
+        {section.movies.map((movie) => (
           <Pressable
             key={movie.id}
             style={styles.movieCard}
@@ -59,5 +90,19 @@ const styles = StyleSheet.create({
   poster: {
     width: rem(8), // 128px
     height: rem(12), // 192px
+  },
+  loadingContainer: {
+    height: rem(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    height: rem(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#666',
+    fontSize: rem(1),
   },
 }); 
