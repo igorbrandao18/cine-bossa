@@ -1,13 +1,17 @@
 import React, { useCallback, memo } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, Animated } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { usePaymentStore } from '../stores/paymentStore';
 import { PaymentMethod } from './PaymentMethod';
-import { SavedCard } from './SavedCard';
-import { RadioButton } from './RadioButton';
 import { rem } from '../../../core/theme/rem';
+
+const CARD_GRADIENTS = {
+  visa: ['#1a1f71', '#0055b8'],
+  mastercard: ['#eb001b', '#f79e1b'],
+} as const;
 
 const SAVED_CARDS = [
   {
@@ -31,31 +35,67 @@ const PAYMENT_METHODS = [
     id: 'credit',
     label: 'Cartão de Crédito',
     icon: 'credit-card',
+    description: 'Parcele em até 12x sem juros',
   },
   { 
     id: 'pix',
     label: 'PIX',
     icon: 'qrcode',
+    description: 'Ganhe 5% de desconto à vista',
   },
   { 
     id: 'debit',
     label: 'Cartão de Débito',
     icon: 'credit-card-outline',
+    description: 'Débito instantâneo sem taxas',
   }
 ] as const;
 
-interface PaymentMethodsProps {
-  selectedMethod: string;
-  onSelectMethod: (method: string) => void;
-}
+const SavedCardItem = memo(({ card, selected, onPress }: any) => (
+  <Pressable onPress={onPress}>
+    <LinearGradient
+      colors={CARD_GRADIENTS[card.brand as keyof typeof CARD_GRADIENTS] || ['#333', '#666']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.cardContainer, selected && styles.selectedCard]}
+    >
+      <View style={styles.cardHeader}>
+        <MaterialCommunityIcons name="chip" size={rem(2)} color="#FFD700" />
+        {selected && (
+          <MaterialCommunityIcons name="check-circle" size={rem(1.5)} color="#fff" />
+        )}
+      </View>
+      
+      <Text style={styles.cardNumber}>•••• •••• •••• {card.last4}</Text>
+      
+      <View style={styles.cardFooter}>
+        <View>
+          <Text style={styles.cardLabel}>TITULAR</Text>
+          <Text style={styles.cardValue}>{card.name}</Text>
+        </View>
+        <View>
+          <Text style={styles.cardLabel}>VALIDADE</Text>
+          <Text style={styles.cardValue}>{card.expiryDate}</Text>
+        </View>
+        <MaterialCommunityIcons
+          name={`${card.brand}-card`}
+          size={rem(2.5)}
+          color="#fff"
+          style={styles.brandIcon}
+        />
+      </View>
+    </LinearGradient>
+  </Pressable>
+));
 
 function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMethodsProps) {
   const selectedCardId = usePaymentStore(state => state.selectedCardId);
+  const setSelectedCard = usePaymentStore(state => state.setSelectedCard);
   
   const handleMethodPress = useCallback((methodId: string) => {
     onSelectMethod(methodId);
     
-    if (methodId === 'credit' || methodId === 'debit') {
+    if ((methodId === 'credit' || methodId === 'debit') && !selectedCardId) {
       router.push({
         pathname: '/payment/select-card',
         params: {
@@ -66,7 +106,11 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
     }
   }, [onSelectMethod, selectedCardId]);
 
-  const selectedCard = SAVED_CARDS.find(card => card.id === selectedCardId);
+  const handleCardPress = useCallback((cardId: string) => {
+    setSelectedCard(cardId);
+  }, [setSelectedCard]);
+
+  const isCardPayment = selectedMethod === 'credit' || selectedMethod === 'debit';
 
   return (
     <View style={styles.container}>
@@ -83,30 +127,26 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
         ))}
       </View>
 
-      {selectedCard && (selectedMethod === 'credit' || selectedMethod === 'debit') && (
-        <View style={styles.selectedCardContainer}>
-          <Text style={styles.selectedCardTitle}>Cartão Selecionado</Text>
-          <Pressable 
-            style={styles.selectedCardButton}
-            onPress={() => handleMethodPress(selectedMethod)}
-          >
-            <View style={styles.cardInfo}>
-              <MaterialCommunityIcons
-                name={`${selectedCard.brand}-card` as any}
-                size={rem(1.5)}
-                color="#999"
+      {isCardPayment && (
+        <View style={styles.cardsSection}>
+          <Text style={styles.sectionTitle}>Meus Cartões</Text>
+          <View style={styles.cardsList}>
+            {SAVED_CARDS.map((card) => (
+              <SavedCardItem
+                key={card.id}
+                card={card}
+                selected={card.id === selectedCardId}
+                onPress={() => handleCardPress(card.id)}
               />
-              <View style={styles.cardTextInfo}>
-                <Text style={styles.cardNumber}>•••• {selectedCard.last4}</Text>
-                <Text style={styles.cardExpiry}>Expira em {selectedCard.expiryDate}</Text>
-              </View>
-            </View>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={rem(1.5)}
-              color="#666"
-            />
-          </Pressable>
+            ))}
+            <Pressable 
+              style={styles.addCardButton}
+              onPress={() => router.push('/payment/add-card')}
+            >
+              <MaterialCommunityIcons name="plus-circle-outline" size={rem(2)} color="#E50914" />
+              <Text style={styles.addCardText}>Adicionar novo cartão</Text>
+            </Pressable>
+          </View>
         </View>
       )}
     </View>
@@ -127,39 +167,69 @@ const styles = StyleSheet.create({
   methodsList: {
     gap: rem(1),
   },
-  selectedCardContainer: {
-    marginTop: rem(1.5),
-    gap: rem(0.75),
+  cardsSection: {
+    marginTop: rem(2),
   },
-  selectedCardTitle: {
-    fontSize: rem(0.875),
-    color: '#999',
-  },
-  selectedCardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: rem(1),
-    backgroundColor: '#1a1a1a',
-    borderRadius: rem(0.5),
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  cardInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: rem(1),
-  },
-  cardTextInfo: {
-    gap: rem(0.25),
-  },
-  cardNumber: {
+  sectionTitle: {
     fontSize: rem(1),
     color: '#fff',
-    fontWeight: '500',
+    marginBottom: rem(1),
   },
-  cardExpiry: {
+  cardsList: {
+    gap: rem(1),
+  },
+  cardContainer: {
+    padding: rem(1.5),
+    borderRadius: rem(1),
+    height: rem(11),
+    justifyContent: 'space-between',
+  },
+  selectedCard: {
+    transform: [{ scale: 0.98 }],
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cardNumber: {
+    fontSize: rem(1.25),
+    color: '#fff',
+    letterSpacing: rem(0.2),
+    fontFamily: 'monospace',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  cardLabel: {
+    fontSize: rem(0.625),
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: rem(0.25),
+  },
+  cardValue: {
     fontSize: rem(0.875),
-    color: '#999',
+    color: '#fff',
+    textTransform: 'uppercase',
+  },
+  brandIcon: {
+    opacity: 0.9,
+  },
+  addCardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: rem(0.75),
+    padding: rem(1.5),
+    borderRadius: rem(1),
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#E50914',
+  },
+  addCardText: {
+    color: '#E50914',
+    fontSize: rem(1),
+    fontWeight: '500',
   },
 }); 
