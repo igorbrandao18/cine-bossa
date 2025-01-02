@@ -1,14 +1,22 @@
 import React, { memo } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, Image } from 'react-native';
 import { Text } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { rem } from '../../../core/theme/rem';
+
+const BRAND_LOGOS = {
+  visa: 'https://logodownload.org/wp-content/uploads/2016/10/visa-logo-1.png',
+  mastercard: 'https://logodownload.org/wp-content/uploads/2014/07/mastercard-logo-7.png',
+  amex: 'https://logodownload.org/wp-content/uploads/2014/07/american-express-logo-4.png',
+  elo: 'https://logodownload.org/wp-content/uploads/2017/04/elo-logo-0.png',
+  hipercard: 'https://logodownload.org/wp-content/uploads/2017/04/hipercard-logo-0.png',
+  diners: 'https://logodownload.org/wp-content/uploads/2014/07/diners-club-logo-0.png'
+} as const;
 
 interface SavedCardProps {
   card: {
     id: string;
     last4: string;
-    brand: string;
+    brand: keyof typeof BRAND_LOGOS;
     name: string;
     expiryDate: string;
   };
@@ -16,53 +24,67 @@ interface SavedCardProps {
   onPress: () => void;
 }
 
-const SavedCardComponent = ({ card, selected, onPress }: SavedCardProps) => {
+export const SavedCard = memo(({ card, selected, onPress }: SavedCardProps) => {
   return (
     <Pressable
-      style={[styles.savedCard, selected && styles.selectedCard]}
+      style={[styles.container, selected && styles.selectedContainer]}
       onPress={onPress}
     >
-      <View style={styles.cardInfo}>
-        <MaterialCommunityIcons
-          name={`${card.brand}-card` as any}
-          size={rem(1.5)}
-          color="#999"
-        />
-        <View style={styles.cardTextInfo}>
+      <View style={styles.leftContent}>
+        <View style={styles.brandContainer}>
+          <Image
+            source={{ uri: BRAND_LOGOS[card.brand] }}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
+        </View>
+        <View style={styles.cardInfo}>
           <Text style={styles.cardNumber}>•••• {card.last4}</Text>
-          <Text style={styles.cardExpiry}>Expira em {card.expiryDate}</Text>
+          <Text style={styles.expiryDate}>Expira em {card.expiryDate}</Text>
         </View>
       </View>
+
       <View style={[styles.radioOuter, selected && styles.selectedRadioOuter]}>
         <View style={[styles.radioInner, selected && styles.selectedRadioInner]} />
       </View>
     </Pressable>
   );
-};
-
-export const SavedCard = memo(SavedCardComponent);
+});
 
 const styles = StyleSheet.create({
-  savedCard: {
+  container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: rem(1),
     backgroundColor: '#1a1a1a',
-    borderRadius: rem(0.5),
+    borderRadius: rem(0.75),
     borderWidth: 1,
     borderColor: '#333',
+    marginBottom: rem(0.75),
   },
-  selectedCard: {
-    backgroundColor: 'rgba(229, 9, 20, 0.1)',
+  selectedContainer: {
+    backgroundColor: '#000',
     borderColor: '#E50914',
+    transform: [{ scale: 0.98 }],
   },
-  cardInfo: {
+  leftContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: rem(1),
   },
-  cardTextInfo: {
+  brandContainer: {
+    width: rem(3.5),
+    height: rem(2),
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandLogo: {
+    width: '100%',
+    height: '100%',
+  },
+  cardInfo: {
     gap: rem(0.25),
   },
   cardNumber: {
@@ -70,8 +92,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '500',
   },
-  cardExpiry: {
-    fontSize: rem(0.875),
+  expiryDate: {
+    fontSize: rem(0.75),
     color: '#999',
   },
   radioOuter: {
