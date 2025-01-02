@@ -10,6 +10,10 @@ interface PaymentMethodProps {
     label: string;
     icon: string;
     description?: string;
+    selectedCard?: {
+      last4: string;
+      brand: string;
+    };
   };
   selected: boolean;
   onPress: () => void;
@@ -32,7 +36,11 @@ export const PaymentMethod = memo(({ method, selected, onPress }: PaymentMethodP
         <Text style={[styles.methodLabel, selected && styles.selectedMethodLabel]}>
           {method.label}
         </Text>
-        {method.description && (
+        {method.selectedCard ? (
+          <Text style={[styles.methodDescription, selected && styles.selectedMethodDescription]}>
+            •••• {method.selectedCard.last4} ({method.selectedCard.brand})
+          </Text>
+        ) : method.description && (
           <Text style={[styles.methodDescription, selected && styles.selectedMethodDescription]}>
             {method.description}
           </Text>
@@ -113,5 +121,19 @@ const styles = StyleSheet.create({
   },
   selectedIndicator: {
     transform: [{ scale: 1.1 }],
+  },
+  cardInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.75),
+  },
+  changeCardButton: {
+    paddingVertical: rem(0.25),
+    paddingHorizontal: rem(0.5),
+  },
+  changeCardText: {
+    color: '#E50914',
+    fontSize: rem(0.75),
+    fontWeight: '500',
   },
 }); 

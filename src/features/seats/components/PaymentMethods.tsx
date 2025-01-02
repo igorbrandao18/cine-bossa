@@ -90,12 +90,12 @@ const SavedCardItem = memo(({ card, selected, onPress }: any) => (
 
 function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMethodsProps) {
   const selectedCardId = usePaymentStore(state => state.selectedCardId);
-  const setSelectedCard = usePaymentStore(state => state.setSelectedCard);
+  const selectedCard = SAVED_CARDS.find(card => card.id === selectedCardId);
   
   const handleMethodPress = useCallback((methodId: string) => {
     onSelectMethod(methodId);
     
-    if ((methodId === 'credit' || methodId === 'debit') && !selectedCardId) {
+    if (methodId === 'credit' || methodId === 'debit') {
       router.push({
         pathname: '/payment/select-card',
         params: {
@@ -106,18 +106,17 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
     }
   }, [onSelectMethod, selectedCardId]);
 
-  const handleCardPress = useCallback((cardId: string) => {
-    setSelectedCard(cardId);
-  }, [setSelectedCard]);
-
-  const isCardPayment = selectedMethod === 'credit' || selectedMethod === 'debit';
+  const methods = PAYMENT_METHODS.map(method => ({
+    ...method,
+    selectedCard: (method.id === 'credit' || method.id === 'debit') ? selectedCard : undefined
+  }));
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Formas de Pagamento</Text>
       
       <View style={styles.methodsList}>
-        {PAYMENT_METHODS.map((method) => (
+        {methods.map((method) => (
           <PaymentMethod
             key={method.id}
             method={method}
@@ -126,29 +125,6 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
           />
         ))}
       </View>
-
-      {isCardPayment && (
-        <View style={styles.cardsSection}>
-          <Text style={styles.sectionTitle}>Meus Cartões</Text>
-          <View style={styles.cardsList}>
-            {SAVED_CARDS.map((card) => (
-              <SavedCardItem
-                key={card.id}
-                card={card}
-                selected={card.id === selectedCardId}
-                onPress={() => handleCardPress(card.id)}
-              />
-            ))}
-            <Pressable 
-              style={styles.addCardButton}
-              onPress={() => router.push('/payment/add-card')}
-            >
-              <MaterialCommunityIcons name="plus-circle-outline" size={rem(2)} color="#E50914" />
-              <Text style={styles.addCardText}>Adicionar novo cartão</Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
