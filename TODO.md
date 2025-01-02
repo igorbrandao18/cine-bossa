@@ -200,18 +200,52 @@
   - [x] Criar `features/seats/components/SeatsGrid.tsx`
   - [x] Criar `features/seats/components/ConfirmationModal.tsx`
 
-## ⏭️ Próximos Passos para Componentização
-1. Extrair componentes mantendo a funcionalidade existente
-2. Mover estilos para arquivos separados
-3. Implementar props adequadas para cada componente
-4. Manter estado global onde necessário
-5. Documentar componentes criados
+- [x] ExploreScreen (app/explore.tsx)
+  - [x] Criar `SearchHeader` com busca de filmes
+  - [x] Implementar categorias por gênero
+  - [x] Adicionar descrições para cada gênero
+  - [x] Melhorar layout dos cards de categoria
+  - [x] Otimizar animações e transições
+  - [x] Implementar grid de filmes responsivo
+  - [x] Adicionar feedback visual nas interações
+  - [x] Usar cores do projeto de forma consistente
+  - [x] Implementar estados de loading e erro
+  - [x] Melhorar performance com memo e callbacks
 
-## ⏭️ Próximos Passos
-1. Implementar componentes faltantes da feature Sessions
-2. Converter medidas restantes para REM
-3. Implementar tema global consistente
-4. Testar responsividade em diferentes dispositivos
+## 🎨 Melhorias de UI/UX
+### Explore Screen
+- [x] Layout mais limpo e minimalista
+- [x] Cards de gênero em largura total
+- [x] Descrições informativas para cada gênero
+- [x] Animações suaves e naturais
+- [x] Feedback visual nas interações
+- [x] Cores consistentes com a identidade visual
+- [x] Grid responsivo de filmes
+- [x] Busca com resultados em tempo real
+- [x] Estado vazio com ilustração
+- [x] Transições fluidas entre estados
+
+### Performance
+- [x] Memoização de componentes
+  - [x] SearchHeader
+  - [x] CategoryButton
+  - [x] MovieCard
+- [x] Otimização de re-renders
+- [x] Animações otimizadas com Reanimated
+- [x] Lazy loading de imagens
+- [x] Gestão eficiente de estado
+
+### Próximos Passos
+- [ ] Extrair componentes para arquivos separados
+  - [ ] Mover `SearchHeader` para `features/movies/components/SearchHeader.tsx`
+  - [ ] Mover `CategoryButton` para `features/movies/components/CategoryButton.tsx`
+  - [ ] Mover `MovieCard` para `features/movies/components/MovieCard.tsx`
+- [ ] Criar tipos específicos para props
+- [ ] Adicionar testes unitários
+- [ ] Documentar componentes
+- [ ] Implementar skeleton loading
+- [ ] Melhorar acessibilidade
+- [ ] Adicionar gestos e interações avançadas
 
 ## 🔄 Padronização de Headers
 - [x] Criar componente base Header em `shared/components/Header.tsx`
