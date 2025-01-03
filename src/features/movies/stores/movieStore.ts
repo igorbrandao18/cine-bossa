@@ -1,7 +1,23 @@
 import { create } from 'zustand';
 import type { MovieState, MovieSection } from '../types/movie';
 import { movieService } from '../services/movieService';
-import { useSessionStore } from '@/features/sessions/stores/sessionStore';
+
+interface Genre {
+  id: number;
+  name: string;
+}
+
+interface MovieStoreState extends MovieState {
+  genres: Genre[];
+  loadGenres: () => Promise<void>;
+  loadNowPlaying: () => Promise<void>;
+  loadPopular: () => Promise<void>;
+  loadUpcoming: () => Promise<void>;
+  loadTopRated: () => Promise<void>;
+  getMoviesByGenre: (genreId: number) => Promise<any>;
+  searchMovies: (query: string) => Promise<any>;
+  clearError: () => void;
+}
 
 const initialSection: MovieSection = {
   title: '',
@@ -17,20 +33,28 @@ const initialState: MovieState = {
     upcoming: { ...initialSection, title: 'Em Breve' },
     topRated: { ...initialSection, title: 'Mais Bem Avaliados' },
   },
+  genres: [],
   loading: false,
   error: null,
 };
 
-export const useMovieStore = create<MovieState & {
-  loadNowPlaying: () => Promise<void>;
-  loadPopular: () => Promise<void>;
-  loadUpcoming: () => Promise<void>;
-  loadTopRated: () => Promise<void>;
-  getMoviesByGenre: (genreId: number) => Promise<any>;
-  searchMovies: (query: string) => Promise<any>;
-  clearError: () => void;
-}>((set, get) => ({
+export const useMovieStore = create<MovieStoreState>((set, get) => ({
   ...initialState,
+
+  loadGenres: async () => {
+    try {
+      const response = await movieService.getGenres();
+      console.log('Gêneros da API:', response.genres);
+      if (!response.genres?.length) {
+        throw new Error('No genres returned from API');
+      }
+      set({ genres: response.genres });
+    } catch (error) {
+      console.error('Error loading genres:', error);
+      set({ genres: [] });
+      throw error;
+    }
+  },
 
   loadNowPlaying: async () => {
     try {

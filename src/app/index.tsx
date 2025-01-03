@@ -1,21 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text } from 'react-native-paper';
 import { FeaturedMovie } from '../features/movies/components/FeaturedMovie';
 import { MovieRow } from '../features/movies/components/MovieRow';
-import { ScrollView } from 'react-native-gesture-handler';
 import { useMovieStore } from '../features/movies/stores/movieStore';
 import { LoadingState } from '../features/movies/components/LoadingState';
 import { ErrorState } from '../features/movies/components/ErrorState';
+import { rem } from '../core/theme/rem';
+
+const SECTIONS = [
+  { type: 'nowPlaying', title: 'Em Cartaz' },
+  { type: 'popular', title: 'Populares' },
+  { type: 'upcoming', title: 'Em Breve' },
+  { type: 'topRated', title: 'Mais Bem Avaliados' },
+] as const;
 
 export default function Home() {
-  const { sections, loadNowPlaying, loadPopular, loadUpcoming } = useMovieStore();
+  const { sections, loadNowPlaying, loadPopular, loadUpcoming, loadTopRated } = useMovieStore();
   const [featuredIndex, setFeaturedIndex] = useState(0);
 
   useEffect(() => {
     loadNowPlaying();
     loadPopular();
     loadUpcoming();
+    loadTopRated();
   }, []);
 
   const handleNextFeatured = () => {
@@ -37,18 +45,52 @@ export default function Home() {
   const featuredMovie = sections?.nowPlaying?.movies?.[featuredIndex];
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#000' }}>
+    <ScrollView 
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       {featuredMovie && (
         <FeaturedMovie 
           movie={featuredMovie} 
           onNext={handleNextFeatured}
         />
       )}
-      <View style={{ padding: 16 }}>
-        <MovieRow title="Em Cartaz" type="nowPlaying" />
-        <MovieRow title="Em Breve" type="upcoming" />
-        <MovieRow title="Populares" type="popular" />
+      
+      <View style={styles.content}>
+        {SECTIONS.map(section => (
+          <View key={section.type} style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {section.title}
+            </Text>
+            <MovieRow 
+              type={section.type} 
+              loading={sections[section.type]?.loading}
+              error={sections[section.type]?.error}
+              movies={sections[section.type]?.movies || []}
+            />
+          </View>
+        ))}
       </View>
     </ScrollView>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  content: {
+    paddingVertical: rem(1),
+  },
+  section: {
+    marginBottom: rem(2),
+  },
+  sectionTitle: {
+    fontSize: rem(1.5),
+    fontWeight: 'bold',
+    color: '#fff',
+    marginHorizontal: rem(1.25),
+    marginBottom: rem(1),
+  },
+}); 

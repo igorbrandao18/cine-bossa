@@ -1,24 +1,21 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Text, ActivityIndicator } from 'react-native-paper';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { rem } from '../../../core/theme/rem';
 import type { Movie } from '../types/movie';
-import { useMovieStore } from '../stores/movieStore';
-import { ActivityIndicator } from 'react-native-paper';
 
 interface MovieRowProps {
-  title: string;
   type: 'nowPlaying' | 'popular' | 'upcoming' | 'topRated';
+  loading?: boolean;
+  error?: string | null;
+  movies: Movie[];
 }
 
-export function MovieRow({ title, type }: MovieRowProps) {
-  const { sections } = useMovieStore();
-  const section = sections[type];
-
-  if (section.loading) {
+export function MovieRow({ type, loading, error, movies }: MovieRowProps) {
+  if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>{title}</Text>
         <View style={styles.loadingContainer}>
           <ActivityIndicator color="#E50914" />
         </View>
@@ -26,10 +23,9 @@ export function MovieRow({ title, type }: MovieRowProps) {
     );
   }
 
-  if (section.error) {
+  if (error) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>{title}</Text>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Erro ao carregar filmes</Text>
         </View>
@@ -37,19 +33,18 @@ export function MovieRow({ title, type }: MovieRowProps) {
     );
   }
 
-  if (!section.movies?.length) {
+  if (!movies?.length) {
     return null;
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {section.movies.map((movie) => (
+        {movies.map((movie) => (
           <Pressable
             key={movie.id}
             style={styles.movieCard}
@@ -70,13 +65,6 @@ export function MovieRow({ title, type }: MovieRowProps) {
 const styles = StyleSheet.create({
   container: {
     marginBottom: rem(1.5),
-  },
-  title: {
-    color: '#fff',
-    fontSize: rem(1.25),
-    fontWeight: 'bold',
-    marginBottom: rem(0.75),
-    marginLeft: rem(1),
   },
   scrollContent: {
     paddingHorizontal: rem(1),

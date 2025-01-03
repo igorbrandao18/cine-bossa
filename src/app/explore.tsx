@@ -1,5 +1,5 @@
 import React, { useState, useCallback, memo, useRef, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Pressable, Dimensions, ScrollView, StatusBar, Platform } from 'react-native';
+import { View, StyleSheet, FlatList, Pressable, Dimensions, ScrollView, StatusBar, Platform, ActivityIndicator } from 'react-native';
 import { Text, Searchbar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -7,7 +7,8 @@ import { useRouter } from 'expo-router';
 import { rem } from '../core/theme/rem';
 import { useMovieStore } from '../features/movies/stores/movieStore';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, FadeInRight, FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { MovieCard } from '../features/movies/components/MovieCard';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.8;
@@ -16,65 +17,6 @@ const STATUS_BAR_HEIGHT = Platform.select({
   android: StatusBar.currentHeight,
   default: 0,
 });
-
-const CATEGORIES = [
-  { 
-    id: 28, 
-    name: 'Ação', 
-    icon: 'sword', 
-    color: '#E50914',
-    description: 'Filmes cheios de adrenalina e emoção'
-  },
-  { 
-    id: 35, 
-    name: 'Comédia', 
-    icon: 'emoticon-happy', 
-    color: '#E50914',
-    description: 'Diversão garantida para todos os momentos'
-  },
-  { 
-    id: 27, 
-    name: 'Terror', 
-    icon: 'ghost', 
-    color: '#E50914',
-    description: 'Sustos e tensão do início ao fim'
-  },
-  { 
-    id: 10749, 
-    name: 'Romance', 
-    icon: 'heart', 
-    color: '#E50914',
-    description: 'Histórias de amor que emocionam'
-  },
-  { 
-    id: 878, 
-    name: 'Ficção', 
-    icon: 'rocket', 
-    color: '#E50914',
-    description: 'Aventuras além da imaginação'
-  },
-  { 
-    id: 18, 
-    name: 'Drama', 
-    icon: 'drama-masks', 
-    color: '#E50914',
-    description: 'Histórias profundas e emocionantes'
-  },
-  { 
-    id: 16, 
-    name: 'Animação', 
-    icon: 'animation', 
-    color: '#E50914',
-    description: 'Diversão para todas as idades'
-  },
-  { 
-    id: 53, 
-    name: 'Suspense', 
-    icon: 'magnify-scan', 
-    color: '#E50914',
-    description: 'Mistérios que prendem sua atenção'
-  },
-] as const;
 
 const SearchHeader = memo(() => {
   const [focused, setFocused] = useState(false);
@@ -223,17 +165,25 @@ const SearchHeader = memo(() => {
   );
 });
 
+interface CategoryButtonProps {
+  category: {
+    id: number;
+    name: string;
+    icon: string;
+    color: string;
+    description: string;
+  };
+  isSelected: boolean;
+  onPress: () => void;
+  index: number;
+}
+
 const CategoryButton = memo(({ 
   category, 
   isSelected, 
   onPress,
   index
-}: { 
-  category: typeof CATEGORIES[number];
-  isSelected: boolean;
-  onPress: () => void;
-  index: number;
-}) => (
+}: CategoryButtonProps) => (
   <Animated.View
     entering={FadeInDown.duration(800).delay(index * 100)}
   >
@@ -276,148 +226,87 @@ const CategoryButton = memo(({
   </Animated.View>
 ));
 
-const MovieCard = memo(({ 
-  movie, 
-  onPress,
-  index = 0
-}: { 
-  movie: any;
-  onPress: () => void;
-  index?: number;
-}) => {
-  const scale = useSharedValue(1);
-  const translateY = useSharedValue(0);
-  
-  const rStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: withSpring(scale.value, { 
-        damping: 15,
-        stiffness: 150
-      })},
-      { translateY: withSpring(translateY.value, {
-        damping: 15,
-        stiffness: 150
-      })}
-    ]
-  }));
-
-  const onPressIn = () => {
-    scale.value = 0.95;
-    translateY.value = -5;
-  };
-
-  const onPressOut = () => {
-    scale.value = 1;
-    translateY.value = 0;
-  };
-
-  return (
-    <Animated.View 
-      entering={FadeInRight.duration(600)
-        .delay(index * 100)
-        .springify()
-      }
-    >
-      <Pressable
-        onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-      >
-        <Animated.View style={[styles.movieCard, rStyle]}>
-          <Image
-            source={{ uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}` }}
-            style={styles.movieImage}
-            contentFit="cover"
-            transition={300}
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
-            style={styles.movieGradient}
-          >
-            <Animated.View 
-              style={styles.movieContent}
-              entering={FadeIn.duration(300).delay(100)}
-            >
-              <Text style={styles.movieTitle} numberOfLines={2}>
-                {movie.title}
-              </Text>
-              <View style={styles.movieMeta}>
-                <View style={styles.ratingContainer}>
-                  <MaterialCommunityIcons 
-                    name="star" 
-                    size={16} 
-                    color="#FFD700"
-                    style={{ 
-                      textShadowColor: 'rgba(255,215,0,0.5)',
-                      textShadowOffset: { width: 0, height: 0 },
-                      textShadowRadius: 10
-                    }}
-                  />
-                  <Text style={styles.rating}>{movie.vote_average.toFixed(1)}</Text>
-                </View>
-                <View style={styles.yearContainer}>
-                  <Text style={styles.yearText}>
-                    {new Date(movie.release_date).getFullYear()}
-                  </Text>
-                </View>
-              </View>
-            </Animated.View>
-          </LinearGradient>
-        </Animated.View>
-      </Pressable>
-    </Animated.View>
-  );
-});
-
 export default function Explore() {
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const router = useRouter();
-  const { sections, getMoviesByGenre } = useMovieStore();
-  const [categoryMovies, setCategoryMovies] = useState<any[]>([]);
-  const [genreBackgrounds, setGenreBackgrounds] = useState<Record<number, string>>({});
+  const { sections, genres, loadGenres, getMoviesByGenre } = useMovieStore();
+  const [loading, setLoading] = useState(true);
 
-  // Organize movies by genre when sections change
   useEffect(() => {
-    const allMovies = [
-      ...(sections.popular?.movies || []),
-      ...(sections.nowPlaying?.movies || []),
-      ...(sections.upcoming?.movies || []),
-    ];
-
-    const backgrounds: Record<number, string> = {};
-    
-    CATEGORIES.forEach(category => {
-      const moviesInGenre = allMovies.filter(movie => 
-        movie.genre_ids.includes(category.id)
-      );
-      
-      if (moviesInGenre.length > 0) {
-        // Get a random movie from the genre for background
-        const randomIndex = Math.floor(Math.random() * moviesInGenre.length);
-        backgrounds[category.id] = moviesInGenre[randomIndex].backdrop_path;
+    const loadData = async () => {
+      try {
+        await loadGenres();
+      } catch (error) {
+        console.error('Error loading genres:', error);
+      } finally {
+        setLoading(false);
       }
-    });
+    };
 
-    setGenreBackgrounds(backgrounds);
-  }, [sections]);
+    loadData();
+  }, []);
 
-  const handleCategoryPress = useCallback(async (categoryId: number) => {
-    if (selectedCategory === categoryId) {
-      setSelectedCategory(null);
-      setCategoryMovies([]);
-      return;
-    }
+  const genreIcons: Record<number, string> = {
+    28: 'sword',
+    12: 'compass',
+    16: 'animation',
+    35: 'emoticon-happy',
+    80: 'handcuffs',
+    99: 'movie-open',
+    18: 'drama-masks',
+    10751: 'account-group',
+    14: 'auto-fix',
+    36: 'book-open-page-variant',
+    27: 'ghost',
+    10402: 'music',
+    9648: 'magnify-scan',
+    10749: 'heart',
+    878: 'rocket',
+    10770: 'television-classic',
+    53: 'eye-scan',
+    10752: 'tank',
+    37: 'horse',
+  };
 
-    setSelectedCategory(categoryId);
-    try {
-      const response = await getMoviesByGenre(categoryId);
-      setCategoryMovies(response.results);
-    } catch (error) {
-      console.error('Error loading category movies:', error);
-    }
-  }, [selectedCategory, getMoviesByGenre]);
+  const genreDescriptions: Record<number, string> = {
+    28: 'Filmes cheios de adrenalina e emoção',
+    12: 'Aventuras épicas e descobertas incríveis',
+    16: 'Diversão para todas as idades',
+    35: 'Diversão garantida para todos os momentos',
+    80: 'Mistérios e crimes intrigantes',
+    99: 'Histórias reais que inspiram',
+    18: 'Histórias profundas e emocionantes',
+    10751: 'Diversão para toda a família',
+    14: 'Mundos mágicos e fantásticos',
+    36: 'Momentos que marcaram a história',
+    27: 'Sustos e tensão do início ao fim',
+    10402: 'Ritmo e emoção em cada cena',
+    9648: 'Mistérios que prendem sua atenção',
+    10749: 'Histórias de amor que emocionam',
+    878: 'Aventuras além da imaginação',
+    10770: 'Produções especiais para TV',
+    53: 'Suspense que prende do início ao fim',
+    10752: 'Batalhas e conflitos históricos',
+    37: 'Aventuras no velho oeste',
+  };
 
   const trendingMovies = sections.popular?.movies || [];
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator color="#E50914" size="large" />
+      </View>
+    );
+  }
+
+  if (!genres.length) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <MaterialCommunityIcons name="movie-off" size={64} color="#666" />
+        <Text style={styles.errorText}>Não foi possível carregar os gêneros</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView 
@@ -429,52 +318,40 @@ export default function Explore() {
       <View style={styles.categoriesSection}>
         <Text style={styles.sectionTitle}>Explore por gêneros</Text>
         <View style={styles.categoriesContainer}>
-          {CATEGORIES.map((category, index) => (
+          {genres.map((genre, index) => (
             <CategoryButton
-              key={category.id}
-              category={category}
-              isSelected={selectedCategory === category.id}
-              onPress={() => handleCategoryPress(category.id)}
+              key={genre.id}
+              category={{
+                id: genre.id,
+                name: genre.name,
+                icon: genreIcons[genre.id] || 'movie',
+                color: '#E50914',
+                description: genreDescriptions[genre.id] || 'Descubra novos filmes'
+              }}
+              isSelected={false}
+              onPress={() => router.push({
+                pathname: '/category/[id]',
+                params: { id: genre.id }
+              })}
               index={index}
             />
           ))}
         </View>
       </View>
 
-      {selectedCategory ? (
-        <Animated.View 
-          entering={FadeIn.duration(300)}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>
-            {CATEGORIES.find(c => c.id === selectedCategory)?.name}
-          </Text>
-          <View style={styles.gridContainer}>
-            {categoryMovies.map((movie, index) => (
-              <MovieCard
-                key={movie.id}
-                movie={movie}
-                onPress={() => router.push(`/movie/${movie.id}`)}
-                index={index}
-              />
-            ))}
-          </View>
-        </Animated.View>
-      ) : (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recomendados para você</Text>
-          <View style={styles.gridContainer}>
-            {trendingMovies.map((movie, index) => (
-              <MovieCard
-                key={movie.id}
-                movie={movie}
-                onPress={() => router.push(`/movie/${movie.id}`)}
-                index={index}
-              />
-            ))}
-          </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Recomendados para você</Text>
+        <View style={styles.gridContainer}>
+          {trendingMovies.map((movie, index) => (
+            <MovieCard
+              key={movie.id}
+              movie={movie}
+              onPress={() => router.push(`/movie/${movie.id}`)}
+              index={index}
+            />
+          ))}
         </View>
-      )}
+      </View>
 
       <View style={styles.footer} />
     </ScrollView>
@@ -685,5 +562,16 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000',
     zIndex: 1,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: rem(1),
+  },
+  errorText: {
+    color: '#666',
+    fontSize: rem(1),
+    textAlign: 'center',
   },
 }); 
