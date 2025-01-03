@@ -1,31 +1,25 @@
-import React, { useState, useCallback, memo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, memo, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Pressable, Dimensions, ScrollView, StatusBar, Platform, ActivityIndicator } from 'react-native';
 import { Text, Searchbar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { rem } from '../core/theme/rem';
-import { useMovieStore } from '../features/movies/stores/movieStore';
+import { useMovieStore } from '@/features/movies/stores/movieStore';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { MovieCard } from '../features/movies/components/MovieCard';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.8;
-const STATUS_BAR_HEIGHT = Platform.select({
-  ios: 47,
-  android: StatusBar.currentHeight,
-  default: 0,
-});
 
 const SearchHeader = memo(() => {
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useState('');
-  const { sections } = useMovieStore();
+  const { searchMovies } = useMovieStore();
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const router = useRouter();
   
-  const handleSearch = useCallback((text: string) => {
+  const handleSearch = useCallback(async (text: string) => {
     setValue(text);
     
     if (!text.trim()) {
@@ -33,29 +27,15 @@ const SearchHeader = memo(() => {
       return;
     }
 
-    const allMovies = [
-      ...(sections.nowPlaying?.movies || []),
-      ...(sections.popular?.movies || []),
-      ...(sections.upcoming?.movies || []),
-    ];
+    try {
+      const results = await searchMovies(text);
+      setSearchResults(results.results || []);
+    } catch (error) {
+      console.error('Error searching movies:', error);
+      setSearchResults([]);
+    }
+  }, []);
 
-    const filteredMovies = allMovies.filter(movie => 
-      movie.title.toLowerCase().includes(text.toLowerCase())
-    );
-
-    const uniqueMovies = filteredMovies.filter((movie, index, self) =>
-      index === self.findIndex((m) => m.id === movie.id)
-    );
-
-    setSearchResults(uniqueMovies);
-  }, [sections]);
-
-  const handleClose = () => {
-    setFocused(false);
-    setValue('');
-    setSearchResults([]);
-  };
-  
   return (
     <>
       <Animated.View 
@@ -63,6 +43,7 @@ const SearchHeader = memo(() => {
           styles.searchWrapper,
           (focused || value) && styles.searchWrapperFocused
         ]}
+        entering={FadeIn.duration(300)}
       >
         <View style={styles.searchContainer}>
           <Searchbar
@@ -70,97 +51,39 @@ const SearchHeader = memo(() => {
             value={value}
             onChangeText={handleSearch}
             onFocus={() => setFocused(true)}
-            style={[
-              styles.searchBar,
-              (focused || value) && styles.searchBarFocused
-            ]}
+            style={styles.searchBar}
             inputStyle={styles.searchInput}
             iconColor="#E50914"
             placeholderTextColor="rgba(255,255,255,0.5)"
           />
         </View>
 
-        {(focused || value) && (
-          <Animated.View 
-            entering={FadeIn.duration(300)}
-            style={styles.searchResults}
-          >
-            {value.trim() && searchResults.length > 0 ? (
-              <FlatList
-                data={searchResults}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item, index }) => (
-                  <Animated.View 
-                    entering={FadeInRight.duration(400).delay(index * 50)}
-                  >
-                    <Pressable 
-                      style={({ pressed }) => [
-                        styles.movieCard,
-                        pressed && { opacity: 0.7 }
-                      ]}
-                      onPress={() => {
-                        router.push(`/movie/${item.id}`);
-                        handleClose();
-                      }}
-                    >
-                      <Image
-                        source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
-                        style={styles.movieImage}
-                        contentFit="cover"
-                        transition={200}
-                      />
-                      <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.95)']}
-                        style={styles.movieGradient}
-                      >
-                        <View style={styles.movieContent}>
-                          <Text style={styles.movieTitle} numberOfLines={2}>
-                            {item.title}
-                          </Text>
-                          <View style={styles.movieMeta}>
-                            <View style={styles.ratingContainer}>
-                              <MaterialCommunityIcons name="star" size={16} color="#FFD700" />
-                              <Text style={styles.rating}>{item.vote_average.toFixed(1)}</Text>
-                            </View>
-                            <View style={styles.yearContainer}>
-                              <Text style={styles.yearText}>
-                                {new Date(item.release_date).getFullYear()}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      </LinearGradient>
-                    </Pressable>
-                  </Animated.View>
-                )}
-                numColumns={2}
-                columnWrapperStyle={styles.gridContainer}
-                contentContainerStyle={styles.gridContainer}
-                showsVerticalScrollIndicator={false}
-              />
-            ) : value.trim() ? (
-              <Animated.View 
-                entering={FadeIn.duration(300)}
-                style={styles.emptyResults}
+        {(focused || value) && searchResults.length > 0 && (
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <Pressable 
+                onPress={() => router.push(`/movie/${item.id}`)}
+                style={styles.searchResultItem}
               >
-                <MaterialCommunityIcons name="movie-search-outline" size={64} color="#E50914" />
-                <Text style={styles.emptyResultsTitle}>
-                  Nenhum filme encontrado
-                </Text>
-                <Text style={styles.emptyResultsText}>
-                  Não encontramos resultados para "{value}"
-                </Text>
-              </Animated.View>
-            ) : null}
-          </Animated.View>
+                <Image
+                  source={{ uri: `https://image.tmdb.org/t/p/w92${item.poster_path}` }}
+                  style={styles.searchResultImage}
+                  contentFit="cover"
+                />
+                <View style={styles.searchResultContent}>
+                  <Text style={styles.searchResultTitle}>{item.title}</Text>
+                  <Text style={styles.searchResultYear}>
+                    {new Date(item.release_date).getFullYear()}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+            style={styles.searchResults}
+          />
         )}
       </Animated.View>
-      {(focused || value) && (
-        <Animated.View 
-          entering={FadeIn.duration(200)}
-          style={styles.overlay}
-        />
-      )}
     </>
   );
 });
@@ -173,19 +96,13 @@ interface CategoryButtonProps {
     color: string;
     description: string;
   };
-  isSelected: boolean;
   onPress: () => void;
   index: number;
 }
 
-const CategoryButton = memo(({ 
-  category, 
-  isSelected, 
-  onPress,
-  index
-}: CategoryButtonProps) => (
+const CategoryButton = memo(({ category, onPress, index }: CategoryButtonProps) => (
   <Animated.View
-    entering={FadeInDown.duration(800).delay(index * 100)}
+    entering={FadeInDown.duration(300).delay(index * 50)}
   >
     <Pressable
       onPress={onPress}
@@ -196,27 +113,15 @@ const CategoryButton = memo(({
     >
       <View style={styles.categoryContent}>
         <View style={styles.categoryHeader}>
-          <Animated.View
-            style={[
-              styles.categoryIconContainer,
-              isSelected && { transform: [{ scale: 1.1 }] }
-            ]}
-          >
-            <MaterialCommunityIcons
-              name={category.icon as any}
-              size={24}
-              color="#E50914"
-              style={styles.categoryIcon}
-            />
-          </Animated.View>
-          <Animated.Text 
-            style={[
-              styles.categoryButtonText,
-              isSelected && { opacity: 1 }
-            ]}
-          >
+          <MaterialCommunityIcons
+            name={category.icon as any}
+            size={24}
+            color="#E50914"
+            style={styles.categoryIcon}
+          />
+          <Text style={styles.categoryButtonText}>
             {category.name}
-          </Animated.Text>
+          </Text>
         </View>
         <Text style={styles.categoryDescription} numberOfLines={2}>
           {category.description}
@@ -228,15 +133,18 @@ const CategoryButton = memo(({
 
 export default function Explore() {
   const router = useRouter();
-  const { sections, genres, loadGenres, getMoviesByGenre } = useMovieStore();
+  const { sections, genres, loadGenres, loadPopular } = useMovieStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        await loadGenres();
+        await Promise.all([
+          loadGenres(),
+          loadPopular()
+        ]);
       } catch (error) {
-        console.error('Error loading genres:', error);
+        console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
@@ -299,15 +207,6 @@ export default function Explore() {
     );
   }
 
-  if (!genres.length) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <MaterialCommunityIcons name="movie-off" size={64} color="#666" />
-        <Text style={styles.errorText}>Não foi possível carregar os gêneros</Text>
-      </View>
-    );
-  }
-
   return (
     <ScrollView 
       style={styles.container} 
@@ -326,7 +225,7 @@ export default function Explore() {
             {trendingMovies.map((movie, index) => (
               <Animated.View
                 key={movie.id}
-                entering={FadeInRight.duration(600).delay(index * 100)}
+                entering={FadeInDown.duration(300).delay(index * 50)}
                 style={styles.recommendedCard}
               >
                 <Pressable
@@ -382,11 +281,7 @@ export default function Explore() {
                 color: '#E50914',
                 description: genreDescriptions[genre.id] || 'Descubra novos filmes'
               }}
-              isSelected={false}
-              onPress={() => router.push({
-                pathname: '/category/[id]',
-                params: { id: genre.id }
-              })}
+              onPress={() => router.push(`/category/${genre.id}`)}
               index={index}
             />
           ))}
@@ -407,7 +302,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     position: 'relative',
     zIndex: 2,
-    paddingTop: STATUS_BAR_HEIGHT || 0,
+    paddingTop: Platform.select({
+      ios: 47,
+      android: StatusBar.currentHeight,
+      default: 0,
+    }),
   },
   searchWrapperFocused: {
     position: 'absolute',
@@ -431,9 +330,6 @@ const styles = StyleSheet.create({
     elevation: 0,
     height: rem(3),
   },
-  searchBarFocused: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-  },
   searchInput: {
     color: '#fff',
     fontSize: rem(1),
@@ -442,23 +338,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  emptyResults: {
-    flex: 1,
-    justifyContent: 'center',
+  searchResultItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: rem(2),
+    gap: rem(1),
+    padding: rem(1),
+    borderRadius: rem(0.75),
+    overflow: 'hidden',
+    backgroundColor: '#1a1a1a',
+    marginBottom: rem(1),
   },
-  emptyResultsTitle: {
+  searchResultImage: {
+    width: rem(4),
+    height: rem(6),
+    borderRadius: rem(0.5),
+  },
+  searchResultContent: {
+    flex: 1,
+    padding: rem(0.75),
+  },
+  searchResultTitle: {
     color: '#fff',
-    fontSize: rem(1.25),
+    fontSize: rem(0.875),
     fontWeight: 'bold',
-    marginTop: rem(1),
-    marginBottom: rem(0.5),
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  emptyResultsText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: rem(1),
-    textAlign: 'center',
+  searchResultYear: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: rem(0.75),
   },
   section: {
     marginBottom: rem(2),
@@ -499,14 +408,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: rem(0.75),
-  },
-  categoryIconContainer: {
-    width: rem(2.25),
-    height: rem(2.25),
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: rem(0.5),
-    backgroundColor: 'rgba(229, 9, 20, 0.1)',
   },
   categoryIcon: {
     opacity: 0.9,
