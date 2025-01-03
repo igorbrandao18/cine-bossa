@@ -200,17 +200,71 @@
   - [x] Criar `features/seats/components/SeatsGrid.tsx`
   - [x] Criar `features/seats/components/ConfirmationModal.tsx`
 
-- [x] ExploreScreen (app/explore.tsx)
-  - [x] Criar `SearchHeader` com busca de filmes
-  - [x] Implementar categorias por gênero
-  - [x] Adicionar descrições para cada gênero
-  - [x] Melhorar layout dos cards de categoria
-  - [x] Otimizar animações e transições
-  - [x] Implementar grid de filmes responsivo
-  - [x] Adicionar feedback visual nas interações
-  - [x] Usar cores do projeto de forma consistente
-  - [x] Implementar estados de loading e erro
-  - [x] Melhorar performance com memo e callbacks
+- [ ] ProfileScreen (app/profile.tsx)
+  - [ ] Criar `features/profile/components/ProfileHeader.tsx`
+  - [ ] Criar `features/profile/components/StatsSection.tsx`
+  - [ ] Criar `features/profile/components/UpcomingTickets.tsx`
+  - [ ] Criar `features/profile/components/WatchHistory.tsx`
+  - [ ] Criar `features/profile/components/FavoriteGenres.tsx`
+  - [ ] Criar `features/profile/components/SettingsList.tsx`
+  - [ ] Criar `features/profile/types/profile.ts`
+  - [ ] Criar `features/profile/stores/profileStore.ts`
+  - [ ] Criar `features/profile/services/profileService.ts`
+
+## 📱 Feature: Profile
+- [ ] Estrutura de Pastas
+  - [ ] Criar diretório `features/profile`
+  - [ ] Criar subdiretórios (components, services, stores, types)
+
+- [ ] Tipos e Interfaces
+  - [ ] Definir interface `UserProfile`
+  - [ ] Definir interface `UserStats`
+  - [ ] Definir interface `UpcomingTicket`
+  - [ ] Definir interface `WatchedMovie`
+  - [ ] Definir tipos para níveis e conquistas
+
+- [ ] Store
+  - [ ] Implementar `profileStore` com Zustand
+  - [ ] Gerenciar estado do perfil
+  - [ ] Gerenciar histórico de filmes
+  - [ ] Gerenciar ingressos futuros
+  - [ ] Gerenciar estatísticas
+  - [ ] Implementar persistência local
+
+- [ ] Serviços
+  - [ ] Implementar `profileService`
+  - [ ] Integrar com API de usuários
+  - [ ] Gerenciar cache de dados
+  - [ ] Implementar sincronização
+
+- [ ] Componentes
+  - [ ] Extrair componentes do ProfileScreen
+  - [ ] Implementar loading states
+  - [ ] Implementar error states
+  - [ ] Adicionar animações e transições
+  - [ ] Melhorar feedback visual
+
+- [ ] Funcionalidades
+  - [ ] Sistema de níveis e conquistas
+  - [ ] Sistema de pontos
+  - [ ] Histórico de compras
+  - [ ] Cupons e promoções
+  - [ ] Preferências de cinema
+  - [ ] Integração com pagamentos
+
+- [ ] UI/UX
+  - [ ] Melhorar visual dos cards
+  - [ ] Adicionar skeleton loading
+  - [ ] Implementar pull-to-refresh
+  - [ ] Melhorar transições
+  - [ ] Adicionar gestos
+  - [ ] Otimizar performance
+
+- [ ] Testes
+  - [ ] Testes unitários para store
+  - [ ] Testes unitários para serviços
+  - [ ] Testes de componentes
+  - [ ] Testes de integração
 
 ## 🎨 Melhorias de UI/UX
 ### Explore Screen

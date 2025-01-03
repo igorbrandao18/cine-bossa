@@ -7,6 +7,7 @@ import { Header } from '../../shared/components/Header';
 import { Button } from '../../shared/components/Button';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCardStore } from '../../features/payment/stores/cardStore';
+import { CardScanner } from '../../features/payment/components/CardScanner';
 
 export default function AddCardScreen() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function AddCardScreen() {
   const [cardName, setCardName] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const formatCardNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
@@ -46,6 +48,12 @@ export default function AddCardScreen() {
     router.back();
   };
 
+  const handleScan = (cardData: { number?: string; expiryDate?: string; name?: string }) => {
+    if (cardData.number) setCardNumber(formatCardNumber(cardData.number));
+    if (cardData.expiryDate) setExpiryDate(cardData.expiryDate);
+    if (cardData.name) setCardName(cardData.name);
+  };
+
   const isFormValid = () => {
     return (
       cardNumber.replace(/\s/g, '').length === 16 &&
@@ -71,6 +79,12 @@ export default function AddCardScreen() {
           <View style={styles.cardHeader}>
             <MaterialCommunityIcons name="credit-card" size={24} color="#E50914" />
             <Text style={styles.cardHeaderText}>Informações do cartão</Text>
+            <View style={styles.spacer} />
+            <Button
+              onPress={() => setShowScanner(true)}
+              variant="secondary"
+              title="Escanear"
+            />
           </View>
 
           <TextInput
@@ -148,6 +162,13 @@ export default function AddCardScreen() {
           />
         </View>
       </ScrollView>
+
+      {showScanner && (
+        <CardScanner
+          onScan={handleScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -179,6 +200,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: rem(1),
     fontWeight: '500',
+  },
+  spacer: {
+    flex: 1,
   },
   input: {
     backgroundColor: 'transparent',
