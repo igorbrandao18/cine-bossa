@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { usePaymentStore } from '../stores/paymentStore';
 import { PaymentMethod } from './PaymentMethod';
+import { AddCardButton } from './AddCardButton';
 import { rem } from '../../../core/theme/rem';
 
 const CARD_GRADIENTS = {
@@ -106,6 +107,12 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
     }
   }, [onSelectMethod, selectedCardId]);
 
+  const handleAddCard = useCallback(() => {
+    router.push({
+      pathname: "/payment/add-card"
+    });
+  }, []);
+
   const methods = PAYMENT_METHODS.map(method => ({
     ...method,
     selectedCard: (method.id === 'credit' || method.id === 'debit') ? selectedCard : undefined
@@ -124,6 +131,21 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
             onPress={() => handleMethodPress(method.id)}
           />
         ))}
+      </View>
+
+      <View style={styles.cardsSection}>
+        <Text style={styles.sectionTitle}>Cartões salvos</Text>
+        <View style={styles.cardsList}>
+          {SAVED_CARDS.map((card) => (
+            <SavedCardItem
+              key={card.id}
+              card={card}
+              selected={card.id === selectedCardId}
+              onPress={() => handleMethodPress('credit')}
+            />
+          ))}
+          <AddCardButton onPress={handleAddCard} />
+        </View>
       </View>
     </View>
   );

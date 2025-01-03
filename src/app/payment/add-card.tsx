@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { rem } from '../../../core/theme/rem';
-import { Header } from '../../../shared/components/Header';
-import { Button } from '../../../shared/components/Button';
+import { rem } from '../../core/theme/rem';
+import { Header } from '../../shared/components/Header';
+import { Button } from '../../shared/components/Button';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export default function NewCardScreen() {
+export default function AddCardScreen() {
   const router = useRouter();
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('');
@@ -17,7 +17,7 @@ export default function NewCardScreen() {
   const formatCardNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
     const formatted = cleaned.replace(/(\d{4})/g, '$1 ').trim();
-    return formatted.substring(0, 19); // Limita a 16 dígitos + 3 espaços
+    return formatted.substring(0, 19);
   };
 
   const formatExpiryDate = (text: string) => {
@@ -29,7 +29,6 @@ export default function NewCardScreen() {
   };
 
   const handleSave = () => {
-    // TODO: Implementar lógica de salvar cartão
     router.back();
   };
 
@@ -117,10 +116,11 @@ export default function NewCardScreen() {
 
         <View style={styles.footer}>
           <Button 
-            mode="contained" 
             onPress={handleSave}
-            style={styles.button}
-            label="Salvar cartão"
+            title="Salvar cartão"
+            variant="primary"
+            size="large"
+            fullWidth
           />
         </View>
       </ScrollView>
@@ -169,8 +169,5 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: rem(2),
-  },
-  button: {
-    height: rem(3),
   },
 }); 
