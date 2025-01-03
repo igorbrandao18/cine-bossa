@@ -315,6 +315,60 @@ export default function Explore() {
     >
       <SearchHeader />
 
+      {trendingMovies.length > 0 && (
+        <View style={styles.recommendedSection}>
+          <Text style={styles.sectionTitle}>Recomendados para você</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.recommendedContainer}
+          >
+            {trendingMovies.map((movie, index) => (
+              <Animated.View
+                key={movie.id}
+                entering={FadeInRight.duration(600).delay(index * 100)}
+                style={styles.recommendedCard}
+              >
+                <Pressable
+                  onPress={() => router.push(`/movie/${movie.id}`)}
+                  style={({ pressed }) => [
+                    styles.recommendedPressable,
+                    pressed && { opacity: 0.8 }
+                  ]}
+                >
+                  <Image
+                    source={{ uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}` }}
+                    style={styles.recommendedImage}
+                    contentFit="cover"
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.9)']}
+                    style={styles.recommendedGradient}
+                  >
+                    <Text style={styles.recommendedTitle} numberOfLines={2}>
+                      {movie.title}
+                    </Text>
+                    <View style={styles.recommendedMeta}>
+                      <View style={styles.ratingContainer}>
+                        <MaterialCommunityIcons name="star" size={16} color="#E50914" />
+                        <Text style={styles.rating}>
+                          {movie.vote_average.toFixed(1)}
+                        </Text>
+                      </View>
+                      <View style={styles.yearContainer}>
+                        <Text style={styles.yearText}>
+                          {new Date(movie.release_date).getFullYear()}
+                        </Text>
+                      </View>
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+              </Animated.View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       <View style={styles.categoriesSection}>
         <Text style={styles.sectionTitle}>Explore por gêneros</Text>
         <View style={styles.categoriesContainer}>
@@ -333,20 +387,6 @@ export default function Explore() {
                 pathname: '/category/[id]',
                 params: { id: genre.id }
               })}
-              index={index}
-            />
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recomendados para você</Text>
-        <View style={styles.gridContainer}>
-          {trendingMovies.map((movie, index) => (
-            <MovieCard
-              key={movie.id}
-              movie={movie}
-              onPress={() => router.push(`/movie/${movie.id}`)}
               index={index}
             />
           ))}
@@ -573,5 +613,52 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: rem(1),
     textAlign: 'center',
+  },
+  recommendedSection: {
+    marginTop: rem(1),
+    marginBottom: rem(2),
+  },
+  recommendedContainer: {
+    paddingHorizontal: rem(1.25),
+    paddingTop: rem(1),
+    gap: rem(1),
+  },
+  recommendedCard: {
+    width: CARD_WIDTH,
+    aspectRatio: 0.7,
+    borderRadius: rem(1),
+    overflow: 'hidden',
+    marginRight: rem(1),
+  },
+  recommendedPressable: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+  },
+  recommendedImage: {
+    width: '100%',
+    height: '100%',
+  },
+  recommendedGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: rem(1),
+    height: '40%',
+    justifyContent: 'flex-end',
+  },
+  recommendedTitle: {
+    color: '#fff',
+    fontSize: rem(1.1),
+    fontWeight: 'bold',
+    marginBottom: rem(0.5),
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  recommendedMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(1),
   },
 }); 
