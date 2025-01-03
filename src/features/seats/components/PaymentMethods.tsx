@@ -1,10 +1,11 @@
 import React, { useCallback, memo } from 'react';
-import { View, Pressable, StyleSheet, Animated } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { usePaymentStore } from '../stores/paymentStore';
+import { useCardStore } from '../../payment/stores/cardStore';
 import { PaymentMethod } from './PaymentMethod';
 import { AddCardButton } from './AddCardButton';
 import { rem } from '../../../core/theme/rem';
@@ -13,23 +14,6 @@ const CARD_GRADIENTS = {
   visa: ['#1a1f71', '#0055b8'],
   mastercard: ['#eb001b', '#f79e1b'],
 } as const;
-
-const SAVED_CARDS = [
-  {
-    id: 'card1',
-    last4: '4567',
-    brand: 'visa',
-    name: 'João Silva',
-    expiryDate: '12/25'
-  },
-  {
-    id: 'card2',
-    last4: '8901',
-    brand: 'mastercard',
-    name: 'João Silva',
-    expiryDate: '08/24'
-  }
-] as const;
 
 const PAYMENT_METHODS = [
   { 
@@ -51,6 +35,11 @@ const PAYMENT_METHODS = [
     description: 'Débito instantâneo sem taxas',
   }
 ] as const;
+
+interface PaymentMethodsProps {
+  selectedMethod: string;
+  onSelectMethod: (methodId: string) => void;
+}
 
 const SavedCardItem = memo(({ card, selected, onPress }: any) => (
   <Pressable onPress={onPress}>
@@ -79,7 +68,7 @@ const SavedCardItem = memo(({ card, selected, onPress }: any) => (
           <Text style={styles.cardValue}>{card.expiryDate}</Text>
         </View>
         <MaterialCommunityIcons
-          name={`${card.brand}-card`}
+          name={card.brand === 'visa' ? 'credit-card' : 'credit-card-outline'}
           size={rem(2.5)}
           color="#fff"
           style={styles.brandIcon}
@@ -91,7 +80,8 @@ const SavedCardItem = memo(({ card, selected, onPress }: any) => (
 
 function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMethodsProps) {
   const selectedCardId = usePaymentStore(state => state.selectedCardId);
-  const selectedCard = SAVED_CARDS.find(card => card.id === selectedCardId);
+  const cards = useCardStore(state => state.cards);
+  const selectedCard = cards.find(card => card.id === selectedCardId);
   
   const handleMethodPress = useCallback((methodId: string) => {
     onSelectMethod(methodId);
@@ -108,9 +98,7 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
   }, [onSelectMethod, selectedCardId]);
 
   const handleAddCard = useCallback(() => {
-    router.push({
-      pathname: "/payment/add-card"
-    });
+    router.push('/payment/add-card');
   }, []);
 
   const methods = PAYMENT_METHODS.map(method => ({
@@ -136,7 +124,7 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
       <View style={styles.cardsSection}>
         <Text style={styles.sectionTitle}>Cartões salvos</Text>
         <View style={styles.cardsList}>
-          {SAVED_CARDS.map((card) => (
+          {cards.map((card) => (
             <SavedCardItem
               key={card.id}
               card={card}

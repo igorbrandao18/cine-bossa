@@ -6,9 +6,11 @@ import { rem } from '../../core/theme/rem';
 import { Header } from '../../shared/components/Header';
 import { Button } from '../../shared/components/Button';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useCardStore } from '../../features/payment/stores/cardStore';
 
 export default function AddCardScreen() {
   const router = useRouter();
+  const addCard = useCardStore(state => state.addCard);
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -29,7 +31,28 @@ export default function AddCardScreen() {
   };
 
   const handleSave = () => {
+    // Detectar a bandeira do cartão
+    const firstDigit = cardNumber.charAt(0);
+    const brand = firstDigit === '4' ? 'visa' : 'mastercard';
+
+    // Adicionar cartão ao store
+    addCard({
+      number: cardNumber.replace(/\s/g, ''),
+      name: cardName,
+      expiryDate,
+      brand,
+    });
+
     router.back();
+  };
+
+  const isFormValid = () => {
+    return (
+      cardNumber.replace(/\s/g, '').length === 16 &&
+      cardName.length >= 3 &&
+      expiryDate.length === 5 &&
+      cvv.length >= 3
+    );
   };
 
   return (
@@ -121,6 +144,7 @@ export default function AddCardScreen() {
             variant="primary"
             size="large"
             fullWidth
+            disabled={!isFormValid()}
           />
         </View>
       </ScrollView>
