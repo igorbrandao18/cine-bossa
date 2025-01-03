@@ -49,6 +49,9 @@ interface SessionState {
   } | null;
 }
 
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+const sessionCache = new Map<number, { data: Session[]; timestamp: number }>();
+
 export const useSessionStore = create<SessionState>((set, get) => ({
   currentSession: null,
   sessions: [],
@@ -105,7 +108,19 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   loadSessions: async (movieId: number, movieTitle: string) => {
     set({ loading: true, error: null });
     try {
+      // Check cache first
+      const cached = sessionCache.get(movieId);
+      const now = Date.now();
+      
+      if (cached && (now - cached.timestamp) < CACHE_EXPIRY) {
+        set({ sessions: cached.data, loading: false });
+        return;
+      }
+
       const response = await mockLoadSessions(movieId, movieTitle);
+      
+      // Update cache
+      sessionCache.set(movieId, { data: response, timestamp: now });
       set({ sessions: response, loading: false });
     } catch (error) {
       set({ error: 'Erro ao carregar sessões', loading: false });
@@ -202,26 +217,31 @@ const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Se
     // Array para controlar datas e horários já usados para não repetir
     const usedDateTimes: string[] = [];
     
-    for (let i = 0; i < numberOfSessions; i++) {
-      const { date, time, dateTime, isToday } = generateRandomDateTime(usedDateTimes);
-      usedDateTimes.push(dateTime);
-      
-      const room = generateRandomRoom();
-      
-      sessions.push({
-        id: `${movieId}-${i + 1}`,
-        movieId: String(movieId),
-        movieTitle,
-        room: `Sala ${room.number}`,
-        technology: room.technology,
-        time,
-        date,
-        isToday,
-        seats: generateSeats(),
-        price: room.price,
-        type: room.technology,
-        seatTypes: room.seatTypes,
-      });
+    // Batch process sessions creation
+    const batchSize = 4;
+    for (let i = 0; i < numberOfSessions; i += batchSize) {
+      const batchEnd = Math.min(i + batchSize, numberOfSessions);
+      for (let j = i; j < batchEnd; j++) {
+        const { date, time, dateTime, isToday } = generateRandomDateTime(usedDateTimes);
+        usedDateTimes.push(dateTime);
+        
+        const room = generateRandomRoom();
+        
+        sessions.push({
+          id: `${movieId}-${j + 1}`,
+          movieId: String(movieId),
+          movieTitle,
+          room: `Sala ${room.number}`,
+          technology: room.technology,
+          time,
+          date,
+          isToday,
+          seats: generateSeats(),
+          price: room.price,
+          type: room.technology,
+          seatTypes: room.seatTypes,
+        });
+      }
     }
     
     // Ordenar sessões primeiro por data e depois por horário
@@ -235,9 +255,10 @@ const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Se
       return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
     });
 
+    // Reduced timeout from 1000ms to 300ms
     setTimeout(() => {
       resolve(sessions);
-    }, 1000);
+    }, 300);
   });
 };
 

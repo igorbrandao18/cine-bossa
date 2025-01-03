@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { memo, useCallback } from 'react';
 import { rem } from '../../../core/theme/rem';
 import type { Session } from '../types/session';
 
@@ -8,11 +9,15 @@ interface SessionCardProps {
   session: Session;
 }
 
-export function SessionCard({ session }: SessionCardProps) {
+export const SessionCard = memo(function SessionCard({ session }: SessionCardProps) {
+  const handlePress = useCallback(() => {
+    router.push(`/seats/${session.id}`);
+  }, [session.id]);
+
   return (
     <Pressable
       style={styles.container}
-      onPress={() => router.push(`/seats/${session.id}`)}
+      onPress={handlePress}
       android_ripple={{ color: 'rgba(255, 255, 255, 0.1)' }}
     >
       <View style={styles.timeContainer}>
@@ -56,7 +61,7 @@ export function SessionCard({ session }: SessionCardProps) {
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
