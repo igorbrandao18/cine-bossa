@@ -210,55 +210,76 @@ const generateRandomRoom = () => {
 // Mock para carregar lista de sessões
 const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Session[]> => {
   return new Promise((resolve) => {
-    // Gerar entre 8 e 15 sessões aleatórias (mais sessões pois agora são vários dias)
+    // Gerar entre 8 e 15 sessões aleatórias
     const numberOfSessions = Math.floor(Math.random() * 8) + 8;
     const sessions: Session[] = [];
-    
-    // Array para controlar datas e horários já usados para não repetir
     const usedDateTimes: string[] = [];
-    
-    // Batch process sessions creation
-    const batchSize = 4;
-    for (let i = 0; i < numberOfSessions; i += batchSize) {
-      const batchEnd = Math.min(i + batchSize, numberOfSessions);
-      for (let j = i; j < batchEnd; j++) {
-        const { date, time, dateTime, isToday } = generateRandomDateTime(usedDateTimes);
-        usedDateTimes.push(dateTime);
-        
-        const room = generateRandomRoom();
-        
-        sessions.push({
-          id: `${movieId}-${j + 1}`,
-          movieId: String(movieId),
-          movieTitle,
-          room: `Sala ${room.number}`,
-          technology: room.technology,
-          time,
-          date,
-          isToday,
-          seats: generateSeats(),
-          price: room.price,
-          type: room.technology,
-          seatTypes: room.seatTypes,
-        });
-      }
-    }
-    
-    // Ordenar sessões primeiro por data e depois por horário
-    sessions.sort((a, b) => {
-      const dateA = a.date.split('/').reverse().join('');
-      const dateB = b.date.split('/').reverse().join('');
-      if (dateA !== dateB) return dateA.localeCompare(dateB);
-      
-      const timeA = a.time.split(':').map(Number);
-      const timeB = b.time.split(':').map(Number);
-      return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
-    });
 
-    // Reduced timeout from 1000ms to 300ms
-    setTimeout(() => {
-      resolve(sessions);
-    }, 300);
+    // Carregar primeira sessão imediatamente
+    const firstSession = generateSession(movieId, 0, usedDateTimes, movieTitle);
+    sessions.push(firstSession);
+
+    // Função para gerar uma sessão
+    function generateSession(movieId: number, index: number, usedDateTimes: string[], movieTitle: string): Session {
+      const { date, time, dateTime, isToday } = generateRandomDateTime(usedDateTimes);
+      usedDateTimes.push(dateTime);
+      const room = generateRandomRoom();
+      
+      return {
+        id: `${movieId}-${index + 1}`,
+        movieId: String(movieId),
+        movieTitle,
+        room: `Sala ${room.number}`,
+        technology: room.technology,
+        time,
+        date,
+        isToday,
+        seats: generateSeats(),
+        price: room.price,
+        type: room.technology,
+        seatTypes: room.seatTypes,
+      };
+    }
+
+    // Resolver primeira sessão imediatamente
+    resolve(sessions);
+
+    // Carregar as sessões restantes em batches
+    const batchSize = 4;
+    let currentIndex = 1;
+
+    const loadNextBatch = () => {
+      const batchEnd = Math.min(currentIndex + batchSize, numberOfSessions);
+      
+      for (let i = currentIndex; i < batchEnd; i++) {
+        const session = generateSession(movieId, i, usedDateTimes, movieTitle);
+        sessions.push(session);
+      }
+
+      // Ordenar sessões
+      sessions.sort((a, b) => {
+        const dateA = a.date.split('/').reverse().join('');
+        const dateB = b.date.split('/').reverse().join('');
+        if (dateA !== dateB) return dateA.localeCompare(dateB);
+        
+        const timeA = a.time.split(':').map(Number);
+        const timeB = b.time.split(':').map(Number);
+        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+      });
+
+      // Atualizar o store com as novas sessões
+      useSessionStore.setState({ sessions: [...sessions] });
+
+      currentIndex = batchEnd;
+      
+      // Se ainda houver mais sessões para carregar, agendar próximo batch
+      if (currentIndex < numberOfSessions) {
+        setTimeout(loadNextBatch, 100);
+      }
+    };
+
+    // Iniciar carregamento lazy após 100ms
+    setTimeout(loadNextBatch, 100);
   });
 };
 
