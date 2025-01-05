@@ -4,10 +4,10 @@ import { Text } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import QRCode from 'react-native-qrcode-svg';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors } from '@/core/theme/colors';
 import { Header } from '@/shared/components/Header';
+import { QRCodeSection } from './QRCodeSection';
+import { PaymentInstructions } from './PaymentInstructions';
+import { colors } from '@/core/theme/colors';
 import { styles } from './styles/pix-screen.styles';
 
 export default function PixScreen() {
@@ -34,61 +34,8 @@ export default function PixScreen() {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.qrSection}>
-            <View style={styles.qrWrapper}>
-              <QRCode
-                value={qrCodeValue}
-                size={200}
-                backgroundColor="white"
-              />
-            </View>
-
-            <View style={styles.qrInfo}>
-              <MaterialCommunityIcons 
-                name="qrcode" 
-                size={24} 
-                color="#00875F" 
-              />
-              <Text style={styles.qrInfoText}>
-                Escaneie o QR Code ou copie o código PIX
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.instructions}>
-            <View style={styles.step}>
-              <MaterialCommunityIcons
-                name="cellphone"
-                size={24}
-                color="#666"
-              />
-              <Text style={styles.stepText}>
-                Abra o app do seu banco
-              </Text>
-            </View>
-
-            <View style={styles.step}>
-              <MaterialCommunityIcons
-                name="qrcode-scan"
-                size={24}
-                color="#666"
-              />
-              <Text style={styles.stepText}>
-                Escaneie o QR Code ou copie o código
-              </Text>
-            </View>
-
-            <View style={styles.step}>
-              <MaterialCommunityIcons
-                name="check-circle"
-                size={24}
-                color="#666"
-              />
-              <Text style={styles.stepText}>
-                Confirme o pagamento no app
-              </Text>
-            </View>
-          </View>
+          <QRCodeSection qrCodeValue={qrCodeValue} />
+          <PaymentInstructions />
         </ScrollView>
 
         <LinearGradient

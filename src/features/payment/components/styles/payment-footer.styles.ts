@@ -2,20 +2,10 @@ import { StyleSheet } from 'react-native';
 import { rem } from '@/shared/utils/rem';
 
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    flexGrow: 1,
-  },
   footerGradient: {
     paddingTop: rem(2),
     paddingHorizontal: rem(1.5),
-    paddingBottom: rem(4.5),
+    paddingBottom: rem(1.5),
   },
   footer: {
     gap: rem(1),
