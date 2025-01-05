@@ -218,20 +218,19 @@ function PaymentMethodsComponent({
             end={{ x: 1, y: 1 }}
             style={styles.pixContainer}
           >
-            <MaterialCommunityIcons 
-              name="qrcode" 
-              size={rem(8)} 
-              color="#fff" 
-            />
             <View style={styles.pixInfo}>
+              <View style={styles.pixRow}>
+                <MaterialCommunityIcons 
+                  name="percent" 
+                  size={rem(1.25)} 
+                  color="#fff" 
+                />
+                <Text style={styles.pixDiscount}>
+                  5% de desconto no PIX
+                </Text>
+              </View>
               <Text style={styles.pixInstructions}>
-                Ao finalizar, você receberá o QR Code do PIX para pagamento
-              </Text>
-              <Text style={styles.pixDiscount}>
-                Desconto de 5% aplicado
-              </Text>
-              <Text style={styles.pixTotal}>
-                Total com desconto: R$ {(totalPrice * 0.95).toFixed(2)}
+                QR Code gerado após confirmação
               </Text>
             </View>
           </LinearGradient>
@@ -241,13 +240,24 @@ function PaymentMethodsComponent({
       <View style={styles.checkoutSection}>
         <View style={styles.totalPrice}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>
-            R$ {selectedMethod === 'pix' ? (totalPrice * 0.95).toFixed(2) : totalPrice.toFixed(2)}
-          </Text>
+          <View>
+            {selectedMethod === 'pix' && (
+              <Text style={styles.originalPrice}>
+                De: R$ {totalPrice.toFixed(2)}
+              </Text>
+            )}
+            <Text style={[
+              styles.totalValue,
+              selectedMethod === 'pix' && styles.discountedValue
+            ]}>
+              {selectedMethod === 'pix' ? 'Por: ' : ''}
+              R$ {selectedMethod === 'pix' ? (totalPrice * 0.95).toFixed(2) : totalPrice.toFixed(2)}
+            </Text>
+          </View>
         </View>
 
         <Button
-          title="Finalizar Compra"
+          title={selectedMethod === 'pix' ? 'Gerar QR Code PIX' : 'Finalizar Compra'}
           onPress={onFinishPurchase}
           disabled={!selectedMethod || ((selectedMethod === 'credit' || selectedMethod === 'debit') && !selectedCardId)}
           fullWidth
@@ -341,33 +351,29 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   pixSection: {
-    marginTop: rem(1.5),
+    marginTop: rem(1),
   },
   pixContainer: {
-    padding: rem(2),
-    borderRadius: rem(1),
-    alignItems: 'center',
-    gap: rem(1.5),
+    padding: rem(1),
+    borderRadius: rem(0.75),
   },
   pixInfo: {
-    alignItems: 'center',
-    gap: rem(1),
+    gap: rem(0.25),
   },
-  pixInstructions: {
-    fontSize: rem(0.875),
-    color: '#fff',
-    textAlign: 'center',
-    opacity: 0.9,
+  pixRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.5),
   },
   pixDiscount: {
-    fontSize: rem(1.125),
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  pixTotal: {
     fontSize: rem(1),
     color: '#fff',
     fontWeight: '500',
+  },
+  pixInstructions: {
+    fontSize: rem(0.75),
+    color: '#fff',
+    opacity: 0.8,
   },
   checkoutSection: {
     marginTop: 'auto',
@@ -390,6 +396,16 @@ const styles = StyleSheet.create({
     fontSize: rem(1.5),
     fontWeight: 'bold',
     color: '#fff',
+  },
+  originalPrice: {
+    fontSize: rem(0.875),
+    color: '#808080',
+    textDecorationLine: 'line-through',
+    textAlign: 'right',
+  },
+  discountedValue: {
+    color: '#00875F',
+    fontWeight: 'bold',
   },
 });
 
