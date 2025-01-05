@@ -8,12 +8,18 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    position: 'relative',
   },
   contentContainer: {
     padding: rem(1),
     gap: rem(1.5),
+    paddingBottom: rem(5),
   },
   footerGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: rem(1),
     paddingBottom: 0,
   },
