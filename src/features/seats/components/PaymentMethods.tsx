@@ -202,6 +202,19 @@ function PaymentMethodsComponent({
     );
   }, [selectedMethod, selectedCard, handleMethodPress, renderCardSection]);
 
+  const handleFinishPurchase = useCallback(() => {
+    if (selectedMethod === 'pix') {
+      router.push({
+        pathname: '/(stack)/pix',
+        params: {
+          amount: (totalPrice * 0.95).toFixed(2)
+        }
+      } as any);
+    } else {
+      onFinishPurchase();
+    }
+  }, [selectedMethod, totalPrice, onFinishPurchase]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Formas de Pagamento</Text>
@@ -248,17 +261,21 @@ function PaymentMethodsComponent({
             )}
             <Text style={[
               styles.totalValue,
-              selectedMethod === 'pix' && styles.discountedValue
+              selectedMethod === 'pix' && styles.pixValue
             ]}>
-              {selectedMethod === 'pix' ? 'Por: ' : ''}
-              R$ {selectedMethod === 'pix' ? (totalPrice * 0.95).toFixed(2) : totalPrice.toFixed(2)}
+              {selectedMethod === 'pix' 
+                ? `R$ ${(totalPrice * 0.95).toFixed(2)}`
+                : `R$ ${totalPrice.toFixed(2)}`
+              }
             </Text>
           </View>
         </View>
 
         <Button
-          title={selectedMethod === 'pix' ? 'Gerar QR Code PIX' : 'Finalizar Compra'}
-          onPress={onFinishPurchase}
+          title="Finalizar Compra"
+          onPress={handleFinishPurchase}
+          variant="primary"
+          size="large"
           disabled={!selectedMethod || ((selectedMethod === 'credit' || selectedMethod === 'debit') && !selectedCardId)}
           fullWidth
         />
@@ -403,9 +420,12 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     textAlign: 'right',
   },
-  discountedValue: {
+  pixValue: {
     color: '#00875F',
     fontWeight: 'bold',
+  },
+  checkoutButton: {
+    marginTop: rem(1),
   },
 });
 
