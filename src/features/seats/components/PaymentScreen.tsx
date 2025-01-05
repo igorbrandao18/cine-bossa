@@ -10,16 +10,19 @@ import { PurchaseSummary } from './PurchaseSummary';
 import { PaymentMethods } from './PaymentMethods';
 import { Header } from '../../../shared/components/Header';
 import { styles } from './styles/payment-screen.styles';
+import type { Session, Seat } from '@/features/sessions/types/session';
 
 const PAYMENT_METHODS = [
   { id: 'credit', label: 'Cartão de Crédito', icon: 'credit-card' },
   { id: 'pix', label: 'PIX', icon: 'qrcode' },
-  { id: 'boleto', label: 'Boleto', icon: 'barcode' },
+  { id: 'debit', label: 'Cartão de Débito', icon: 'credit-card-outline' },
 ] as const;
+
+type PaymentMethodId = typeof PAYMENT_METHODS[number]['id'];
 
 export function PaymentScreen() {
   const { currentSession, selectedSeats, clearSelectedSeats } = useSessionStore();
-  const [selectedMethod, setSelectedMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('credit');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>('credit');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,6 +41,10 @@ export function PaymentScreen() {
     }, 0);
   };
 
+  const handleMethodSelect = (methodId: string) => {
+    setSelectedMethod(methodId as PaymentMethodId);
+  };
+
   const handlePayment = async () => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -48,6 +55,27 @@ export function PaymentScreen() {
   if (!currentSession || selectedSeats.length === 0) {
     return null;
   }
+
+  const sessionWithStatus: Session = {
+    id: currentSession.id,
+    movieId: Number(currentSession.movieId),
+    movieTitle: currentSession.movieTitle,
+    date: currentSession.date,
+    time: currentSession.time,
+    room: currentSession.room,
+    price: currentSession.price,
+    status: 'scheduled',
+    technology: currentSession.technology,
+    seats: currentSession.seats.map(seat => ({
+      id: seat.id,
+      row: seat.row,
+      number: seat.number,
+      status: (seat.status === 'selected' ? 'reserved' : seat.status) as Seat['status'],
+      type: (seat.type === 'couple' ? 'companion' : 
+             seat.type === 'premium' ? 'standard' : seat.type) as Seat['type'],
+      price: seat.price
+    }))
+  };
 
   return (
     <View style={styles.container}>
@@ -63,14 +91,16 @@ export function PaymentScreen() {
           showsVerticalScrollIndicator={false}
         >
           <PurchaseSummary 
-            currentSession={currentSession}
+            currentSession={sessionWithStatus}
             selectedSeats={selectedSeats}
             getTotalPrice={getTotalPrice}
           />
 
           <PaymentMethods
             selectedMethod={selectedMethod}
-            onSelectMethod={setSelectedMethod}
+            onSelectMethod={handleMethodSelect}
+            totalPrice={getTotalPrice() * 1.1}
+            onFinishPurchase={handlePayment}
           />
         </ScrollView>
 

@@ -1,12 +1,14 @@
 export interface Session {
   id: string;
   movieId: number;
+  movieTitle: string;
   date: string;
   time: string;
   room: string;
   price: number;
   seats: Seat[];
   status: 'scheduled' | 'in_progress' | 'finished' | 'cancelled';
+  technology: string;
 }
 
 export interface Seat {
@@ -14,8 +16,8 @@ export interface Seat {
   row: string;
   number: string;
   status: 'available' | 'reserved' | 'occupied';
-  type: 'standard' | 'wheelchair' | 'companion';
-  price?: number;
+  type: 'standard' | 'wheelchair' | 'companion' | 'couple' | 'premium';
+  price: number;
 }
 
 export interface SeatMap {

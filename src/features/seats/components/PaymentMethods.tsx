@@ -1,19 +1,12 @@
 import React, { useCallback, memo } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { usePaymentStore } from '../stores/paymentStore';
-import { useCardStore } from '../../payment/stores/cardStore';
 import { PaymentMethod } from './PaymentMethod';
-import { AddCardButton } from './AddCardButton';
+import { Button } from '../../../shared/components/Button';
 import { rem } from '../../../core/theme/rem';
-
-const CARD_GRADIENTS = {
-  visa: ['#1a1f71', '#0055b8'],
-  mastercard: ['#eb001b', '#f79e1b'],
-} as const;
 
 const PAYMENT_METHODS = [
   { 
@@ -39,49 +32,19 @@ const PAYMENT_METHODS = [
 interface PaymentMethodsProps {
   selectedMethod: string;
   onSelectMethod: (methodId: string) => void;
+  totalPrice: number;
+  onFinishPurchase: () => void;
+  movieTitle?: string;
 }
 
-const SavedCardItem = memo(({ card, selected, onPress }: any) => (
-  <Pressable onPress={onPress}>
-    <LinearGradient
-      colors={CARD_GRADIENTS[card.brand as keyof typeof CARD_GRADIENTS] || ['#333', '#666']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.cardContainer, selected && styles.selectedCard]}
-    >
-      <View style={styles.cardHeader}>
-        <MaterialCommunityIcons name="chip" size={rem(2)} color="#FFD700" />
-        {selected && (
-          <MaterialCommunityIcons name="check-circle" size={rem(1.5)} color="#fff" />
-        )}
-      </View>
-      
-      <Text style={styles.cardNumber}>•••• •••• •••• {card.last4}</Text>
-      
-      <View style={styles.cardFooter}>
-        <View>
-          <Text style={styles.cardLabel}>TITULAR</Text>
-          <Text style={styles.cardValue}>{card.name}</Text>
-        </View>
-        <View>
-          <Text style={styles.cardLabel}>VALIDADE</Text>
-          <Text style={styles.cardValue}>{card.expiryDate}</Text>
-        </View>
-        <MaterialCommunityIcons
-          name={card.brand === 'visa' ? 'credit-card' : 'credit-card-outline'}
-          size={rem(2.5)}
-          color="#fff"
-          style={styles.brandIcon}
-        />
-      </View>
-    </LinearGradient>
-  </Pressable>
-));
-
-function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMethodsProps) {
+function PaymentMethodsComponent({ 
+  selectedMethod, 
+  onSelectMethod,
+  totalPrice,
+  onFinishPurchase,
+  movieTitle
+}: PaymentMethodsProps) {
   const selectedCardId = usePaymentStore(state => state.selectedCardId);
-  const cards = useCardStore(state => state.cards);
-  const selectedCard = cards.find(card => card.id === selectedCardId);
   
   const handleMethodPress = useCallback((methodId: string) => {
     onSelectMethod(methodId);
@@ -97,17 +60,15 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
     }
   }, [onSelectMethod, selectedCardId]);
 
-  const handleAddCard = useCallback(() => {
-    router.push('/payment/add-card');
-  }, []);
-
   const methods = PAYMENT_METHODS.map(method => ({
     ...method,
-    selectedCard: (method.id === 'credit' || method.id === 'debit') ? selectedCard : undefined
   }));
 
   return (
     <View style={styles.container}>
+      {movieTitle && (
+        <Text style={styles.movieTitle}>{movieTitle}</Text>
+      )}
       <Text style={styles.title}>Formas de Pagamento</Text>
       
       <View style={styles.methodsList}>
@@ -121,18 +82,27 @@ function PaymentMethodsComponent({ selectedMethod, onSelectMethod }: PaymentMeth
         ))}
       </View>
 
-      <View style={styles.cardsSection}>
-        <Text style={styles.sectionTitle}>Cartões salvos</Text>
-        <View style={styles.cardsList}>
-          {cards.map((card) => (
-            <SavedCardItem
-              key={card.id}
-              card={card}
-              selected={card.id === selectedCardId}
-              onPress={() => handleMethodPress('credit')}
-            />
-          ))}
-          <AddCardButton onPress={handleAddCard} />
+      <View style={styles.checkoutSection}>
+        <View style={styles.totalPrice}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>
+            R$ {totalPrice.toFixed(2)}
+          </Text>
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Finalizar Compra"
+            onPress={onFinishPurchase}
+            disabled={!selectedMethod}
+            fullWidth
+          />
+          <MaterialCommunityIcons 
+            name="ticket-confirmation" 
+            size={rem(1.5)} 
+            color="#fff" 
+            style={styles.buttonIcon}
+          />
         </View>
       </View>
     </View>
@@ -153,69 +123,40 @@ const styles = StyleSheet.create({
   methodsList: {
     gap: rem(1),
   },
-  cardsSection: {
+  checkoutSection: {
     marginTop: rem(2),
-  },
-  sectionTitle: {
-    fontSize: rem(1),
-    color: '#fff',
-    marginBottom: rem(1),
-  },
-  cardsList: {
     gap: rem(1),
+    paddingTop: rem(2),
+    borderTopWidth: 1,
+    borderTopColor: '#333',
   },
-  cardContainer: {
-    padding: rem(1.5),
-    borderRadius: rem(1),
-    height: rem(11),
-    justifyContent: 'space-between',
-  },
-  selectedCard: {
-    transform: [{ scale: 0.98 }],
-  },
-  cardHeader: {
+  totalPrice: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  cardNumber: {
+  totalLabel: {
+    fontSize: rem(1),
+    color: '#999',
+  },
+  totalValue: {
+    fontSize: rem(1.5),
+    color: '#fff',
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    position: 'relative',
+  },
+  buttonIcon: {
+    position: 'absolute',
+    right: rem(1),
+    top: '50%',
+    transform: [{ translateY: -12 }],
+  },
+  movieTitle: {
     fontSize: rem(1.25),
     color: '#fff',
-    letterSpacing: rem(0.2),
-    fontFamily: 'monospace',
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  cardLabel: {
-    fontSize: rem(0.625),
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: rem(0.25),
-  },
-  cardValue: {
-    fontSize: rem(0.875),
-    color: '#fff',
-    textTransform: 'uppercase',
-  },
-  brandIcon: {
-    opacity: 0.9,
-  },
-  addCardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: rem(0.75),
-    padding: rem(1.5),
-    borderRadius: rem(1),
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#E50914',
-  },
-  addCardText: {
-    color: '#E50914',
-    fontSize: rem(1),
-    fontWeight: '500',
+    fontWeight: '600',
+    marginBottom: rem(1.5),
   },
 }); 

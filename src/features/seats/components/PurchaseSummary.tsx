@@ -55,7 +55,8 @@ export function PurchaseSummary({ currentSession, selectedSeats, getTotalPrice }
                   <Text style={styles.seatType}>
                     {seat.type === 'couple' ? 'Namorados' :
                      seat.type === 'premium' ? 'Premium' :
-                     seat.type === 'wheelchair' ? 'Acessível' : 'Padrão'}
+                     seat.type === 'wheelchair' ? 'Acessível' :
+                     seat.type === 'companion' ? 'Acompanhante' : 'Padrão'}
                   </Text>
                   <Text style={styles.seatPrice}>
                     R$ {seat.price.toFixed(2)}
