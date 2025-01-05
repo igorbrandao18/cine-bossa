@@ -34,15 +34,13 @@ interface PaymentMethodsProps {
   onSelectMethod: (methodId: string) => void;
   totalPrice: number;
   onFinishPurchase: () => void;
-  movieTitle?: string;
 }
 
 function PaymentMethodsComponent({ 
   selectedMethod, 
   onSelectMethod,
   totalPrice,
-  onFinishPurchase,
-  movieTitle
+  onFinishPurchase
 }: PaymentMethodsProps) {
   const selectedCardId = usePaymentStore(state => state.selectedCardId);
   
@@ -66,9 +64,6 @@ function PaymentMethodsComponent({
 
   return (
     <View style={styles.container}>
-      {movieTitle && (
-        <Text style={styles.movieTitle}>{movieTitle}</Text>
-      )}
       <Text style={styles.title}>Formas de Pagamento</Text>
       
       <View style={styles.methodsList}>
@@ -152,11 +147,5 @@ const styles = StyleSheet.create({
     right: rem(1),
     top: '50%',
     transform: [{ translateY: -12 }],
-  },
-  movieTitle: {
-    fontSize: rem(1.25),
-    color: '#fff',
-    fontWeight: '600',
-    marginBottom: rem(1.5),
   },
 }); 
