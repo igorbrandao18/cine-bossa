@@ -1,12 +1,12 @@
-import React, { useCallback, memo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useCallback, memo, useEffect } from 'react';
+import { View, StyleSheet, Animated, Pressable } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { usePaymentStore } from '../stores/paymentStore';
-import { PaymentMethod } from './PaymentMethod';
 import { Button } from '../../../shared/components/Button';
 import { rem } from '../../../core/theme/rem';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PAYMENT_METHODS = [
   { 
@@ -14,18 +14,21 @@ const PAYMENT_METHODS = [
     label: 'Cartão de Crédito',
     icon: 'credit-card',
     description: 'Parcele em até 12x sem juros',
+    gradient: ['#E50914', '#831010']
   },
   { 
     id: 'pix',
     label: 'PIX',
     icon: 'qrcode',
     description: 'Ganhe 5% de desconto à vista',
+    gradient: ['#00875F', '#015F43']
   },
   { 
     id: 'debit',
     label: 'Cartão de Débito',
     icon: 'credit-card-outline',
     description: 'Débito instantâneo sem taxas',
+    gradient: ['#E50914', '#831010']
   }
 ] as const;
 
@@ -42,11 +45,43 @@ function PaymentMethodsComponent({
   totalPrice,
   onFinishPurchase
 }: PaymentMethodsProps) {
+  // Estados do store com seletores específicos para melhor performance
   const selectedCardId = usePaymentStore(state => state.selectedCardId);
+  const savedCards = usePaymentStore(state => state.cards);
+  const setSelectedMethod = usePaymentStore(state => state.setSelectedMethod);
+  const setSelectedCard = usePaymentStore(state => state.setSelectedCard);
+
+  // Estado local para forçar atualização
+  const [updateKey, setUpdateKey] = React.useState(0);
   
+  // Encontra o cartão selecionado com memoização
+  const selectedCard = React.useMemo(() => 
+    selectedCardId ? savedCards.find(card => card.id === selectedCardId) : null
+  , [selectedCardId, savedCards, updateKey]);
+
+  // Atualiza quando a tela recebe foco
+  useFocusEffect(
+    useCallback(() => {
+      if (selectedCardId) {
+        // Força método como crédito
+        setSelectedMethod('credit');
+        onSelectMethod('credit');
+        // Força atualização do componente
+        setUpdateKey(prev => prev + 1);
+      }
+    }, [selectedCardId, setSelectedMethod, onSelectMethod])
+  );
+
+  // Monitora mudanças no cartão selecionado
+  useEffect(() => {
+    if (selectedCardId) {
+      setSelectedMethod('credit');
+      onSelectMethod('credit');
+      setUpdateKey(prev => prev + 1);
+    }
+  }, [selectedCardId, setSelectedMethod, onSelectMethod]);
+
   const handleMethodPress = useCallback((methodId: string) => {
-    onSelectMethod(methodId);
-    
     if (methodId === 'credit' || methodId === 'debit') {
       router.push({
         pathname: '/payment/select-card',
@@ -55,75 +90,291 @@ function PaymentMethodsComponent({
           selectedCardId: selectedCardId || ''
         }
       });
+    } else {
+      onSelectMethod(methodId);
+      setSelectedMethod(methodId);
+      setSelectedCard(null);
     }
-  }, [onSelectMethod, selectedCardId]);
+  }, [onSelectMethod, selectedCardId, setSelectedCard, setSelectedMethod]);
 
-  const methods = PAYMENT_METHODS.map(method => ({
-    ...method,
-  }));
+  const renderCardSection = useCallback((method: typeof PAYMENT_METHODS[number]) => {
+    const isCardMethod = method.id === 'credit' || method.id === 'debit';
+    
+    // Se não for método de cartão, mostra só a descrição
+    if (!isCardMethod) {
+      return (
+        <Text style={styles.methodDescription}>
+          {method.description}
+        </Text>
+      );
+    }
+
+    // Se tiver cartão selecionado
+    if (selectedCard) {
+      return (
+        <View style={styles.selectedCardInfo}>
+          <Text style={styles.cardName}>
+            {selectedCard.name}
+          </Text>
+          <Text style={styles.cardDetails}>
+            •••• {selectedCard.last4} | {selectedCard.brand.toUpperCase()}
+          </Text>
+          <Pressable 
+            style={styles.changeCard}
+            onPress={() => handleMethodPress(method.id)}
+          >
+            <MaterialCommunityIcons
+              name="credit-card-edit"
+              size={rem(1)}
+              color="#fff"
+            />
+            <Text style={styles.changeCardText}>
+              Trocar cartão
+            </Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    // Se não tiver cartão selecionado
+    return (
+      <>
+        <Text style={styles.methodDescription}>
+          {method.description}
+        </Text>
+        <Pressable 
+          style={styles.addCardButton}
+          onPress={() => handleMethodPress(method.id)}
+        >
+          <MaterialCommunityIcons
+            name="credit-card-plus"
+            size={rem(1.25)}
+            color="#fff"
+          />
+          <Text style={styles.addCardText}>
+            Adicionar Cartão
+          </Text>
+        </Pressable>
+      </>
+    );
+  }, [selectedCard, handleMethodPress]);
+
+  const renderMethod = useCallback((method: typeof PAYMENT_METHODS[number]) => {
+    const isSelected = selectedMethod === method.id;
+    const hasSelectedCard = selectedCard && (method.id === 'credit' || method.id === 'debit');
+
+    return (
+      <Pressable
+        key={method.id}
+        onPress={() => handleMethodPress(method.id)}
+      >
+        <LinearGradient
+          colors={method.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            styles.methodCard,
+            isSelected && styles.selectedMethod,
+            hasSelectedCard && styles.hasCard
+          ]}
+        >
+          <View style={styles.methodHeader}>
+            <MaterialCommunityIcons
+              name={hasSelectedCard ? 'credit-card-check' : method.icon}
+              size={rem(1.75)}
+              color="#fff"
+            />
+            {isSelected && (
+              <MaterialCommunityIcons
+                name="check-circle"
+                size={rem(1.25)}
+                color="#fff"
+              />
+            )}
+          </View>
+
+          <View style={styles.methodContent}>
+            <Text style={styles.methodLabel}>{method.label}</Text>
+            {renderCardSection(method)}
+          </View>
+        </LinearGradient>
+      </Pressable>
+    );
+  }, [selectedMethod, selectedCard, handleMethodPress, renderCardSection]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Formas de Pagamento</Text>
       
       <View style={styles.methodsList}>
-        {methods.map((method) => (
-          <PaymentMethod
-            key={method.id}
-            method={method}
-            selected={selectedMethod === method.id}
-            onPress={() => handleMethodPress(method.id)}
-          />
-        ))}
+        {PAYMENT_METHODS.map(renderMethod)}
       </View>
+
+      {selectedMethod === 'pix' && (
+        <View style={styles.pixSection}>
+          <LinearGradient
+            colors={['#00875F', '#015F43']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.pixContainer}
+          >
+            <MaterialCommunityIcons 
+              name="qrcode" 
+              size={rem(8)} 
+              color="#fff" 
+            />
+            <View style={styles.pixInfo}>
+              <Text style={styles.pixInstructions}>
+                Ao finalizar, você receberá o QR Code do PIX para pagamento
+              </Text>
+              <Text style={styles.pixDiscount}>
+                Desconto de 5% aplicado
+              </Text>
+              <Text style={styles.pixTotal}>
+                Total com desconto: R$ {(totalPrice * 0.95).toFixed(2)}
+              </Text>
+            </View>
+          </LinearGradient>
+        </View>
+      )}
 
       <View style={styles.checkoutSection}>
         <View style={styles.totalPrice}>
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>
-            R$ {totalPrice.toFixed(2)}
+            R$ {selectedMethod === 'pix' ? (totalPrice * 0.95).toFixed(2) : totalPrice.toFixed(2)}
           </Text>
         </View>
 
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Finalizar Compra"
-            onPress={onFinishPurchase}
-            disabled={!selectedMethod}
-            fullWidth
-          />
-          <MaterialCommunityIcons 
-            name="ticket-confirmation" 
-            size={rem(1.5)} 
-            color="#fff" 
-            style={styles.buttonIcon}
-          />
-        </View>
+        <Button
+          title="Finalizar Compra"
+          onPress={onFinishPurchase}
+          disabled={!selectedMethod || ((selectedMethod === 'credit' || selectedMethod === 'debit') && !selectedCardId)}
+          fullWidth
+        />
       </View>
     </View>
   );
 }
 
-export const PaymentMethods = memo(PaymentMethodsComponent);
-
 const styles = StyleSheet.create({
   container: {
-    gap: rem(1.5),
+    flex: 1,
+    padding: rem(1),
+    backgroundColor: '#141414',
   },
   title: {
-    fontSize: rem(1.125),
+    fontSize: rem(1.5),
+    fontWeight: 'bold',
+    marginBottom: rem(1.5),
     color: '#fff',
-    marginBottom: rem(1),
   },
   methodsList: {
     gap: rem(1),
   },
-  checkoutSection: {
-    marginTop: rem(2),
+  methodCard: {
+    padding: rem(1.25),
+    borderRadius: rem(1),
+    minHeight: rem(8),
+  },
+  selectedMethod: {
+    transform: [{ scale: 0.98 }],
+  },
+  hasCard: {
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  methodHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: rem(1),
+  },
+  methodContent: {
+    gap: rem(0.5),
+  },
+  methodLabel: {
+    fontSize: rem(1.125),
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  methodDescription: {
+    fontSize: rem(0.875),
+    color: '#fff',
+    opacity: 0.8,
+  },
+  selectedCardInfo: {
+    marginTop: rem(0.5),
+    gap: rem(0.25),
+  },
+  cardName: {
+    fontSize: rem(0.875),
+    color: '#fff',
+    fontWeight: '500',
+  },
+  cardDetails: {
+    fontSize: rem(0.875),
+    color: '#fff',
+    opacity: 0.8,
+  },
+  changeCard: {
+    marginTop: rem(0.5),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.25),
+  },
+  changeCardText: {
+    fontSize: rem(0.75),
+    color: '#fff',
+    textDecorationLine: 'underline',
+  },
+  addCardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.5),
+    marginTop: rem(1),
+    opacity: 0.9,
+  },
+  addCardText: {
+    fontSize: rem(0.875),
+    color: '#fff',
+    fontWeight: '500',
+  },
+  pixSection: {
+    marginTop: rem(1.5),
+  },
+  pixContainer: {
+    padding: rem(2),
+    borderRadius: rem(1),
+    alignItems: 'center',
+    gap: rem(1.5),
+  },
+  pixInfo: {
+    alignItems: 'center',
     gap: rem(1),
+  },
+  pixInstructions: {
+    fontSize: rem(0.875),
+    color: '#fff',
+    textAlign: 'center',
+    opacity: 0.9,
+  },
+  pixDiscount: {
+    fontSize: rem(1.125),
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  pixTotal: {
+    fontSize: rem(1),
+    color: '#fff',
+    fontWeight: '500',
+  },
+  checkoutSection: {
+    marginTop: 'auto',
     paddingTop: rem(2),
     borderTopWidth: 1,
     borderTopColor: '#333',
+    gap: rem(1.5),
   },
   totalPrice: {
     flexDirection: 'row',
@@ -131,21 +382,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   totalLabel: {
-    fontSize: rem(1),
-    color: '#999',
+    fontSize: rem(1.125),
+    color: '#808080',
+    fontWeight: '500',
   },
   totalValue: {
     fontSize: rem(1.5),
+    fontWeight: 'bold',
     color: '#fff',
-    fontWeight: '600',
   },
-  buttonContainer: {
-    position: 'relative',
-  },
-  buttonIcon: {
-    position: 'absolute',
-    right: rem(1),
-    top: '50%',
-    transform: [{ translateY: -12 }],
-  },
-}); 
+});
+
+export const PaymentMethods = memo(PaymentMethodsComponent); 

@@ -7,30 +7,15 @@ import { AddCardButton } from '../../features/seats/components/AddCardButton';
 import { usePaymentStore } from '../../features/seats/stores/paymentStore';
 import { rem } from '../../core/theme/rem';
 
-// Mover para um service depois
-const SAVED_CARDS = [
-  {
-    id: 'card1',
-    last4: '4567',
-    brand: 'visa',
-    name: 'João Silva',
-    expiryDate: '12/25'
-  },
-  {
-    id: 'card2',
-    last4: '8901',
-    brand: 'mastercard',
-    name: 'João Silva',
-    expiryDate: '08/24'
-  }
-];
-
 export default function SelectCardScreen() {
   const { type, selectedCardId } = useLocalSearchParams<{ type: string; selectedCardId: string }>();
+  const cards = usePaymentStore(state => state.cards);
   const setSelectedCard = usePaymentStore(state => state.setSelectedCard);
+  const setSelectedMethod = usePaymentStore(state => state.setSelectedMethod);
 
   const handleCardSelect = (cardId: string) => {
     setSelectedCard(cardId);
+    setSelectedMethod('credit');
     router.back();
   };
 
@@ -47,7 +32,7 @@ export default function SelectCardScreen() {
       
       <ScrollView style={styles.content}>
         <View style={styles.cardsList}>
-          {SAVED_CARDS.map((card) => (
+          {cards.map((card) => (
             <SavedCard
               key={card.id}
               card={card}
