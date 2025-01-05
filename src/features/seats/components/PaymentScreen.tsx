@@ -5,6 +5,8 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSessionStore } from '@/features/sessions/stores/sessionStore';
+import { useTicketStore } from '@/features/tickets/stores/ticketStore';
+import { useMovieDetails } from '@/features/movies/hooks/useMovieDetails';
 import { colors } from '@/core/theme/colors';
 import { PurchaseSummary } from './PurchaseSummary';
 import { PaymentMethods } from './PaymentMethods';
@@ -22,8 +24,12 @@ type PaymentMethodId = typeof PAYMENT_METHODS[number]['id'];
 
 export function PaymentScreen() {
   const { currentSession, selectedSeats, clearSelectedSeats } = useSessionStore();
+  const { addTicket } = useTicketStore();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>('credit');
   const [loading, setLoading] = useState(false);
+
+  // Carrega os detalhes do filme para obter o poster_path
+  const { movie } = useMovieDetails(Number(currentSession?.movieId));
 
   useEffect(() => {
     if (!currentSession || selectedSeats.length === 0) {
@@ -46,10 +52,41 @@ export function PaymentScreen() {
   };
 
   const handlePayment = async () => {
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    clearSelectedSeats();
-    router.push('/(stack)/success');
+    try {
+      setLoading(true);
+      
+      // Simula o processamento do pagamento
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      if (!currentSession || !movie) return;
+
+      // Cria o novo ingresso
+      await addTicket({
+        movieId: Number(currentSession.movieId),
+        movieTitle: currentSession.movieTitle,
+        posterPath: movie.poster_path,
+        date: currentSession.date,
+        time: currentSession.time,
+        room: currentSession.room,
+        seats: selectedSeats.map(seatId => {
+          const seat = currentSession.seats.find(s => s.id === seatId);
+          return `${seat?.row}${seat?.number}`;
+        }),
+        price: getTotalPrice() * 1.1, // Inclui a taxa de serviço
+        userId: 'user123', // Você deve pegar o ID do usuário atual
+        sessionId: currentSession.id,
+        purchaseDate: new Date().toISOString(),
+      });
+
+      clearSelectedSeats();
+      // Navega para a tela de ingressos após o sucesso
+      router.push('/tickets');
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      // Aqui você pode adicionar um tratamento de erro adequado
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!currentSession || selectedSeats.length === 0) {
