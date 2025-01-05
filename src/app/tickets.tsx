@@ -24,6 +24,8 @@ import { rem } from '../core/theme/rem';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { Header } from '../shared/components/Header';
+import { colors } from '../core/theme/colors';
+import { theme } from '../core/theme';
 
 const { width, height } = Dimensions.get('window');
 const TICKET_HEIGHT = height * 0.65;
@@ -100,10 +102,11 @@ export default function Tickets() {
           transition={300}
         />
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.9)']}
+          colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
+          locations={[0.4, 0.8, 1]}
           style={styles.gradient}
         />
-        <BlurView intensity={20} style={styles.ticketContent}>
+        <BlurView intensity={15} tint="dark" style={styles.ticketContent}>
           <View style={styles.ticketHeader}>
             <Text style={styles.movieTitle}>{ticket.movieTitle}</Text>
             <View style={[styles.status, { backgroundColor: getStatusColor(ticket.status) }]}>
@@ -113,21 +116,21 @@ export default function Tickets() {
 
           <View style={styles.ticketDetails}>
             <View style={styles.detailRow}>
-              <MaterialCommunityIcons name="calendar" size={20} color="#fff" />
+              <MaterialCommunityIcons name="calendar" size={20} color={colors.textSecondary} />
               <Text style={styles.detailText}>
                 {format(new Date(ticket.date), "dd 'de' MMMM", { locale: ptBR })}
               </Text>
             </View>
             <View style={styles.detailRow}>
-              <MaterialCommunityIcons name="clock-outline" size={20} color="#fff" />
+              <MaterialCommunityIcons name="clock-outline" size={20} color={colors.textSecondary} />
               <Text style={styles.detailText}>{ticket.time}</Text>
             </View>
             <View style={styles.detailRow}>
-              <MaterialCommunityIcons name="theater" size={20} color="#fff" />
+              <MaterialCommunityIcons name="theater" size={20} color={colors.textSecondary} />
               <Text style={styles.detailText}>Sala {ticket.room}</Text>
             </View>
             <View style={styles.detailRow}>
-              <MaterialCommunityIcons name="seat" size={20} color="#fff" />
+              <MaterialCommunityIcons name="seat" size={20} color={colors.textSecondary} />
               <Text style={styles.detailText}>Assentos: {ticket.seats.join(', ')}</Text>
             </View>
           </View>
@@ -140,7 +143,7 @@ export default function Tickets() {
               <QRCode
                 value={ticket.qrCode}
                 size={120}
-                color="#fff"
+                color={colors.text}
                 backgroundColor="transparent"
               />
             </Animated.View>
@@ -168,26 +171,28 @@ export default function Tickets() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
       <Header
         title="Meus Ingressos"
         variant="transparent"
         alignment="center"
-        rightAction={
-          isExpanded.value === 1
-            ? {
-                icon: 'close',
-                onPress: handleClose,
-              }
-            : undefined
-        }
       />
 
       <SafeAreaView style={styles.content} edges={['bottom']}>
+        {isExpanded.value === 1 && (
+          <IconButton
+            icon="close"
+            size={24}
+            iconColor={colors.text}
+            onPress={handleClose}
+            style={styles.closeButton}
+          />
+        )}
+
         {tickets.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="ticket-outline" size={64} color="#666" />
+            <MaterialCommunityIcons name="ticket-outline" size={64} color={colors.textMuted} />
             <Text style={styles.emptyText}>
               Você ainda não possui ingressos
             </Text>
@@ -209,13 +214,13 @@ export default function Tickets() {
 const getStatusColor = (status: Ticket['status']) => {
   switch (status) {
     case 'valid':
-      return '#4CAF50';
+      return colors.success;
     case 'used':
-      return '#9E9E9E';
+      return colors.textMuted;
     case 'expired':
-      return '#FF453A';
+      return colors.error;
     default:
-      return '#9E9E9E';
+      return colors.textMuted;
   }
 };
 
@@ -235,6 +240,7 @@ const getStatusText = (status: Ticket['status']) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -247,11 +253,15 @@ const styles = StyleSheet.create({
     height: TICKET_HEIGHT,
     borderRadius: rem(1.5),
     overflow: 'hidden',
+    backgroundColor: 'transparent',
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: rem(0.125),
+    },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: rem(0.5),
   },
   ticketImage: {
     width: '100%',
@@ -264,12 +274,14 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: '100%',
+    backgroundColor: colors.overlay.darker,
   },
   ticketContent: {
     flex: 1,
     padding: rem(1.5),
     justifyContent: 'flex-end',
     overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
   ticketHeader: {
     flexDirection: 'row',
@@ -280,7 +292,7 @@ const styles = StyleSheet.create({
   movieTitle: {
     fontSize: rem(1.5),
     fontWeight: 'bold',
-    color: '#fff',
+    color: colors.text,
     flex: 1,
     marginRight: rem(1),
   },
@@ -290,7 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: rem(0.5),
   },
   statusText: {
-    color: '#fff',
+    color: colors.text,
     fontSize: rem(0.75),
     fontWeight: '600',
   },
@@ -303,15 +315,14 @@ const styles = StyleSheet.create({
     gap: rem(0.5),
   },
   detailText: {
-    color: '#fff',
+    color: colors.textSecondary,
     fontSize: rem(0.875),
-    opacity: 0.9,
   },
   qrContainer: {
     alignItems: 'center',
     marginTop: rem(1.5),
-    padding: rem(1),
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: rem(1.5),
+    backgroundColor: colors.overlay.dark,
     borderRadius: rem(1),
     alignSelf: 'center',
   },
@@ -320,7 +331,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: '#FF453A',
+    color: colors.error,
     marginTop: rem(1),
     textAlign: 'center',
   },
@@ -328,11 +339,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: rem(1),
+    gap: rem(1.5),
   },
   emptyText: {
-    color: '#666',
-    fontSize: rem(1),
+    color: colors.textSecondary,
+    fontSize: rem(1.125),
     textAlign: 'center',
+    maxWidth: '80%',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: rem(1),
+    right: rem(1),
+    backgroundColor: colors.overlay.dark,
   },
 }); 
