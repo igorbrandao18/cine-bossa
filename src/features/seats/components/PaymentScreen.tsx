@@ -78,9 +78,16 @@ export function PaymentScreen() {
         purchaseDate: new Date().toISOString(),
       });
 
+      // Limpa todos os estados
       clearSelectedSeats();
-      // Navega para a tela de ingressos após o sucesso
-      router.push('/tickets');
+      useSessionStore.setState({ 
+        currentSession: null,
+        selectedSession: null,
+        selectedSeats: []
+      });
+      
+      // Navega para a tela de sucesso primeiro
+      router.push('/(stack)/success');
     } catch (error) {
       console.error('Erro ao processar pagamento:', error);
       // Aqui você pode adicionar um tratamento de erro adequado

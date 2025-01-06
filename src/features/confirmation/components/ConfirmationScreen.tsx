@@ -41,12 +41,12 @@ export function ConfirmationScreen({ onFinish }: ConfirmationScreenProps) {
       </Text>
 
       <Button 
-        mode="contained"
-        style={styles.button}
+        variant="primary"
+        size="large"
         onPress={onFinish}
-      >
-        Voltar para o início
-      </Button>
+        title="Ver meus ingressos"
+        fullWidth
+      />
     </View>
   );
 }

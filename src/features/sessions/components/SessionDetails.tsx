@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { Button } from 'react-native-paper';
 import { router } from 'expo-router';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -20,7 +20,6 @@ const SessionButton = memo(function SessionButton({ session, onPressStart }: Ses
     onPressStart();
     
     setSelectedSession(session.id);
-    
     setTimeout(() => {
       router.push(`/seats/${session.id}`);
     }, 50);
@@ -93,7 +92,7 @@ export const SessionDetails = memo(function SessionDetails({ sessions }: Session
       {Object.entries(groupedSessions).map(([date, dateSessions]) => (
         <View key={date} style={styles.dateGroup}>
           <Text style={styles.dateTitle}>
-            {dateSessions[0].isToday ? 'Hoje' : date}
+            {date}
           </Text>
           <View style={styles.sessionList}>
             {dateSessions.map((session) => (

@@ -28,6 +28,7 @@ export default function SeatsScreen() {
 
   useEffect(() => {
     if (sessionId) {
+      clearSelectedSeats();
       fetchSession(String(sessionId));
     }
     return () => {

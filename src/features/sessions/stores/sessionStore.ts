@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { router } from 'expo-router';
 
 export type SessionType = 'imax' | '3d' | 'dbox' | 'vip' | 'standard';
 
@@ -48,6 +49,9 @@ interface SessionState {
     seats: string[];
     totalPrice: number;
   } | null;
+  timeUntilReload: number | null;
+  hasCompletedPurchase: boolean;
+  startReloadTimer: () => void;
 }
 
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
@@ -122,6 +126,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   error: null,
   selectedSeats: [],
   orderSummary: null,
+  timeUntilReload: null,
+  hasCompletedPurchase: false,
   
   selectSeat: (seatId: string) => {
     set(state => ({
@@ -143,6 +149,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const sessions = get().sessions;
     const session = sessions.find(s => s.id === sessionId);
     if (session) {
+      // Primeiro limpa os assentos selecionados
+      set({ selectedSeats: [] });
+
       // Primeiro setamos loading para true
       set({ loading: true });
 
@@ -266,6 +275,37 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   clearOrderSummary: () => set({ orderSummary: null }),
+
+  startReloadTimer: () => {
+    set({ hasCompletedPurchase: true });
+    
+    // Inicia com 15 segundos
+    set({ timeUntilReload: 15 });
+    
+    // Atualiza o contador a cada segundo
+    const interval = setInterval(() => {
+      const currentTime = get().timeUntilReload;
+      if (currentTime === null) return;
+      
+      if (currentTime <= 1) {
+        clearInterval(interval);
+        set({ timeUntilReload: null });
+        // Limpa os estados
+        set({
+          currentSession: null,
+          selectedSession: null,
+          selectedSeats: [],
+          loading: false,
+          error: null,
+          hasCompletedPurchase: false
+        });
+        // Recarrega o app
+        router.replace('/');
+      } else {
+        set({ timeUntilReload: currentTime - 1 });
+      }
+    }, 1000);
+  },
 }));
 
 // Função auxiliar para gerar data e hora aleatória nos próximos 7 dias
