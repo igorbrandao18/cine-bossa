@@ -264,7 +264,48 @@ export const storage = {
 
 ## 🌐 API
 
-### Configuração
+### TMDB (The Movie Database)
+
+O projeto utiliza a API do TMDB para obter informações sobre filmes. Para usar a API:
+
+1. Registre-se em [themoviedb.org](https://www.themoviedb.org/documentation/api)
+2. Obtenha sua API Key
+3. Configure no arquivo `.env`:
+```bash
+TMDB_API_KEY=sua_api_key_aqui
+TMDB_API_URL=https://api.themoviedb.org/3
+```
+
+### Endpoints Utilizados
+
+```typescript
+// Filmes em Cartaz
+GET /movie/now_playing
+Response: {
+  results: Movie[],
+  page: number,
+  total_pages: number
+}
+
+// Filmes Populares
+GET /movie/popular
+Response: {
+  results: Movie[],
+  page: number,
+  total_pages: number
+}
+
+// Detalhes do Filme
+GET /movie/{movie_id}
+Response: MovieDetails
+
+// Imagens
+const TMDB_IMAGE_URL = 'https://image.tmdb.org/t/p/';
+const posterUrl = `${TMDB_IMAGE_URL}/w500${movie.poster_path}`;
+const backdropUrl = `${TMDB_IMAGE_URL}/original${movie.backdrop_path}`;
+```
+
+### Configuração do Cliente
 
 ```typescript
 export const apiClient = axios.create({
@@ -272,19 +313,97 @@ export const apiClient = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+    'Authorization': `Bearer ${API_CONFIG.apiKey}`,
   },
 });
+
+// Interceptor para tratamento de erros
+apiClient.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      // Tratamento de erro de autenticação
+      console.error('API Key inválida ou expirada');
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+### Interfaces
+
+```typescript
+interface Movie {
+  id: number;
+  title: string;
+  overview: string;
+  poster_path: string;
+  backdrop_path: string;
+  release_date: string;
+  vote_average: number;
+  genre_ids: number[];
+}
+
+interface MovieDetails extends Movie {
+  genres: Genre[];
+  runtime: number;
+  status: string;
+  tagline: string;
+  production_companies: Company[];
+}
 ```
 
 ### Serviços
 
 ```typescript
 export class MovieService {
-  async getNowPlaying(): Promise<Movie[]>
-  async getPopular(): Promise<Movie[]>
-  async getUpcoming(): Promise<Movie[]>
-  async getMovieDetails(id: string): Promise<MovieDetails>
+  // Filmes em cartaz
+  async getNowPlaying(page: number = 1): Promise<MovieResponse> {
+    const response = await apiClient.get('/movie/now_playing', {
+      params: { page, language: 'pt-BR' }
+    });
+    return response.data;
+  }
+
+  // Filmes populares
+  async getPopular(page: number = 1): Promise<MovieResponse> {
+    const response = await apiClient.get('/movie/popular', {
+      params: { page, language: 'pt-BR' }
+    });
+    return response.data;
+  }
+
+  // Próximos lançamentos
+  async getUpcoming(page: number = 1): Promise<MovieResponse> {
+    const response = await apiClient.get('/movie/upcoming', {
+      params: { page, language: 'pt-BR' }
+    });
+    return response.data;
+  }
+
+  // Detalhes do filme
+  async getMovieDetails(movieId: string): Promise<MovieDetails> {
+    const response = await apiClient.get(`/movie/${movieId}`, {
+      params: { language: 'pt-BR' }
+    });
+    return response.data;
+  }
 }
+```
+
+### Tratamento de Imagens
+
+```typescript
+export const getImageUrl = (path: string, size: 'poster' | 'backdrop' = 'poster'): string => {
+  if (!path) return '';
+  
+  const sizes = {
+    poster: 'w500',
+    backdrop: 'original'
+  };
+
+  return `${TMDB_IMAGE_URL}/${sizes[size]}${path}`;
+};
 ```
 
 ## 📚 Recursos Adicionais
