@@ -9,21 +9,45 @@ import { ErrorState } from '@/features/movies/components/ErrorState';
 import { rem } from '@/core/theme/rem';
 
 const SECTIONS = [
-  { type: 'nowPlaying', title: 'Now Playing' },
-  { type: 'popular', title: 'Popular' },
-  { type: 'upcoming', title: 'Coming Soon' },
-  { type: 'topRated', title: 'Top Rated' },
+  { type: 'trending', title: 'Em Alta' },
+  { type: 'nowPlaying', title: 'Em Cartaz' },
+  { type: 'popular', title: 'Populares' },
+  { type: 'upcoming', title: 'Em Breve' },
+  { type: 'topRated', title: 'Mais Bem Avaliados' },
+  { type: 'action', title: 'Ação' },
+  { type: 'comedy', title: 'Comédia' },
+  { type: 'horror', title: 'Terror' },
+  { type: 'romance', title: 'Romance' },
+  { type: 'documentary', title: 'Documentários' },
 ] as const;
 
 export default function Home() {
-  const { sections, loadNowPlaying, loadPopular, loadUpcoming, loadTopRated } = useMovieStore();
+  const { 
+    sections, 
+    loadTrending,
+    loadNowPlaying, 
+    loadPopular, 
+    loadUpcoming, 
+    loadTopRated,
+    loadActionMovies,
+    loadComedyMovies,
+    loadHorrorMovies,
+    loadRomanceMovies,
+    loadDocumentaries,
+  } = useMovieStore();
   const [featuredIndex, setFeaturedIndex] = useState(0);
 
   useEffect(() => {
+    loadTrending();
     loadNowPlaying();
     loadPopular();
     loadUpcoming();
     loadTopRated();
+    loadActionMovies();
+    loadComedyMovies();
+    loadHorrorMovies();
+    loadRomanceMovies();
+    loadDocumentaries();
   }, []);
 
   const handleNextFeatured = () => {

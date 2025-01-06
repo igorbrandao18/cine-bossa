@@ -1,32 +1,37 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, StatusBar, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Dimensions, StatusBar, Platform, Pressable } from 'react-native';
 import { Button, Title, Paragraph, Chip, Text } from 'react-native-paper';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useMovieDetails } from '@/features/movies/hooks/useMovieDetails';
-import { MovieDetails } from '@/core/types/tmdb';
+import { useMovieStore } from '@/features/movies/stores/movieStore';
 import { API_CONFIG, SIZES } from '@/core/config/api';
 import { rem } from '@/core/theme/rem';
 import { Header } from '@/components/Header';
+import { MovieCrew, MovieCast, MovieVideo, MovieDetails } from '@/core/types/tmdb';
 
 const { width, height } = Dimensions.get('window');
 const HEADER_HEIGHT = height * 0.7;
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 47 : StatusBar.currentHeight || 0;
 
-const MATCH_SCORE = 98; // Simular score de compatibilidade como Netflix
+const MATCH_SCORE = 98;
 
 export default function MovieDetailsScreen() {
   const params = useLocalSearchParams();
   const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const router = useRouter();
-  const { movie, loading, loadMovie } = useMovieDetails(Number(id));
+  
+  const { currentMovie, loading, error, loadMovieDetails, resetMovieState } = useMovieStore();
+  const { details: movie, credits, videos, recommendations } = currentMovie;
 
   useEffect(() => {
     if (id) {
-      loadMovie();
+      loadMovieDetails(Number(id));
     }
+    return () => {
+      resetMovieState();
+    };
   }, [id]);
 
   const handleBuyTicket = () => {
@@ -41,7 +46,12 @@ export default function MovieDetailsScreen() {
     }
   };
 
-  if (!movie) return null;
+  if (!movie || loading) return null;
+  if (error) return <Text style={styles.error}>{error}</Text>;
+
+  const director = credits?.crew?.find((person: MovieCrew) => person.job === 'Director');
+  const cast = credits?.cast?.slice(0, 5) || [];
+  const trailer = videos?.results?.find((video: MovieVideo) => video.type === 'Trailer' && video.site === 'YouTube');
 
   return (
     <View style={styles.container}>
@@ -135,8 +145,67 @@ export default function MovieDetailsScreen() {
               ))}
             </View>
 
+            {director && (
+              <View style={styles.directorContainer}>
+                <Text style={styles.directorLabel}>Direção:</Text>
+                <Text style={styles.directorName}>{director.name}</Text>
+              </View>
+            )}
+
+            {cast.length > 0 && (
+              <View style={styles.castContainer}>
+                <Text style={styles.sectionTitle}>Elenco Principal</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {cast.map((actor: MovieCast) => (
+                    <View key={actor.id} style={styles.castMember}>
+                      <Image
+                        source={{
+                          uri: actor.profile_path
+                            ? `${API_CONFIG.imageBaseUrl}/${SIZES.profile.w185}${actor.profile_path}`
+                            : 'https://via.placeholder.com/100x150'
+                        }}
+                        style={styles.castImage}
+                      />
+                      <Text style={styles.actorName}>{actor.name}</Text>
+                      <Text style={styles.characterName}>{actor.character}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
             <Text variant="titleMedium" style={styles.sectionTitle}>Sinopse</Text>
             <Paragraph style={styles.overview}>{movie.overview}</Paragraph>
+
+            {recommendations?.results && recommendations.results.length > 0 && (
+              <View style={styles.recommendationsContainer}>
+                <Text style={styles.sectionTitle}>Recomendados</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {recommendations.results.slice(0, 10).map((recommendedMovie: MovieDetails) => (
+                    <Pressable 
+                      key={recommendedMovie.id} 
+                      style={styles.recommendedMovie}
+                      onPress={() => {
+                        router.push({
+                          pathname: "/(stack)/movie/[id]",
+                          params: { id: recommendedMovie.id }
+                        });
+                      }}
+                    >
+                      <Image
+                        source={{
+                          uri: `${API_CONFIG.imageBaseUrl}/${SIZES.poster.w342}${recommendedMovie.poster_path}`
+                        }}
+                        style={styles.recommendedPoster}
+                      />
+                      <Text style={styles.recommendedTitle} numberOfLines={2}>
+                        {recommendedMovie.title}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             <Button 
               mode="contained" 
@@ -299,9 +368,55 @@ const styles = StyleSheet.create({
     gap: rem(0.5),
     marginBottom: rem(1.5),
   },
+  genreChip: {
+    backgroundColor: 'rgba(229, 9, 20, 0.1)',
+  },
+  genreText: {
+    color: '#E50914',
+  },
+  directorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: rem(1.5),
+  },
+  directorLabel: {
+    color: '#999',
+    fontSize: rem(0.875),
+    marginRight: rem(0.5),
+  },
+  directorName: {
+    color: '#fff',
+    fontSize: rem(0.875),
+    fontWeight: '500',
+  },
+  castContainer: {
+    marginBottom: rem(2),
+  },
+  castMember: {
+    marginRight: rem(1),
+    width: rem(5),
+  },
+  castImage: {
+    width: rem(5),
+    height: rem(7.5),
+    borderRadius: rem(0.5),
+    marginBottom: rem(0.5),
+  },
+  actorName: {
+    color: '#fff',
+    fontSize: rem(0.75),
+    fontWeight: '500',
+    marginBottom: rem(0.25),
+  },
+  characterName: {
+    color: '#999',
+    fontSize: rem(0.75),
+  },
   sectionTitle: {
     color: '#fff',
-    marginBottom: rem(0.5),
+    fontSize: rem(1.125),
+    fontWeight: '600',
+    marginBottom: rem(1),
   },
   overview: {
     color: '#ccc',
@@ -309,11 +424,23 @@ const styles = StyleSheet.create({
     lineHeight: rem(1.5),
     marginBottom: rem(2),
   },
-  genreChip: {
-    backgroundColor: 'rgba(229, 9, 20, 0.1)',
+  recommendationsContainer: {
+    marginBottom: rem(2),
   },
-  genreText: {
-    color: '#E50914',
+  recommendedMovie: {
+    width: rem(7.5),
+    marginRight: rem(1),
+  },
+  recommendedPoster: {
+    width: rem(7.5),
+    height: rem(11.25),
+    borderRadius: rem(0.5),
+    marginBottom: rem(0.5),
+  },
+  recommendedTitle: {
+    color: '#fff',
+    fontSize: rem(0.75),
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#E50914',
@@ -325,5 +452,11 @@ const styles = StyleSheet.create({
   buttonLabel: {
     fontSize: rem(1),
     fontWeight: 'bold',
+  },
+  error: {
+    color: '#E50914',
+    textAlign: 'center',
+    marginTop: rem(2),
+    fontSize: rem(1),
   },
 }); 

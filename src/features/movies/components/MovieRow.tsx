@@ -6,7 +6,7 @@ import { rem } from '../../../core/theme/rem';
 import type { Movie } from '../types/movie';
 
 interface MovieRowProps {
-  type: 'nowPlaying' | 'popular' | 'upcoming' | 'topRated';
+  type: 'trending' | 'nowPlaying' | 'popular' | 'upcoming' | 'topRated' | 'action' | 'comedy' | 'horror' | 'romance' | 'documentary';
   loading?: boolean;
   error?: string | null;
   movies: Movie[];

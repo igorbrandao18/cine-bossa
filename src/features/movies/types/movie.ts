@@ -68,10 +68,16 @@ export interface MovieSection {
 
 export interface MovieState {
   sections: {
+    trending: MovieSection;
     nowPlaying: MovieSection;
     popular: MovieSection;
     upcoming: MovieSection;
     topRated: MovieSection;
+    action: MovieSection;
+    comedy: MovieSection;
+    horror: MovieSection;
+    romance: MovieSection;
+    documentary: MovieSection;
   };
   genres: Genre[];
   loading: boolean;
