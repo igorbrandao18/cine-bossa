@@ -8,6 +8,8 @@ import { useTicketStore } from '@/features/tickets/stores/ticketStore';
 import { useSessionStore } from '@/features/sessions/stores/sessionStore';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
+import { API_CONFIG } from '@/core/config/api';
+import { useMovieStore } from '@/features/movies/stores/movieStore';
 
 interface ConfirmationScreenProps {
   sessionId: string;
@@ -19,6 +21,7 @@ export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenPr
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const { addTicket } = useTicketStore();
   const { selectedSession, selectedSeats } = useSessionStore();
+  const { sections } = useMovieStore();
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -33,14 +36,24 @@ export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenPr
       // Formatar a data para DD/MM/YYYY
       const formattedDate = format(new Date(selectedSession.date), 'dd/MM/yyyy');
       
-      addTicket({
-        movieTitle: selectedSession.movieTitle,
-        date: formattedDate,
-        time: selectedSession.time,
-        room: selectedSession.room,
-        seats: selectedSeats,
-        price: selectedSeats.length * selectedSession.price,
-      });
+      // Encontrar o filme nas seções
+      const movie = Object.values(sections)
+        .flatMap(section => section.movies)
+        .find(m => m.id === Number(selectedSession.movieId));
+
+      if (movie) {
+        addTicket({
+          movieId: selectedSession.movieId,
+          movieTitle: selectedSession.movieTitle,
+          posterPath: movie.poster_path,
+          technology: selectedSession.technology,
+          date: formattedDate,
+          time: selectedSession.time,
+          room: selectedSession.room,
+          seats: selectedSeats,
+          price: selectedSeats.length * selectedSession.price,
+        });
+      }
     }
   }, []);
 

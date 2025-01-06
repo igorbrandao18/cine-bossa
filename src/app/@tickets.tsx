@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { View, StyleSheet, Dimensions, Pressable, Image } from 'react-native';
+import { View, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { Text, useTheme, ActivityIndicator } from 'react-native-paper';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,6 +19,7 @@ import Animated, {
   Layout,
 } from 'react-native-reanimated';
 import { useTicketStore } from '@/features/tickets/stores/ticketStore';
+import { useMovieStore } from '@/features/movies/stores/movieStore';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -27,7 +28,11 @@ import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/core/theme/colors';
 import { MotiView } from 'moti';
-import QRCode from 'react-native-qrcode-svg';
+import { Image } from 'expo-image';
+import { API_CONFIG, SIZES } from '@/core/config/api';
+
+const PLACEHOLDER_BLURHASH = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
+const DEFAULT_POSTER = '/wwemzKWzjKYJFfCeiB57q3r4Bcm.png';
 
 const { width, height } = Dimensions.get('window');
 const TICKET_HEIGHT = height * 0.38;
@@ -84,10 +89,17 @@ const TicketItem = React.memo(({ ticket, index, onPress }: TicketItemProps) => {
 
   const formatDate = useCallback((dateString: string) => {
     try {
-      const date = parse(dateString, 'dd/MM/yyyy', new Date());
+      const [day, month, year] = dateString.split('/').map(Number);
+      const date = new Date(year, month - 1, day);
+      
+      if (isNaN(date.getTime())) {
+        console.error('Data inválida:', dateString);
+        return dateString;
+      }
+
       return format(date, "dd 'de' MMMM", { locale: ptBR });
     } catch (error) {
-      console.error('Erro ao formatar data:', error);
+      console.error('Erro ao formatar data:', error, dateString);
       return dateString;
     }
   }, []);
@@ -112,6 +124,12 @@ const TicketItem = React.memo(({ ticket, index, onPress }: TicketItemProps) => {
     ]
   }));
 
+  const imageUrl = !ticket.posterPath
+    ? `${API_CONFIG.imageBaseUrl}/${SIZES.poster.w500}${DEFAULT_POSTER}`
+    : ticket.posterPath.startsWith('http')
+      ? ticket.posterPath
+      : `${API_CONFIG.imageBaseUrl}/${SIZES.poster.w500}${ticket.posterPath}`;
+
   return (
     <AnimatedPressable
       style={[styles.ticketContainer, animatedStyle]}
@@ -122,9 +140,12 @@ const TicketItem = React.memo(({ ticket, index, onPress }: TicketItemProps) => {
       layout={Layout.springify()}
     >
       <Image 
-        source={{ uri: ticket.posterPath }}
+        source={{ uri: imageUrl }}
         style={styles.backgroundImage}
         blurRadius={10}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        placeholder={PLACEHOLDER_BLURHASH}
       />
       <LinearGradient
         colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
@@ -136,9 +157,11 @@ const TicketItem = React.memo(({ ticket, index, onPress }: TicketItemProps) => {
       <View style={styles.ticketContent}>
         <View style={styles.ticketHeader}>
           <Image 
-            source={{ uri: ticket.posterPath }}
+            source={{ uri: imageUrl }}
             style={styles.moviePoster}
-            resizeMode="cover"
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            placeholder={PLACEHOLDER_BLURHASH}
           />
           <View style={styles.headerInfo}>
             <Text style={styles.movieTitle} numberOfLines={2}>
@@ -214,17 +237,29 @@ const TicketItem = React.memo(({ ticket, index, onPress }: TicketItemProps) => {
   );
 });
 
-export default function Tickets() {
-  const theme = useTheme();
-  const { tickets, loading, error, loadTickets } = useTicketStore();
+export default function TicketsScreen() {
+  const { tickets, loading, error, loadTickets, clearTickets } = useTicketStore();
+  const { sections, loadNowPlaying, loadPopular, loadUpcoming, loadTopRated } = useMovieStore();
 
   useEffect(() => {
-    loadTickets();
+    const init = async () => {
+      // Limpar tickets existentes
+      await clearTickets();
+      // Carregar tickets mockados
+      await loadTickets();
+      // Carregar todas as seções de filmes
+      loadNowPlaying();
+      loadPopular();
+      loadUpcoming();
+      loadTopRated();
+    };
+
+    init();
   }, []);
 
-  const handleTicketPress = useCallback(async (ticket: any) => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Implementar visualização detalhada do ticket
+  const handleTicketPress = useCallback((ticket: Ticket) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Aqui você pode adicionar a navegação para os detalhes do ingresso
   }, []);
 
   if (loading) {
@@ -238,51 +273,52 @@ export default function Tickets() {
   if (error) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <MaterialCommunityIcons name="alert-circle" size={48} color={colors.error} />
         <Text style={styles.errorText}>{error}</Text>
       </View>
     );
   }
 
+  if (!tickets || tickets.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <MaterialCommunityIcons 
+          name="ticket-outline" 
+          size={64} 
+          color={colors.textSecondary} 
+        />
+        <Text style={styles.emptyText}>
+          Você ainda não tem ingressos.{'\n'}
+          Compre ingressos para seus filmes favoritos!
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       <StatusBar style="light" />
       
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Meus Ingressos</Text>
-        {tickets.length > 0 && (
-          <Text style={styles.headerSubtitle}>{tickets.length} {tickets.length === 1 ? 'ingresso' : 'ingressos'}</Text>
-        )}
+        <Text style={styles.headerSubtitle}>
+          {tickets.length} {tickets.length === 1 ? 'ingresso' : 'ingressos'}
+        </Text>
       </View>
 
-      {tickets.length === 0 ? (
-        <MotiView 
-          style={styles.emptyContainer}
-          from={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring' }}
-        >
-          <MaterialCommunityIcons name="ticket-outline" size={64} color={colors.textMuted} />
-          <Text style={styles.emptyText}>
-            Você ainda não possui ingressos
-          </Text>
-        </MotiView>
-      ) : (
-        <Animated.ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {tickets.map((ticket, index) => (
-            <TicketItem
-              key={ticket.id}
-              ticket={ticket}
-              index={index}
-              onPress={() => handleTicketPress(ticket)}
-            />
-          ))}
-        </Animated.ScrollView>
-      )}
-    </SafeAreaView>
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {tickets.map((ticket, index) => (
+          <TicketItem
+            key={`ticket-${ticket.id}-${index}`}
+            ticket={ticket}
+            index={index}
+            onPress={() => handleTicketPress(ticket)}
+          />
+        ))}
+      </Animated.ScrollView>
+    </View>
   );
 }
 
@@ -325,7 +361,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
-    opacity: 0.5,
+    opacity: 0.3,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -340,21 +376,22 @@ const styles = StyleSheet.create({
     marginBottom: rem(1),
   },
   moviePoster: {
-    width: rem(3.75),
-    height: rem(5.5),
+    width: rem(5),
+    height: rem(7.5),
     borderRadius: rem(0.75),
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
   headerInfo: {
     flex: 1,
+    marginLeft: rem(1),
   },
   movieTitle: {
     fontSize: rem(1.125),
     lineHeight: rem(1.375),
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: rem(0.5),
+    marginBottom: rem(0.75),
     textShadowColor: 'rgba(0,0,0,0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
