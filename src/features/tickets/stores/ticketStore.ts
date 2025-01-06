@@ -3,12 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Ticket {
   id: string;
+  movieId: string;
   movieTitle: string;
+  posterPath: string;
   date: string;
   time: string;
   room: string;
+  technology: string;
   seats: string[];
   price: number;
+  status?: 'VALID' | 'USED' | 'EXPIRED';
   purchaseDate: string;
 }
 

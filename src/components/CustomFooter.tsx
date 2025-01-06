@@ -21,7 +21,7 @@ const TABS = [
     name: 'tickets',
     label: 'Ingressos',
     icon: 'ticket',
-    path: '/tickets',
+    path: '/@tickets',
   },
 ] as const;
 
