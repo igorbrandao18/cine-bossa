@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: rem(1),
+    paddingBottom: rem(1),
     gap: rem(0.75),
   },
   movieCard: {

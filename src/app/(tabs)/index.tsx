@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingVertical: rem(1),
+    paddingBottom: rem(4),
   },
   section: {
     marginBottom: rem(2),
