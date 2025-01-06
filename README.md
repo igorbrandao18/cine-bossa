@@ -23,7 +23,7 @@ Você também pode assistir ao vídeo completo no YouTube:
 
 ### Pré-requisitos
 
-- Node.js 18 ou superior
+- Node.js 22.10 ou superior
 - npm ou yarn
 - Expo CLI
 - iOS Simulator ou Android Emulator (opcional)
