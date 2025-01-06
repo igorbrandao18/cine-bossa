@@ -48,25 +48,34 @@ export default function Home() {
     loadHorrorMovies();
     loadRomanceMovies();
     loadDocumentaries();
+
+    // Inicia com um índice aleatório
+    if (sections?.trending?.movies?.length > 0) {
+      setFeaturedIndex(Math.floor(Math.random() * sections.trending.movies.length));
+    }
   }, []);
 
   const handleNextFeatured = () => {
-    if (sections?.nowPlaying?.movies?.length > 0) {
-      setFeaturedIndex(prev => 
-        prev === sections.nowPlaying.movies.length - 1 ? 0 : prev + 1
-      );
+    if (sections?.trending?.movies?.length > 0) {
+      // Gera um novo índice aleatório diferente do atual
+      let newIndex;
+      do {
+        newIndex = Math.floor(Math.random() * sections.trending.movies.length);
+      } while (newIndex === featuredIndex && sections.trending.movies.length > 1);
+      
+      setFeaturedIndex(newIndex);
     }
   };
 
-  if (sections?.nowPlaying?.loading) {
+  if (sections?.trending?.loading) {
     return <LoadingState />;
   }
 
-  if (sections?.nowPlaying?.error) {
-    return <ErrorState error={sections.nowPlaying.error} onRetry={loadNowPlaying} />;
+  if (sections?.trending?.error) {
+    return <ErrorState error={sections.trending.error} onRetry={loadTrending} />;
   }
 
-  const featuredMovie = sections?.nowPlaying?.movies?.[featuredIndex];
+  const featuredMovie = sections?.trending?.movies?.[featuredIndex];
 
   return (
     <ScrollView 
