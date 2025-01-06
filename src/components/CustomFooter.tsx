@@ -23,12 +23,6 @@ const TABS = [
     icon: 'ticket',
     path: '/tickets',
   },
-  {
-    name: 'profile',
-    label: 'Perfil',
-    icon: 'account',
-    path: '/profile',
-  },
 ] as const;
 
 export function CustomFooter() {

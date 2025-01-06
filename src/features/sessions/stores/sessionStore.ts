@@ -27,6 +27,18 @@ interface Session {
   seatTypes: SessionType[];
 }
 
+interface PurchaseHistory {
+  id: string;
+  movieTitle: string;
+  date: string;
+  time: string;
+  seats: string[];
+  totalPrice: number;
+  purchaseDate: string;
+  room: string;
+  technology: string;
+}
+
 interface SessionState {
   currentSession: Session | null;
   sessions: Session[];
@@ -52,6 +64,8 @@ interface SessionState {
   timeUntilReload: number | null;
   hasCompletedPurchase: boolean;
   startReloadTimer: () => void;
+  purchaseHistory: PurchaseHistory[];
+  addToPurchaseHistory: () => void;
 }
 
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
@@ -128,6 +142,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   orderSummary: null,
   timeUntilReload: null,
   hasCompletedPurchase: false,
+  purchaseHistory: [],
   
   selectSeat: (seatId: string) => {
     set(state => ({
@@ -279,8 +294,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   startReloadTimer: () => {
     set({ hasCompletedPurchase: true });
     
-    // Inicia com 15 segundos
-    set({ timeUntilReload: 15 });
+    // Inicia com 60 segundos (1 minuto)
+    set({ timeUntilReload: 60 });
     
     // Atualiza o contador a cada segundo
     const interval = setInterval(() => {
@@ -305,6 +320,28 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         set({ timeUntilReload: currentTime - 1 });
       }
     }, 1000);
+  },
+
+  addToPurchaseHistory: () => {
+    const { currentSession, selectedSeats, orderSummary } = get();
+    
+    if (!currentSession || !orderSummary) return;
+
+    const purchase: PurchaseHistory = {
+      id: Date.now().toString(),
+      movieTitle: currentSession.movieTitle,
+      date: currentSession.date,
+      time: currentSession.time,
+      seats: selectedSeats,
+      totalPrice: orderSummary.totalPrice,
+      purchaseDate: new Date().toISOString(),
+      room: currentSession.room,
+      technology: currentSession.technology
+    };
+
+    set(state => ({
+      purchaseHistory: [...state.purchaseHistory, purchase]
+    }));
   },
 }));
 
