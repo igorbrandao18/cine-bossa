@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback } from 'react';
-import { View, StyleSheet, Dimensions, Pressable } from 'react-native';
-import { Text, useTheme, ActivityIndicator } from 'react-native-paper';
+import React, { useEffect, useCallback, useState } from 'react';
+import { View, StyleSheet, Dimensions, Pressable, Modal } from 'react-native';
+import { Text, useTheme, ActivityIndicator, IconButton } from 'react-native-paper';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,6 +31,7 @@ import { MotiView } from 'moti';
 import { Image } from 'expo-image';
 import { API_CONFIG, SIZES } from '@/core/config/api';
 import { getStatusBarHeight, getTopPosition } from '@/shared/utils/statusbar';
+import QRCode from 'react-native-qrcode-svg';
 
 const PLACEHOLDER_BLURHASH = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
 const DEFAULT_POSTER = '/wwemzKWzjKYJFfCeiB57q3r4Bcm.png';
@@ -239,6 +240,7 @@ const TicketItem = React.memo(({ ticket, index, onPress }: TicketItemProps) => {
 });
 
 export default function TicketsScreen() {
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const { tickets, loading, error, loadTickets, clearTickets } = useTicketStore();
   const { sections, loadNowPlaying, loadPopular, loadUpcoming, loadTopRated } = useMovieStore();
 
@@ -257,7 +259,11 @@ export default function TicketsScreen() {
 
   const handleTicketPress = useCallback((ticket: Ticket) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Aqui você pode adicionar a navegação para os detalhes do ingresso
+    setSelectedTicket(ticket);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedTicket(null);
   }, []);
 
   if (loading) {
@@ -316,6 +322,150 @@ export default function TicketsScreen() {
           />
         ))}
       </Animated.ScrollView>
+
+      <Modal
+        visible={!!selectedTicket}
+        animationType="slide"
+        onRequestClose={handleCloseModal}
+        statusBarTranslucent
+      >
+        <View style={[styles.modalOverlay, { paddingTop: getStatusBarHeight() }]}>
+          <StatusBar style="light" backgroundColor={colors.background} />
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <IconButton
+                icon="chevron-left"
+                size={28}
+                iconColor={colors.text}
+                onPress={handleCloseModal}
+              />
+              <Text style={styles.modalHeaderTitle}>Meu Ingresso</Text>
+              <IconButton
+                icon="share-variant"
+                size={24}
+                iconColor={colors.text}
+                onPress={() => {}}
+              />
+            </View>
+
+            <Animated.ScrollView
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={styles.modalScrollContent}
+            >
+              <Animated.View 
+                style={styles.ticketPreview}
+                entering={FadeInDown.springify()}
+              >
+                <Image 
+                  source={{ uri: selectedTicket?.posterPath.startsWith('http') 
+                    ? selectedTicket?.posterPath 
+                    : `${API_CONFIG.imageBaseUrl}/${SIZES.poster.w500}${selectedTicket?.posterPath}` 
+                  }}
+                  style={styles.modalPoster}
+                  contentFit="cover"
+                  placeholder={PLACEHOLDER_BLURHASH}
+                />
+                <LinearGradient
+                  colors={['transparent', colors.background]}
+                  style={styles.posterGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                />
+              </Animated.View>
+              
+              <Animated.View 
+                style={styles.qrSection}
+                entering={FadeInDown.delay(200).springify()}
+              >
+                <View style={styles.qrContainer}>
+                  {selectedTicket && (
+                    <QRCode
+                      value={JSON.stringify({
+                        id: selectedTicket.id,
+                        movieId: selectedTicket.movieId,
+                        seats: selectedTicket.seats,
+                        date: selectedTicket.date,
+                        time: selectedTicket.time,
+                        room: selectedTicket.room
+                      })}
+                      size={width * 0.5}
+                      backgroundColor="transparent"
+                      color={colors.text}
+                    />
+                  )}
+                </View>
+
+                <View style={styles.ticketStatus}>
+                  <View style={[
+                    styles.statusBadge,
+                    { backgroundColor: TICKET_STATUS[selectedTicket?.status || 'VALID'].bgColor }
+                  ]}>
+                    <MaterialCommunityIcons 
+                      name={TICKET_STATUS[selectedTicket?.status || 'VALID'].icon as any}
+                      size={20}
+                      color={TICKET_STATUS[selectedTicket?.status || 'VALID'].color}
+                    />
+                    <Text style={[
+                      styles.statusBadgeText,
+                      { color: TICKET_STATUS[selectedTicket?.status || 'VALID'].color }
+                    ]}>
+                      {TICKET_STATUS[selectedTicket?.status || 'VALID'].label}
+                    </Text>
+                  </View>
+                </View>
+              </Animated.View>
+
+              <Animated.View 
+                style={styles.ticketInfo}
+                entering={FadeInDown.delay(400).springify()}
+              >
+                <Text style={styles.movieTitleLarge} numberOfLines={2}>
+                  {selectedTicket?.movieTitle}
+                </Text>
+
+                <View style={styles.infoGrid}>
+                  <View style={styles.infoRow}>
+                    <MaterialCommunityIcons name="calendar" size={24} color={colors.primary} />
+                    <View>
+                      <Text style={styles.infoLabel}>Data</Text>
+                      <Text style={styles.infoValue}>{selectedTicket?.date}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <MaterialCommunityIcons name="clock-outline" size={24} color={colors.primary} />
+                    <View>
+                      <Text style={styles.infoLabel}>Horário</Text>
+                      <Text style={styles.infoValue}>{selectedTicket?.time}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <MaterialCommunityIcons name="theater" size={24} color={colors.primary} />
+                    <View>
+                      <Text style={styles.infoLabel}>Sala</Text>
+                      <Text style={styles.infoValue}>{selectedTicket?.room}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <MaterialCommunityIcons name="seat" size={24} color={colors.primary} />
+                    <View>
+                      <Text style={styles.infoLabel}>Assentos</Text>
+                      <Text style={styles.infoValue}>{selectedTicket?.seats.join(', ')}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.priceTag}>
+                  <Text style={styles.modalPriceLabel}>Total Pago</Text>
+                  <Text style={styles.modalPriceValue}>
+                    R$ {selectedTicket?.price.toFixed(2)}
+                  </Text>
+                </View>
+              </Animated.View>
+            </Animated.ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -550,5 +700,128 @@ const styles = StyleSheet.create({
     fontSize: rem(1.125),
     textAlign: 'center',
     maxWidth: '80%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  modalContent: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: rem(0.5),
+    paddingVertical: rem(0.5),
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  modalHeaderTitle: {
+    fontSize: rem(1.125),
+    fontWeight: '600',
+    color: colors.text,
+  },
+  ticketPreview: {
+    width: '100%',
+    height: height * 0.35,
+    position: 'relative',
+    marginTop: -rem(1),
+  },
+  modalPoster: {
+    width: '100%',
+    height: '100%',
+  },
+  posterGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+  },
+  qrSection: {
+    alignItems: 'center',
+    marginTop: -height * 0.05,
+    paddingHorizontal: rem(1.25),
+    marginBottom: rem(3),
+  },
+  qrContainer: {
+    padding: rem(2),
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: rem(2),
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  ticketStatus: {
+    marginTop: rem(1.5),
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: rem(0.5),
+    paddingHorizontal: rem(1),
+    borderRadius: rem(1),
+    gap: rem(0.5),
+  },
+  statusBadgeText: {
+    fontSize: rem(1),
+    fontWeight: '600',
+  },
+  ticketInfo: {
+    flex: 1,
+    paddingHorizontal: rem(1.25),
+  },
+  movieTitleLarge: {
+    fontSize: rem(1.5),
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: rem(3),
+  },
+  infoGrid: {
+    gap: rem(1.5),
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(1),
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: rem(1),
+    borderRadius: rem(1),
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  infoLabel: {
+    fontSize: rem(0.75),
+    color: colors.textSecondary,
+    opacity: 0.8,
+  },
+  infoValue: {
+    fontSize: rem(1),
+    color: colors.text,
+    fontWeight: '500',
+  },
+  priceTag: {
+    marginTop: rem(2),
+    backgroundColor: 'rgba(229, 9, 20, 0.1)',
+    padding: rem(1),
+    borderRadius: rem(1),
+    borderWidth: 1,
+    borderColor: 'rgba(229, 9, 20, 0.2)',
+    alignItems: 'center',
+  },
+  modalPriceLabel: {
+    fontSize: rem(0.875),
+    color: colors.textSecondary,
+    marginBottom: rem(0.25),
+  },
+  modalPriceValue: {
+    fontSize: rem(1.5),
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  modalScrollContent: {
+    paddingBottom: rem(4),
   },
 }); 
