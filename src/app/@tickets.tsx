@@ -30,6 +30,7 @@ import { colors } from '@/core/theme/colors';
 import { MotiView } from 'moti';
 import { Image } from 'expo-image';
 import { API_CONFIG, SIZES } from '@/core/config/api';
+import { getStatusBarHeight, getTopPosition } from '@/shared/utils/statusbar';
 
 const PLACEHOLDER_BLURHASH = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
 const DEFAULT_POSTER = '/wwemzKWzjKYJFfCeiB57q3r4Bcm.png';
@@ -243,11 +244,8 @@ export default function TicketsScreen() {
 
   useEffect(() => {
     const init = async () => {
-      // Limpar tickets existentes
       await clearTickets();
-      // Carregar tickets mockados
       await loadTickets();
-      // Carregar todas as seções de filmes
       loadNowPlaying();
       loadPopular();
       loadUpcoming();
@@ -264,23 +262,23 @@ export default function TicketsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <SafeAreaView style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <SafeAreaView style={[styles.container, styles.centered]}>
         <Text style={styles.errorText}>{error}</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!tickets || tickets.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
+      <SafeAreaView style={styles.emptyContainer}>
         <MaterialCommunityIcons 
           name="ticket-outline" 
           size={64} 
@@ -290,12 +288,12 @@ export default function TicketsScreen() {
           Você ainda não tem ingressos.{'\n'}
           Compre ingressos para seus filmes favoritos!
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar style="light" />
       
       <View style={styles.header}>
@@ -318,7 +316,7 @@ export default function TicketsScreen() {
           />
         ))}
       </Animated.ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
