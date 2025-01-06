@@ -14,6 +14,10 @@ interface Ticket {
   price: number;
   status?: 'VALID' | 'USED' | 'EXPIRED';
   purchaseDate: string;
+  paymentMethod: {
+    type: 'CREDIT' | 'DEBIT' | 'PIX';
+    lastDigits?: string;
+  };
 }
 
 // Mock de ingressos para teste
@@ -30,7 +34,11 @@ const mockTickets: Ticket[] = [
     seats: ['A01', 'A02'],
     price: 90.00,
     status: 'VALID',
-    purchaseDate: new Date().toISOString()
+    purchaseDate: new Date().toISOString(),
+    paymentMethod: {
+      type: 'CREDIT',
+      lastDigits: '4389'
+    }
   },
   {
     id: '2',
@@ -44,7 +52,11 @@ const mockTickets: Ticket[] = [
     seats: ['C04', 'C05', 'C06'],
     price: 105.00,
     status: 'USED',
-    purchaseDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    purchaseDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    paymentMethod: {
+      type: 'DEBIT',
+      lastDigits: '2547'
+    }
   },
   {
     id: '3',
@@ -58,7 +70,10 @@ const mockTickets: Ticket[] = [
     seats: ['E04'],
     price: 50.00,
     status: 'EXPIRED',
-    purchaseDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+    purchaseDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    paymentMethod: {
+      type: 'PIX'
+    }
   },
   {
     id: '4',
@@ -72,7 +87,11 @@ const mockTickets: Ticket[] = [
     seats: ['B03', 'B04'],
     price: 80.00,
     status: 'VALID',
-    purchaseDate: new Date().toISOString()
+    purchaseDate: new Date().toISOString(),
+    paymentMethod: {
+      type: 'CREDIT',
+      lastDigits: '1234'
+    }
   }
 ];
 

@@ -7,9 +7,10 @@ import { useEffect, useRef } from 'react';
 import { useTicketStore } from '@/features/tickets/stores/ticketStore';
 import { useSessionStore } from '@/features/sessions/stores/sessionStore';
 import { useRouter } from 'expo-router';
-import { format } from 'date-fns';
+import { parse, format, isValid } from 'date-fns';
 import { API_CONFIG } from '@/core/config/api';
 import { useMovieStore } from '@/features/movies/stores/movieStore';
+import { APP_ROUTES } from '@/core/navigation/routes';
 
 interface ConfirmationScreenProps {
   sessionId: string;
@@ -33,15 +34,15 @@ export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenPr
 
     // Salvar o ticket
     if (selectedSession && selectedSeats.length > 0) {
-      // Formatar a data para DD/MM/YYYY
-      const formattedDate = format(new Date(selectedSession.date), 'dd/MM/yyyy');
-      
       // Encontrar o filme nas seções
       const movie = Object.values(sections)
         .flatMap(section => section.movies)
         .find(m => m.id === Number(selectedSession.movieId));
 
       if (movie) {
+        // Usar a data diretamente do selectedSession
+        const formattedDate = selectedSession.date;
+
         addTicket({
           movieId: selectedSession.movieId,
           movieTitle: selectedSession.movieTitle,
@@ -52,13 +53,17 @@ export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenPr
           room: selectedSession.room,
           seats: selectedSeats,
           price: selectedSeats.length * selectedSession.price,
+          paymentMethod: {
+            type: 'CREDIT',
+            lastDigits: '1234' // This should come from the payment flow
+          }
         });
       }
     }
   }, []);
 
   const handleSeeTickets = () => {
-    router.push('/(tabs)/tickets');
+    router.push('/@tickets');
     onFinish?.();
   };
 

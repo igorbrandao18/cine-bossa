@@ -56,6 +56,11 @@ interface Ticket {
   seats: string[];
   price: number;
   status?: TicketStatus;
+  purchaseDate: string;
+  paymentMethod: {
+    type: 'CREDIT' | 'DEBIT' | 'PIX';
+    lastDigits?: string;
+  };
 }
 
 interface TicketItemProps {
@@ -456,10 +461,40 @@ export default function TicketsScreen() {
                 </View>
 
                 <View style={styles.priceTag}>
-                  <Text style={styles.modalPriceLabel}>Total Pago</Text>
-                  <Text style={styles.modalPriceValue}>
-                    R$ {selectedTicket?.price.toFixed(2)}
-                  </Text>
+                  <View style={styles.priceHeader}>
+                    <View style={styles.priceInfo}>
+                      <Text style={styles.modalPriceLabel}>Total Pago</Text>
+                      <Text style={styles.modalPriceValue}>
+                        R$ {selectedTicket?.price.toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.priceDivider} />
+                  </View>
+
+                  <View style={styles.paymentInfo}>
+                    <View style={styles.paymentIconContainer}>
+                      <MaterialCommunityIcons 
+                        name={
+                          selectedTicket?.paymentMethod.type === 'CREDIT' ? 'credit-card' :
+                          selectedTicket?.paymentMethod.type === 'DEBIT' ? 'credit-card-outline' :
+                          'qrcode'
+                        } 
+                        size={24} 
+                        color={colors.primary} 
+                      />
+                    </View>
+                    <View style={styles.paymentDetails}>
+                      <Text style={styles.paymentLabel}>
+                        {selectedTicket?.paymentMethod.type === 'CREDIT' ? 'Cartão de Crédito' :
+                         selectedTicket?.paymentMethod.type === 'DEBIT' ? 'Cartão de Débito' :
+                         'PIX'}
+                      </Text>
+                      <Text style={styles.paymentText}>
+                        {selectedTicket?.paymentMethod.type === 'PIX' ? 'Pagamento Instantâneo' :
+                         `Final ${selectedTicket?.paymentMethod.lastDigits}`}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </Animated.View>
             </Animated.ScrollView>
@@ -804,22 +839,66 @@ const styles = StyleSheet.create({
   },
   priceTag: {
     marginTop: rem(2),
-    backgroundColor: 'rgba(229, 9, 20, 0.1)',
-    padding: rem(1),
-    borderRadius: rem(1),
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: rem(1.5),
     borderWidth: 1,
-    borderColor: 'rgba(229, 9, 20, 0.2)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
+  },
+  priceHeader: {
+    padding: rem(1.5),
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  priceInfo: {
     alignItems: 'center',
   },
   modalPriceLabel: {
     fontSize: rem(0.875),
     color: colors.textSecondary,
-    marginBottom: rem(0.25),
+    marginBottom: rem(0.5),
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   modalPriceValue: {
-    fontSize: rem(1.5),
+    fontSize: rem(2),
     fontWeight: 'bold',
-    color: colors.primary,
+    color: colors.text,
+    letterSpacing: 1,
+  },
+  priceDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginTop: rem(1.5),
+  },
+  paymentInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: rem(1.5),
+    gap: rem(1),
+  },
+  paymentIconContainer: {
+    width: rem(3),
+    height: rem(3),
+    borderRadius: rem(1.5),
+    backgroundColor: 'rgba(229, 9, 20, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 9, 20, 0.2)',
+  },
+  paymentDetails: {
+    flex: 1,
+  },
+  paymentLabel: {
+    fontSize: rem(0.875),
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: rem(0.25),
+  },
+  paymentText: {
+    fontSize: rem(0.75),
+    color: colors.textSecondary,
   },
   modalScrollContent: {
     paddingBottom: rem(4),
