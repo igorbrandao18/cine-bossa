@@ -4,14 +4,21 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Button } from '@/shared/components/Button';
 import { theme, rem } from '@/theme';
 import { useEffect, useRef } from 'react';
+import { useTicketStore } from '@/features/tickets/stores/ticketStore';
+import { useSessionStore } from '@/features/sessions/stores/sessionStore';
+import { useRouter } from 'expo-router';
+import { format } from 'date-fns';
 
 interface ConfirmationScreenProps {
   sessionId: string;
   onFinish: () => void;
 }
 
-export function ConfirmationScreen({ onFinish }: ConfirmationScreenProps) {
+export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenProps) {
+  const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const { addTicket } = useTicketStore();
+  const { selectedSession, selectedSeats } = useSessionStore();
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -20,7 +27,27 @@ export function ConfirmationScreen({ onFinish }: ConfirmationScreenProps) {
       tension: 50,
       friction: 7,
     }).start();
+
+    // Salvar o ticket
+    if (selectedSession && selectedSeats.length > 0) {
+      // Formatar a data para DD/MM/YYYY
+      const formattedDate = format(new Date(selectedSession.date), 'dd/MM/yyyy');
+      
+      addTicket({
+        movieTitle: selectedSession.movieTitle,
+        date: formattedDate,
+        time: selectedSession.time,
+        room: selectedSession.room,
+        seats: selectedSeats,
+        price: selectedSeats.length * selectedSession.price,
+      });
+    }
   }, []);
+
+  const handleSeeTickets = () => {
+    router.push('/(tabs)/tickets');
+    onFinish?.();
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -43,7 +70,7 @@ export function ConfirmationScreen({ onFinish }: ConfirmationScreenProps) {
       <Button 
         variant="primary"
         size="large"
-        onPress={onFinish}
+        onPress={handleSeeTickets}
         title="Ver meus ingressos"
         fullWidth
       />

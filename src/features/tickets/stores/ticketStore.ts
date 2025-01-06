@@ -1,80 +1,67 @@
 import { create } from 'zustand';
-import type { TicketStore } from '../types/ticket';
-import { ticketService } from '../services/ticketService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const useTicketStore = create<TicketStore>((set) => ({
+interface Ticket {
+  id: string;
+  movieTitle: string;
+  date: string;
+  time: string;
+  room: string;
+  seats: string[];
+  price: number;
+  purchaseDate: string;
+}
+
+interface TicketStore {
+  tickets: Ticket[];
+  loading: boolean;
+  error: string | null;
+  addTicket: (ticket: Omit<Ticket, 'id' | 'purchaseDate'>) => void;
+  loadTickets: () => Promise<void>;
+}
+
+export const useTicketStore = create<TicketStore>((set, get) => ({
   tickets: [],
   loading: false,
   error: null,
 
+  addTicket: (ticketData) => {
+    const newTicket: Ticket = {
+      ...ticketData,
+      id: Math.random().toString(36).substring(7),
+      purchaseDate: new Date().toISOString(),
+    };
+
+    set((state) => ({
+      tickets: [...state.tickets, newTicket],
+    }));
+
+    // Salvar no AsyncStorage
+    try {
+      const tickets = [...get().tickets, newTicket];
+      AsyncStorage.setItem('@CineBossa:tickets', JSON.stringify(tickets));
+    } catch (error) {
+      console.error('Erro ao salvar tickets:', error);
+    }
+  },
+
   loadTickets: async () => {
+    set({ loading: true, error: null });
+
     try {
-      set({ loading: true, error: null });
-      const tickets = await ticketService.getTickets();
-      set({ tickets, loading: false });
+      // Carregar do AsyncStorage
+      const storedTickets = await AsyncStorage.getItem('@CineBossa:tickets');
+      
+      if (storedTickets) {
+        set({ tickets: JSON.parse(storedTickets), loading: false });
+      } else {
+        set({ tickets: [], loading: false });
+      }
     } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to load tickets',
-        loading: false,
+      set({ 
+        error: 'Erro ao carregar ingressos. Tente novamente.',
+        loading: false 
       });
     }
-  },
-
-  addTicket: async (ticket) => {
-    try {
-      set({ loading: true, error: null });
-      const newTicket = await ticketService.createTicket(ticket);
-      set((state) => ({
-        tickets: [...state.tickets, newTicket],
-        loading: false,
-      }));
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to add ticket',
-        loading: false,
-      });
-    }
-  },
-
-  updateTicketStatus: async (id, status) => {
-    try {
-      set({ loading: true, error: null });
-      const updatedTicket = await ticketService.updateTicketStatus(id, status);
-      set((state) => ({
-        tickets: state.tickets.map((t) =>
-          t.id === id ? updatedTicket : t
-        ),
-        loading: false,
-      }));
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to update ticket',
-        loading: false,
-      });
-    }
-  },
-
-  deleteTicket: async (id) => {
-    try {
-      set({ loading: true, error: null });
-      await ticketService.deleteTicket(id);
-      set((state) => ({
-        tickets: state.tickets.filter((t) => t.id !== id),
-        loading: false,
-      }));
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to delete ticket',
-        loading: false,
-      });
-    }
-  },
-
-  clearTickets: () => {
-    set({ tickets: [], error: null });
-  },
-
-  setError: (error) => {
-    set({ error });
   },
 })); 
