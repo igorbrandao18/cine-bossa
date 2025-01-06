@@ -4,7 +4,7 @@ import { Text } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMovieStore } from '@/features/movies/stores/movieStore';
 import { rem } from '@/core/theme/rem';
-import { Header } from '@/shared/components/Header';
+import { Header } from '@/components/Header';
 import { MovieCard } from '@/features/movies/components/MovieCard';
 
 const { width } = Dimensions.get('window');
@@ -74,7 +74,7 @@ export default function CategoryScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title={category.name} />
+      <Header />
       
       <View style={styles.content}>
         <Text style={styles.description}>

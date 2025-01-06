@@ -1,21 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { rem } from '@/core/theme/rem';
 import { getTopPosition } from '@/core/utils/statusBar';
 
 interface HeaderProps {
-  title: string;
+  title?: string;
   onBack?: () => void;
 }
 
 export function Header({ title, onBack }: HeaderProps) {
+  const navigation = useNavigation();
   const topPosition = getTopPosition();
 
   const handleBack = () => {
     if (onBack) {
       onBack();
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
     } else {
       router.back();
     }
@@ -27,10 +30,11 @@ export function Header({ title, onBack }: HeaderProps) {
         <Pressable 
           style={styles.backButton}
           onPress={handleBack}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
         </Pressable>
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        {title && <Text style={styles.title} numberOfLines={1}>{title}</Text>}
       </View>
     </View>
   );

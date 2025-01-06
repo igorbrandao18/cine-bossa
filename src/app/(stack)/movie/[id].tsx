@@ -69,7 +69,7 @@ export default function MovieDetailsScreen() {
               style={styles.gradient}
               locations={[0, 0.2, 0.6, 0.9]}
             />
-            <Header title={movie.title} />
+            <Header/>
             <View style={styles.headerContent}>
               <Title style={styles.title}>{movie.title}</Title>
               
