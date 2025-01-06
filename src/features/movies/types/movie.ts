@@ -73,6 +73,7 @@ export interface MovieState {
     upcoming: MovieSection;
     topRated: MovieSection;
   };
+  genres: Genre[];
   loading: boolean;
   error: string | null;
 } 

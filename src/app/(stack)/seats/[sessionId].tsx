@@ -1,62 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, StatusBar, Dimensions, Pressable } from 'react-native';
+import { View, StyleSheet, Dimensions, Pressable, StatusBar, ScrollView } from 'react-native';
 import { Text, IconButton, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSessionStore, Seat } from '@/features/sessions/stores/sessionStore';
+import { useSessionStore } from '@/features/sessions/stores/sessionStore';
+import { PromotionBanner } from '@/features/seats/components/PromotionBanner';
+import { SelectionSummary } from '@/features/seats/components/SelectionSummary';
+import { colors } from '@/core/theme/colors';
 
-const { width } = Dimensions.get('window');
-const HORIZONTAL_PADDING = 32; // 16px de padding de cada lado
-const ROW_LETTER_WIDTH = 24; // largura da coluna com as letras das fileiras
-const SEAT_GAP = 8; // espaço entre os assentos
+const { width, height } = Dimensions.get('window');
+const HORIZONTAL_PADDING = 32;
+const ROW_LETTER_WIDTH = 24;
+const SEAT_GAP = 8;
 const SEATS_PER_ROW = 8;
 
 const SEAT_SIZE = Math.floor(
   (width - HORIZONTAL_PADDING - ROW_LETTER_WIDTH - (SEAT_GAP * (SEATS_PER_ROW - 1))) / SEATS_PER_ROW
 );
 
-const SEAT_TYPES = {
-  standard: {
-    icon: 'seat' as const,
-    color: '#E67E22',
-    label: 'Standard',
-    price: 35.00
-  },
-  couple: {
-    icon: 'sofa' as const,
-    color: '#E91E63',
-    label: 'Namorados',
-    price: 70.00
-  },
-  premium: {
-    icon: 'seat-recline-extra' as const,
-    color: '#3498DB',
-    label: 'Premium',
-    price: 45.00
-  },
-  wheelchair: {
-    icon: 'wheelchair-accessibility' as const,
-    color: '#2ECC71',
-    label: 'Acessível',
-    price: 35.00
-  }
-} as const;
-
-type SeatType = keyof typeof SEAT_TYPES;
-
 export default function SeatsScreen() {
   const router = useRouter();
   const { sessionId } = useLocalSearchParams();
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-  
-  const { currentSession, loading, error, fetchSession } = useSessionStore();
+  const { currentSession, loading, error, fetchSession, selectSeat, clearSelectedSeats } = useSessionStore();
 
   useEffect(() => {
     if (sessionId) {
+      clearSelectedSeats();
       fetchSession(String(sessionId));
     }
+    return () => {
+      clearSelectedSeats();
+    };
   }, [sessionId]);
 
   const toggleSeat = (seatId: string) => {
@@ -79,7 +56,7 @@ export default function SeatsScreen() {
 
   if (error || !currentSession) {
     return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea}>
         <View style={[styles.container, styles.centerContent]}>
           <Text style={styles.errorText}>Erro ao carregar sessão</Text>
           <Pressable 
@@ -118,9 +95,10 @@ export default function SeatsScreen() {
           </View>
         </View>
 
+        {/* Scrollable Content */}
         <ScrollView 
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
+          style={styles.scrollContent} 
+          contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
           {/* Screen */}
@@ -136,15 +114,13 @@ export default function SeatsScreen() {
           {/* Seats Grid */}
           <View style={styles.seatsContainer}>
             {loading ? (
-              <View style={styles.inlineLoading}>
-                <ActivityIndicator size="large" color="#E50914" />
-              </View>
+              <ActivityIndicator size="large" color="#E50914" />
             ) : (
               rows.map((row) => (
                 <View key={row} style={styles.seatRow}>
                   <Text style={styles.rowLetter}>{row}</Text>
                   <View style={styles.seatsGrid}>
-                    {currentSession.seats
+                    {seats
                       .filter(seat => seat.row === row)
                       .map((seat) => {
                         const isSelected = selectedSeats.includes(seat.id);
@@ -165,18 +141,13 @@ export default function SeatsScreen() {
                               colors={[
                                 isOccupied ? '#666' :
                                 isSelected ? '#E50914' : 
-                                SEAT_TYPES[seat.type].color,
+                                '#333',
                                 isOccupied ? '#444' :
                                 isSelected ? '#B71C1C' : 
-                                SEAT_TYPES[seat.type].color + '80'
+                                '#1A1A1A'
                               ]}
                               style={styles.seat}
                             >
-                              <MaterialCommunityIcons
-                                name={SEAT_TYPES[seat.type].icon}
-                                size={16}
-                                color={isOccupied ? '#333' : '#fff'}
-                              />
                               <Text style={[
                                 styles.seatNumber,
                                 isOccupied && styles.occupiedSeatNumber
@@ -193,64 +164,28 @@ export default function SeatsScreen() {
             )}
           </View>
 
-          {/* Legend */}
-          <View style={styles.legend}>
-            {Object.entries(SEAT_TYPES).map(([key, value]) => (
-              <View key={key} style={styles.legendItem}>
-                <LinearGradient
-                  colors={[value.color, value.color + '80']}
-                  style={styles.legendIcon}
-                >
-                  <MaterialCommunityIcons 
-                    name={value.icon} 
-                    size={12} 
-                    color="#fff" 
-                  />
-                </LinearGradient>
-                <Text style={styles.legendText}>{value.label}</Text>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
-
-        {/* Footer */}
-        <LinearGradient
-          colors={['transparent', '#000']}
-          style={styles.footerGradient}
-        >
-          <View style={styles.footer}>
-            <View style={styles.priceInfo}>
-              <Text style={styles.selectedCount}>
-                {selectedSeats.length} {selectedSeats.length === 1 ? 'assento' : 'assentos'} selecionado{selectedSeats.length !== 1 ? 's' : ''}
-              </Text>
-              <Text style={styles.totalPrice}>
-                R$ {getTotalPrice().toFixed(2)}
-              </Text>
-            </View>
-            <Pressable
-              style={[
-                styles.continueButton,
-                selectedSeats.length === 0 && { opacity: 0.5 }
-              ]}
-              onPress={() => {
+          {/* Bottom Info Container */}
+          <View style={styles.bottomInfoContainer}>
+            <PromotionBanner />
+            <SelectionSummary 
+              selectedSeats={selectedSeats}
+              onContinue={() => {
                 if (selectedSeats.length > 0) {
+                  clearSelectedSeats();
+                  selectedSeats.forEach(seatId => selectSeat(seatId));
                   router.push('/(stack)/payment');
                 }
               }}
-              disabled={selectedSeats.length === 0}
-            >
-              <Text style={styles.continueText}>Continuar</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#fff" />
-            </Pressable>
+            />
           </View>
+        </ScrollView>
 
-          <View style={styles.promotion}>
-            <MaterialCommunityIcons name="ticket-percent" size={20} color="#E50914" />
-            <Text style={styles.promotionText}>
-              Super Segunda: 25% em todos os assentos
-            </Text>
-          </View>
-        </LinearGradient>
+        {/* Footer Gradient */}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.95)', '#000']}
+          style={styles.bottomGradient}
+          pointerEvents="none"
+        />
       </View>
     </SafeAreaView>
   );
@@ -259,11 +194,11 @@ export default function SeatsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -271,7 +206,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A1A',
+    borderBottomColor: colors.border,
+    height: 56,
   },
   backButton: {
     margin: 0,
@@ -281,60 +217,43 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   movieTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colors.text,
   },
   sessionInfo: {
-    fontSize: 13,
-    color: '#999',
+    fontSize: 12,
+    color: colors.textSecondary,
     marginTop: 2,
   },
-  content: {
+  mainContent: {
     flex: 1,
-  },
-  contentContainer: {
-    padding: 16,
-    paddingBottom: 200,
+    paddingHorizontal: 16,
   },
   screen: {
-    padding: 8,
+    height: 32,
     borderRadius: 4,
     alignItems: 'center',
-    marginBottom: 32,
-    width: '100%',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   screenText: {
-    color: '#666',
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '500',
   },
   seatsContainer: {
-    width: '100%',
     alignItems: 'center',
-  },
-  columnNumbers: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  rowLetterPlaceholder: {
-    width: 24,
-  },
-  gridNumber: {
-    color: '#666',
-    fontSize: 12,
-    width: SEAT_SIZE,
-    textAlign: 'center',
+    gap: 8,
+    paddingBottom: 24,
   },
   seatRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
     width: '100%',
   },
   rowLetter: {
-    color: '#666',
+    color: colors.textMuted,
     fontSize: 12,
     width: ROW_LETTER_WIDTH,
     textAlign: 'center',
@@ -354,117 +273,48 @@ const styles = StyleSheet.create({
   },
   seat: {
     flex: 1,
-    borderRadius: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 2,
-  },
-  seatNumber: {
-    color: '#fff',
-    fontSize: 8,
-    marginTop: -2,
-    opacity: 0.8,
-  },
-  legend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 32,
-    paddingHorizontal: 16,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  legendIcon: {
-    width: 24,
-    height: 24,
     borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  legendText: {
-    color: '#999',
-    fontSize: 13,
+  seatNumber: {
+    color: colors.text,
+    fontSize: 10,
+    fontWeight: '500',
   },
-  footerGradient: {
+  bottomSection: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 32,
+    height: 100,
+    pointerEvents: 'none',
   },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  priceInfo: {
-    flex: 1,
-  },
-  selectedCount: {
-    color: '#999',
-    fontSize: 14,
-  },
-  totalPrice: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  continueButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E50914',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    gap: 8,
-  },
-  continueText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  promotion: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(229, 9, 20, 0.1)',
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E50914',
-  },
-  promotionText: {
-    color: '#E50914',
-    fontSize: 14,
-    fontWeight: '500',
+  bottomGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    zIndex: 1,
   },
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   errorText: {
-    color: '#E50914',
+    color: colors.error,
     fontSize: 16,
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#E50914',
+    backgroundColor: colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   retryText: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -472,10 +322,41 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   occupiedSeatNumber: {
-    color: '#333',
+    color: colors.textMuted,
   },
-  inlineLoading: {
-    padding: 20,
-    alignItems: 'center',
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContainer: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  fixedBottomContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 16,
+    zIndex: 10,
+    elevation: 10,
+  },
+  selectionContainer: {
+    marginTop: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 8,
+    padding: 16,
+  },
+  bottomInfoContainer: {
+    backgroundColor: colors.overlay.darker,
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    marginTop: 24,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });

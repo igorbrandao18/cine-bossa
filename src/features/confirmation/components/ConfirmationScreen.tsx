@@ -3,15 +3,29 @@ import { Text } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Button } from '@/shared/components/Button';
 import { theme, rem } from '@/theme';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTicketStore } from '@/features/tickets/stores/ticketStore';
+import { useSessionStore } from '@/features/sessions/stores/sessionStore';
+import { useRouter } from 'expo-router';
+import { parse, format, isValid } from 'date-fns';
+import { API_CONFIG } from '@/core/config/api';
+import { useMovieStore } from '@/features/movies/stores/movieStore';
+import { APP_ROUTES } from '@/core/navigation/routes';
 
 interface ConfirmationScreenProps {
   sessionId: string;
   onFinish: () => void;
 }
 
-export function ConfirmationScreen({ onFinish }: ConfirmationScreenProps) {
+const TIMEOUT_DURATION = 50; // 50 segundos
+
+export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenProps) {
+  const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const { addTicket } = useTicketStore();
+  const { selectedSession, selectedSeats, clearSelectedSeats } = useSessionStore();
+  const { sections } = useMovieStore();
+  const [timeLeft, setTimeLeft] = useState(TIMEOUT_DURATION);
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -20,7 +34,62 @@ export function ConfirmationScreen({ onFinish }: ConfirmationScreenProps) {
       tension: 50,
       friction: 7,
     }).start();
+
+    // Salvar o ticket
+    if (selectedSession && selectedSeats.length > 0) {
+      // Encontrar o filme nas seções
+      const movie = Object.values(sections)
+        .flatMap(section => section.movies)
+        .find(m => m.id === Number(selectedSession.movieId));
+
+      if (movie) {
+        // Usar a data diretamente do selectedSession
+        const formattedDate = selectedSession.date;
+
+        addTicket({
+          movieId: selectedSession.movieId,
+          movieTitle: selectedSession.movieTitle,
+          posterPath: movie.poster_path,
+          technology: selectedSession.technology,
+          date: formattedDate,
+          time: selectedSession.time,
+          room: selectedSession.room,
+          seats: selectedSeats,
+          price: selectedSeats.length * selectedSession.price,
+          paymentMethod: {
+            type: 'CREDIT',
+            lastDigits: '1234' // This should come from the payment flow
+          }
+        });
+
+        // Iniciar o timer de 50 segundos
+        const timer = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              // Limpar os assentos selecionados
+              clearSelectedSeats();
+              // Redirecionar para a tela de ingressos
+              router.push('/@tickets');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        return () => {
+          clearInterval(timer);
+          clearSelectedSeats();
+        };
+      }
+    }
   }, []);
+
+  const handleSeeTickets = () => {
+    router.push('/@tickets');
+    clearSelectedSeats();
+    onFinish?.();
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -40,13 +109,17 @@ export function ConfirmationScreen({ onFinish }: ConfirmationScreenProps) {
         Você receberá os ingressos no seu e-mail em instantes.
       </Text>
 
+      <Text style={[styles.timer, { color: theme.colors.textSecondary }]}>
+        Redirecionando em {timeLeft} segundos...
+      </Text>
+
       <Button 
-        mode="contained"
-        style={styles.button}
-        onPress={onFinish}
-      >
-        Voltar para o início
-      </Button>
+        variant="primary"
+        size="large"
+        onPress={handleSeeTickets}
+        title="Ver meus ingressos"
+        fullWidth
+      />
     </View>
   );
 }
@@ -73,6 +146,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: rem(1),
+    textAlign: 'center',
+    marginBottom: rem(1),
+  },
+  timer: {
+    fontSize: rem(0.875),
     textAlign: 'center',
     marginBottom: rem(3),
   },

@@ -1,7 +1,23 @@
 import { create } from 'zustand';
 import type { MovieState, MovieSection } from '../types/movie';
 import { movieService } from '../services/movieService';
-import { useSessionStore } from '@/features/sessions/stores/sessionStore';
+
+interface Genre {
+  id: number;
+  name: string;
+}
+
+interface MovieStoreState extends MovieState {
+  genres: Genre[];
+  loadGenres: () => Promise<void>;
+  loadNowPlaying: () => Promise<void>;
+  loadPopular: () => Promise<void>;
+  loadUpcoming: () => Promise<void>;
+  loadTopRated: () => Promise<void>;
+  getMoviesByGenre: (genreId: number) => Promise<any>;
+  searchMovies: (query: string) => Promise<any>;
+  clearError: () => void;
+}
 
 const initialSection: MovieSection = {
   title: '',
@@ -17,22 +33,43 @@ const initialState: MovieState = {
     upcoming: { ...initialSection, title: 'Em Breve' },
     topRated: { ...initialSection, title: 'Mais Bem Avaliados' },
   },
+  genres: [],
   loading: false,
   error: null,
 };
 
-export const useMovieStore = create<MovieState & {
-  loadNowPlaying: () => Promise<void>;
-  loadPopular: () => Promise<void>;
-  loadUpcoming: () => Promise<void>;
-  loadTopRated: () => Promise<void>;
-  getMoviesByGenre: (genreId: number) => Promise<any>;
-  searchMovies: (query: string) => Promise<any>;
-  clearError: () => void;
-}>((set, get) => ({
+// Cache para armazenar resultados por gênero
+const genreCache: Record<number, { data: any; timestamp: number }> = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+export const useMovieStore = create<MovieStoreState>((set, get) => ({
   ...initialState,
 
+  loadGenres: async () => {
+    const currentGenres = get().genres;
+    if (currentGenres.length > 0) {
+      return; // Retorna se já tiver gêneros carregados
+    }
+
+    try {
+      const response = await movieService.getGenres();
+      if (!response.genres?.length) {
+        throw new Error('No genres returned from API');
+      }
+      set({ genres: response.genres });
+    } catch (error) {
+      console.error('Error loading genres:', error);
+      set({ genres: [] });
+      throw error;
+    }
+  },
+
   loadNowPlaying: async () => {
+    const currentSection = get().sections.nowPlaying;
+    if (currentSection.movies.length > 0 && !currentSection.loading) {
+      return; // Retorna se já tiver filmes carregados e não estiver carregando
+    }
+
     try {
       set((state) => ({
         sections: {
@@ -72,6 +109,11 @@ export const useMovieStore = create<MovieState & {
   },
 
   loadPopular: async () => {
+    const currentSection = get().sections.popular;
+    if (currentSection.movies.length > 0 && !currentSection.loading) {
+      return; // Retorna se já tiver filmes carregados e não estiver carregando
+    }
+
     try {
       set((state) => ({
         sections: {
@@ -111,6 +153,11 @@ export const useMovieStore = create<MovieState & {
   },
 
   loadUpcoming: async () => {
+    const currentSection = get().sections.upcoming;
+    if (currentSection.movies.length > 0 && !currentSection.loading) {
+      return; // Retorna se já tiver filmes carregados e não estiver carregando
+    }
+
     try {
       set((state) => ({
         sections: {
@@ -124,7 +171,7 @@ export const useMovieStore = create<MovieState & {
       }));
 
       const response = await movieService.getUpcoming();
-
+      
       set((state) => ({
         sections: {
           ...state.sections,
@@ -150,6 +197,11 @@ export const useMovieStore = create<MovieState & {
   },
 
   loadTopRated: async () => {
+    const currentSection = get().sections.topRated;
+    if (currentSection.movies.length > 0 && !currentSection.loading) {
+      return; // Retorna se já tiver filmes carregados e não estiver carregando
+    }
+
     try {
       set((state) => ({
         sections: {
@@ -163,7 +215,7 @@ export const useMovieStore = create<MovieState & {
       }));
 
       const response = await movieService.getTopRated();
-
+      
       set((state) => ({
         sections: {
           ...state.sections,
@@ -189,10 +241,23 @@ export const useMovieStore = create<MovieState & {
   },
 
   getMoviesByGenre: async (genreId: number) => {
+    // Verifica se há dados em cache e se ainda são válidos
+    const cached = genreCache[genreId];
+    const now = Date.now();
+    if (cached && now - cached.timestamp < CACHE_DURATION) {
+      return cached.data;
+    }
+
     try {
-      return await movieService.getMoviesByGenre(genreId);
+      const response = await movieService.getMoviesByGenre(genreId);
+      // Armazena o resultado no cache
+      genreCache[genreId] = {
+        data: response,
+        timestamp: now
+      };
+      return response;
     } catch (error) {
-      console.error('Error getting movies by genre:', error);
+      console.error('Error loading movies by genre:', error);
       throw error;
     }
   },

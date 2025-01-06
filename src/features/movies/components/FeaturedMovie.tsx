@@ -21,9 +21,10 @@ import {
   GestureHandlerRootView
 } from 'react-native-gesture-handler';
 import { Image as ExpoImage } from 'expo-image';
+import { rem } from '../../../core/theme/rem';
 
 const { width, height } = Dimensions.get('window');
-const BANNER_HEIGHT = height * 0.65;
+const FEATURED_HEIGHT = height * 0.7;
 const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 0;
 
 const DEFAULT_BACKDROP = 'https://image.tmdb.org/t/p/original/wwemzKWzjKYJFfCeiB57q3r4Bcm.png';
@@ -139,7 +140,7 @@ export const FeaturedMovie = memo(function FeaturedMovie({
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.95)', '#000']}
               style={styles.gradient}
-              locations={[0, 0.5, 0.8]}
+              locations={[0.4, 0.8, 1]}
             >
               <View style={styles.contentContainer}>
                 <Text variant="headlineMedium" style={styles.featuredTitle}>
@@ -148,13 +149,6 @@ export const FeaturedMovie = memo(function FeaturedMovie({
                 <Text variant="bodyMedium" style={styles.featuredOverview} numberOfLines={2}>
                   {movie.overview || 'Sem descrição disponível'}
                 </Text>
-                <Pressable 
-                  style={styles.playButton}
-                  onPress={handlePress}
-                  android_ripple={{ color: 'rgba(255, 255, 255, 0.1)' }}
-                >
-                  <Text style={styles.playButtonText}>Comprar Ingresso</Text>
-                </Pressable>
               </View>
             </LinearGradient>
           </Animated.View>
@@ -166,17 +160,14 @@ export const FeaturedMovie = memo(function FeaturedMovie({
 
 const styles = StyleSheet.create({
   container: {
-    height: BANNER_HEIGHT,
-    width,
-    backgroundColor: '#000',
-    overflow: 'hidden',
-    marginTop: -STATUS_BAR_HEIGHT,
+    height: FEATURED_HEIGHT,
+    position: 'relative',
   },
   gestureContainer: {
     flex: 1,
   },
   featuredContainer: {
-    height: BANNER_HEIGHT,
+    height: FEATURED_HEIGHT,
     width: '100%',
   },
   featuredImage: {
@@ -189,34 +180,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: BANNER_HEIGHT,
+    height: FEATURED_HEIGHT,
     justifyContent: 'flex-end',
   },
   contentContainer: {
-    padding: 16,
-    paddingBottom: 24,
+    padding: rem(1.5),
+    paddingBottom: rem(2.25),
   },
   featuredTitle: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: rem(2),
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: rem(0.75),
   },
   featuredOverview: {
     color: '#fff',
-    marginBottom: 12,
-    fontSize: 13,
-  },
-  playButton: {
-    backgroundColor: '#E50914',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-  },
-  playButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: rem(1),
+    lineHeight: rem(1.5),
   },
 }); 

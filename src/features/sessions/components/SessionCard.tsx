@@ -1,81 +1,98 @@
-import { View, StyleSheet } from 'react-native'
-import { Button, Card, Text } from 'react-native-paper'
-import { Session } from '../types/session'
-import { useAppNavigation } from '@/core/navigation/useAppNavigation'
-import { rem } from '@/shared/utils/dimensions'
-import { Link } from 'expo-router'
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { router } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { memo, useCallback } from 'react';
+import { rem } from '../../../core/theme/rem';
+import type { Session } from '../types/session';
 
 interface SessionCardProps {
-  session: Session
+  session: Session;
 }
 
-export function SessionCard({ session }: SessionCardProps) {
-  const navigate = useAppNavigation()
+export const SessionCard = memo(function SessionCard({ session }: SessionCardProps) {
+  const handlePress = useCallback(() => {
+    router.push(`/seats/${session.id}`);
+  }, [session.id]);
 
   return (
-    <Card style={styles.container}>
-      <Card.Content>
-        <View style={styles.content}>
-          <View>
-            <Text variant="titleMedium" style={styles.time}>
-              {session.time}
-            </Text>
-            <Text variant="bodyMedium" style={styles.type}>
-              {session.type}
-            </Text>
-            <Text variant="bodySmall" style={styles.room}>
-              {session.room}
-            </Text>
-          </View>
+    <Pressable
+      style={styles.container}
+      onPress={handlePress}
+      android_ripple={{ color: 'rgba(255, 255, 255, 0.1)' }}
+    >
+      <View style={styles.timeContainer}>
+        <MaterialCommunityIcons 
+          name="clock-outline" 
+          size={rem(1.5)} 
+          color="#E50914" 
+        />
+        <Text style={styles.time}>{session.time}</Text>
+      </View>
 
-          <View style={styles.priceContainer}>
-            <Text variant="titleLarge" style={styles.price}>
-              R$ {session.price.toFixed(2)}
-            </Text>
-            <Link href={`/seats/${session.id}`} asChild>
-              <Button 
-                mode="contained"
-                style={styles.button}
-              >
-                Comprar
-              </Button>
-            </Link>
-          </View>
+      <View style={styles.details}>
+        <View style={styles.detailItem}>
+          <MaterialCommunityIcons 
+            name="theater" 
+            size={rem(1.25)} 
+            color="#999" 
+          />
+          <Text style={styles.detailText}>Sala {session.room}</Text>
         </View>
-      </Card.Content>
-    </Card>
-  )
-}
+
+        <View style={styles.detailItem}>
+          <MaterialCommunityIcons 
+            name="video" 
+            size={rem(1.25)} 
+            color="#999" 
+          />
+          <Text style={styles.detailText}>{session.technology}</Text>
+        </View>
+
+        <View style={styles.detailItem}>
+          <MaterialCommunityIcons 
+            name="currency-usd" 
+            size={rem(1.25)} 
+            color="#999" 
+          />
+          <Text style={styles.detailText}>
+            R$ {session.price.toFixed(2)}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+});
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: rem(0.75),
+    padding: rem(1),
     marginBottom: rem(1),
-    backgroundColor: '#1A1A1A',
   },
-  content: {
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.5),
+    marginBottom: rem(0.75),
+  },
+  time: {
+    color: '#fff',
+    fontSize: rem(1.25),
+    fontWeight: 'bold',
+  },
+  details: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  time: {
-    color: '#FFF',
-    marginBottom: rem(0.25),
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.375),
   },
-  type: {
-    color: '#CCC',
-    marginBottom: rem(0.25),
-  },
-  room: {
+  detailText: {
     color: '#999',
+    fontSize: rem(0.875),
   },
-  priceContainer: {
-    alignItems: 'flex-end',
-  },
-  price: {
-    color: '#E50914',
-    marginBottom: rem(0.5),
-  },
-  button: {
-    minWidth: rem(7.5),
-  },
-}) 
+}); 

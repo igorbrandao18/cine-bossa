@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { router } from 'expo-router';
 
 export type SessionType = 'imax' | '3d' | 'dbox' | 'vip' | 'standard';
 
@@ -26,6 +27,18 @@ interface Session {
   seatTypes: SessionType[];
 }
 
+interface PurchaseHistory {
+  id: string;
+  movieTitle: string;
+  date: string;
+  time: string;
+  seats: string[];
+  totalPrice: number;
+  purchaseDate: string;
+  room: string;
+  technology: string;
+}
+
 interface SessionState {
   currentSession: Session | null;
   sessions: Session[];
@@ -36,6 +49,10 @@ interface SessionState {
   loadSessions: (movieId: number, movieTitle: string) => Promise<void>;
   setSelectedSession: (sessionId: string) => void;
   selectedSeats: string[];
+  selectSeat: (seatId: string) => void;
+  unselectSeat: (seatId: string) => void;
+  clearSelectedSeats: () => void;
+  prefetchSession: (sessionId: string) => void;
   orderSummary: {
     sessionId: string;
     movieTitle: string;
@@ -44,6 +61,75 @@ interface SessionState {
     seats: string[];
     totalPrice: number;
   } | null;
+  timeUntilReload: number | null;
+  hasCompletedPurchase: boolean;
+  startReloadTimer: () => void;
+  purchaseHistory: PurchaseHistory[];
+  addToPurchaseHistory: () => void;
+}
+
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+const sessionCache = new Map<number, { data: Session[]; timestamp: number }>();
+
+// Cache de assentos para evitar regeneração
+const seatsCache = new Map<string, Seat[]>();
+
+// Cache de assentos pré-gerados para todas as configurações possíveis
+const SEAT_LAYOUTS = {
+  standard: generateSeatLayout('standard'),
+  premium: generateSeatLayout('premium'),
+  vip: generateSeatLayout('vip'),
+  imax: generateSeatLayout('imax'),
+} as const;
+
+// Pré-gerar layouts de assentos para cada tipo de sala
+function generateSeatLayout(roomType: string): Seat[] {
+  const seats: Seat[] = [];
+  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+  
+  rows.forEach(row => {
+    for (let i = 1; i <= 8; i++) {
+      const number = String(i).padStart(2, '0');
+      const id = `${row}${number}`;
+      
+      let type: Seat['type'] = 'standard';
+      if (['G02', 'G06'].includes(id)) type = 'couple';
+      if (['E04', 'E05', 'F04', 'F05'].includes(id)) type = 'premium';
+      if (['G01', 'G03', 'G05'].includes(id)) type = 'wheelchair';
+      
+      seats.push({
+        id,
+        row,
+        number,
+        type,
+        status: 'available',
+        price: calculatePrice(type, roomType),
+      });
+    }
+  });
+  
+  return seats;
+}
+
+// Calcular preço baseado no tipo de assento e sala
+function calculatePrice(seatType: Seat['type'], roomType: string): number {
+  const basePrice = 
+    roomType === 'imax' ? 45 :
+    roomType === 'vip' ? 50 :
+    roomType === 'premium' ? 40 :
+    35;
+
+  return seatType === 'couple' ? basePrice * 1.8 :
+         seatType === 'premium' ? basePrice * 1.3 :
+         basePrice;
+}
+
+// Gerar status de ocupação rapidamente
+function generateSeatStatus(seats: Seat[]): Seat[] {
+  return seats.map(seat => ({
+    ...seat,
+    status: Math.random() > 0.8 ? 'occupied' : 'available'
+  }));
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -54,30 +140,111 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   error: null,
   selectedSeats: [],
   orderSummary: null,
+  timeUntilReload: null,
+  hasCompletedPurchase: false,
+  purchaseHistory: [],
   
+  selectSeat: (seatId: string) => {
+    set(state => ({
+      selectedSeats: [...state.selectedSeats, seatId]
+    }));
+  },
+
+  unselectSeat: (seatId: string) => {
+    set(state => ({
+      selectedSeats: state.selectedSeats.filter(id => id !== seatId)
+    }));
+  },
+
+  clearSelectedSeats: () => {
+    set({ selectedSeats: [] });
+  },
+
   setSelectedSession: (sessionId: string) => {
-    const session = get().sessions.find(s => s.id === sessionId);
+    const sessions = get().sessions;
+    const session = sessions.find(s => s.id === sessionId);
     if (session) {
-      set({ selectedSession: session });
+      // Primeiro limpa os assentos selecionados
+      set({ selectedSeats: [] });
+
+      // Primeiro setamos loading para true
+      set({ loading: true });
+
+      // Geramos os assentos antes de atualizar a sessão
+      const baseLayout = SEAT_LAYOUTS[session.type.toLowerCase() as keyof typeof SEAT_LAYOUTS] || SEAT_LAYOUTS.standard;
+      const seatsWithStatus = generateSeatStatus(baseLayout);
+      
+      const sessionWithSeats = {
+        ...session,
+        seats: seatsWithStatus
+      };
+      
+      // Atualizamos tudo de uma vez
+      set({ 
+        selectedSession: sessionWithSeats,
+        currentSession: sessionWithSeats,
+        loading: false
+      });
+    }
+  },
+
+  prefetchSession: (sessionId: string) => {
+    const sessions = get().sessions;
+    const session = sessions.find(s => s.id === sessionId);
+    
+    if (session) {
+      // Pré-gerar assentos e guardar no cache
+      const baseLayout = SEAT_LAYOUTS[session.type.toLowerCase() as keyof typeof SEAT_LAYOUTS] || SEAT_LAYOUTS.standard;
+      const seatsWithStatus = generateSeatStatus(baseLayout);
+      
+      // Guardar no cache de assentos
+      seatsCache.set(sessionId, seatsWithStatus);
+    } else {
+      mockFetchSession(sessionId).then(session => {
+        const baseLayout = SEAT_LAYOUTS[session.type.toLowerCase() as keyof typeof SEAT_LAYOUTS] || SEAT_LAYOUTS.standard;
+        const seatsWithStatus = generateSeatStatus(baseLayout);
+        
+        // Guardar no cache de assentos
+        seatsCache.set(sessionId, seatsWithStatus);
+      });
     }
   },
 
   fetchSession: async (sessionId: string) => {
     set({ loading: true, error: null });
     try {
-      // Primeiro verifica se já temos a sessão selecionada
-      const selectedSession = get().selectedSession;
-      if (selectedSession && selectedSession.id === sessionId) {
-        set({ 
-          currentSession: selectedSession,
-          loading: false 
-        });
+      const currentSession = get().currentSession;
+      if (currentSession?.id === sessionId) {
+        set({ loading: false });
         return;
       }
 
-      // Se não tiver, busca do mock
+      // Verificar cache de assentos primeiro
+      const cachedSeats = seatsCache.get(sessionId);
+      const sessions = get().sessions;
+      const cachedSession = sessions.find(s => s.id === sessionId);
+
+      if (cachedSession && cachedSeats) {
+        const sessionWithSeats = {
+          ...cachedSession,
+          seats: cachedSeats
+        };
+        set({ currentSession: sessionWithSeats, loading: false });
+        return;
+      }
+
       const response = await mockFetchSession(sessionId);
-      set({ currentSession: response, loading: false });
+      const baseLayout = SEAT_LAYOUTS[response.type.toLowerCase() as keyof typeof SEAT_LAYOUTS] || SEAT_LAYOUTS.standard;
+      const seatsWithStatus = generateSeatStatus(baseLayout);
+      
+      const sessionWithSeats = {
+        ...response,
+        seats: seatsWithStatus
+      };
+
+      // Guardar no cache
+      seatsCache.set(sessionId, seatsWithStatus);
+      set({ currentSession: sessionWithSeats, loading: false });
     } catch (error) {
       set({ error: 'Erro ao carregar sessão', loading: false });
     }
@@ -86,7 +253,19 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   loadSessions: async (movieId: number, movieTitle: string) => {
     set({ loading: true, error: null });
     try {
+      // Check cache first
+      const cached = sessionCache.get(movieId);
+      const now = Date.now();
+      
+      if (cached && (now - cached.timestamp) < CACHE_EXPIRY) {
+        set({ sessions: cached.data, loading: false });
+        return;
+      }
+
       const response = await mockLoadSessions(movieId, movieTitle);
+      
+      // Update cache
+      sessionCache.set(movieId, { data: response, timestamp: now });
       set({ sessions: response, loading: false });
     } catch (error) {
       set({ error: 'Erro ao carregar sessões', loading: false });
@@ -111,6 +290,59 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   clearOrderSummary: () => set({ orderSummary: null }),
+
+  startReloadTimer: () => {
+    set({ hasCompletedPurchase: true });
+    
+    // Inicia com 60 segundos (1 minuto)
+    set({ timeUntilReload: 60 });
+    
+    // Atualiza o contador a cada segundo
+    const interval = setInterval(() => {
+      const currentTime = get().timeUntilReload;
+      if (currentTime === null) return;
+      
+      if (currentTime <= 1) {
+        clearInterval(interval);
+        set({ timeUntilReload: null });
+        // Limpa os estados
+        set({
+          currentSession: null,
+          selectedSession: null,
+          selectedSeats: [],
+          loading: false,
+          error: null,
+          hasCompletedPurchase: false
+        });
+        // Recarrega o app
+        router.replace('/');
+      } else {
+        set({ timeUntilReload: currentTime - 1 });
+      }
+    }, 1000);
+  },
+
+  addToPurchaseHistory: () => {
+    const { currentSession, selectedSeats, orderSummary } = get();
+    
+    if (!currentSession || !orderSummary) return;
+
+    const purchase: PurchaseHistory = {
+      id: Date.now().toString(),
+      movieTitle: currentSession.movieTitle,
+      date: currentSession.date,
+      time: currentSession.time,
+      seats: selectedSeats,
+      totalPrice: orderSummary.totalPrice,
+      purchaseDate: new Date().toISOString(),
+      room: currentSession.room,
+      technology: currentSession.technology
+    };
+
+    set(state => ({
+      purchaseHistory: [...state.purchaseHistory, purchase]
+    }));
+  },
 }));
 
 // Função auxiliar para gerar data e hora aleatória nos próximos 7 dias
@@ -176,53 +408,83 @@ const generateRandomRoom = () => {
 // Mock para carregar lista de sessões
 const mockLoadSessions = async (movieId: number, movieTitle: string): Promise<Session[]> => {
   return new Promise((resolve) => {
-    // Gerar entre 8 e 15 sessões aleatórias (mais sessões pois agora são vários dias)
-    const numberOfSessions = Math.floor(Math.random() * 8) + 8;
+    // Garantir pelo menos 4 sessões por dia nos próximos 3 dias
     const sessions: Session[] = [];
-    
-    // Array para controlar datas e horários já usados para não repetir
     const usedDateTimes: string[] = [];
-    
-    for (let i = 0; i < numberOfSessions; i++) {
-      const { date, time, dateTime, isToday } = generateRandomDateTime(usedDateTimes);
-      usedDateTimes.push(dateTime);
+    const today = new Date();
+
+    // Gerar sessões para hoje e próximos 2 dias
+    for (let dayOffset = 0; dayOffset < 3; dayOffset++) {
+      const currentDate = new Date();
+      currentDate.setDate(today.getDate() + dayOffset);
       
-      const room = generateRandomRoom();
+      // Horários fixos para cada dia (10:00, 14:00, 18:00, 21:00)
+      const fixedTimes = ['10:00', '14:00', '18:00', '21:00'];
       
-      sessions.push({
-        id: `${movieId}-${i + 1}`,
-        movieId: String(movieId),
-        movieTitle,
-        room: `Sala ${room.number}`,
-        technology: room.technology,
-        time,
-        date,
-        isToday,
-        seats: generateSeats(),
-        price: room.price,
-        type: room.technology,
-        seatTypes: room.seatTypes,
+      fixedTimes.forEach((time, index) => {
+        const date = currentDate.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+        });
+        
+        const room = generateRandomRoom();
+        
+        sessions.push({
+          id: `${movieId}-${sessions.length + 1}`,
+          movieId: String(movieId),
+          movieTitle,
+          room: `Sala ${room.number}`,
+          technology: room.technology,
+          time,
+          date,
+          isToday: dayOffset === 0,
+          seats: [],
+          price: room.price,
+          type: room.technology,
+          seatTypes: room.seatTypes,
+        });
       });
     }
-    
-    // Ordenar sessões primeiro por data e depois por horário
-    sessions.sort((a, b) => {
-      const dateA = a.date.split('/').reverse().join('');
-      const dateB = b.date.split('/').reverse().join('');
-      if (dateA !== dateB) return dateA.localeCompare(dateB);
-      
-      const timeA = a.time.split(':').map(Number);
-      const timeB = b.time.split(':').map(Number);
-      return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
-    });
 
-    setTimeout(() => {
-      resolve(sessions);
-    }, 1000);
+    // Resolver primeira sessão imediatamente
+    resolve([sessions[0]]);
+
+    // Carregar o resto das sessões em batches
+    const batchSize = 4;
+    let currentIndex = 1;
+
+    const loadNextBatch = () => {
+      const batchEnd = Math.min(currentIndex + batchSize, sessions.length);
+      const currentBatch = sessions.slice(0, batchEnd);
+
+      // Ordenar sessões
+      currentBatch.sort((a, b) => {
+        const dateA = a.date.split('/').reverse().join('');
+        const dateB = b.date.split('/').reverse().join('');
+        if (dateA !== dateB) return dateA.localeCompare(dateB);
+        
+        const timeA = a.time.split(':').map(Number);
+        const timeB = b.time.split(':').map(Number);
+        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+      });
+
+      // Atualizar o store com as novas sessões
+      useSessionStore.setState({ sessions: currentBatch });
+
+      currentIndex = batchEnd;
+      
+      // Se ainda houver mais sessões para carregar, agendar próximo batch
+      if (currentIndex < sessions.length) {
+        setTimeout(loadNextBatch, 50); // Reduzido para 50ms para carregar mais rápido
+      }
+    };
+
+    // Iniciar carregamento lazy após 50ms
+    setTimeout(loadNextBatch, 50);
   });
 };
 
-// Atualizar o mockFetchSession também
+// Atualizar o mockFetchSession para ser mais rápido e não gerar assentos
 const mockFetchSession = async (sessionId: string): Promise<Session> => {
   const [movieId, sessionNumber] = sessionId.split('-').map(Number);
   const room = generateRandomRoom();
@@ -239,39 +501,11 @@ const mockFetchSession = async (sessionId: string): Promise<Session> => {
         time,
         date,
         isToday,
-        seats: generateSeats(),
+        seats: [], // Assentos serão gerados separadamente
         price: room.price,
         type: room.technology,
         seatTypes: room.seatTypes,
       });
-    }, 1000);
+    }, 100); // Reduzido para 100ms já que não gera assentos
   });
-};
-
-const generateSeats = () => {
-  const seats: Seat[] = [];
-  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-  
-  rows.forEach(row => {
-    for (let i = 1; i <= 8; i++) {
-      const number = String(i).padStart(2, '0');
-      const id = `${row}${number}`;
-      
-      let type: Seat['type'] = 'standard';
-      if (['G02', 'G06'].includes(id)) type = 'couple';
-      if (['E04', 'E05', 'F04', 'F05'].includes(id)) type = 'premium';
-      if (['G01', 'G03', 'G05'].includes(id)) type = 'wheelchair';
-      
-      seats.push({
-        id,
-        row,
-        number,
-        type,
-        status: Math.random() > 0.8 ? 'occupied' : 'available',
-        price: type === 'couple' ? 70 : type === 'premium' ? 45 : 35,
-      });
-    }
-  });
-  
-  return seats;
 }; 

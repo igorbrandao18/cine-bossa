@@ -4,6 +4,7 @@ import { PaperProvider } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import { CustomFooter } from '../components/CustomFooter';
+import { ReloadTimer } from '@/shared/components/ReloadTimer';
 
 export default function Layout() {
   return (
@@ -20,6 +21,7 @@ export default function Layout() {
           <CustomFooter />
         </View>
       </PaperProvider>
+      <ReloadTimer />
     </GestureHandlerRootView>
   );
 }

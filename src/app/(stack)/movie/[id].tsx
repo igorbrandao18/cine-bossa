@@ -19,7 +19,7 @@ const SESSION_TYPES = {
     color: '#1B95E0',
   },
   '3d': {
-    icon: '3d',
+    icon: 'glasses',
     label: '3D',
     color: '#8E44AD',
   },
