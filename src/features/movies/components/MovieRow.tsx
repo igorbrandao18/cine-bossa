@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { rem } from '../../../core/theme/rem';
 import type { Movie } from '../types/movie';
+import { useMovieStore } from '../stores/movieStore';
 
 interface MovieRowProps {
   type: 'trending' | 'nowPlaying' | 'popular' | 'upcoming' | 'topRated' | 'action' | 'comedy' | 'horror' | 'romance' | 'documentary';
@@ -13,6 +14,13 @@ interface MovieRowProps {
 }
 
 export function MovieRow({ type, loading, error, movies }: MovieRowProps) {
+  const { loadMovieDetails } = useMovieStore();
+
+  const handleMoviePress = (movie: Movie) => {
+    loadMovieDetails(movie.id, movie);
+    router.push(`/movie/${movie.id}`);
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -48,7 +56,7 @@ export function MovieRow({ type, loading, error, movies }: MovieRowProps) {
           <Pressable
             key={movie.id}
             style={styles.movieCard}
-            onPress={() => router.push(`/movie/${movie.id}`)}
+            onPress={() => handleMoviePress(movie)}
           >
             <Image
               source={{ uri: `https://image.tmdb.org/t/p/w300${movie.poster_path}` }}

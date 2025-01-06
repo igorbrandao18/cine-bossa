@@ -14,7 +14,7 @@ interface MovieStoreState extends MovieState {
 }
 
 interface MovieActions {
-  loadMovieDetails: (movieId: number) => Promise<void>;
+  loadMovieDetails: (movieId: number, initialMovie?: Movie) => Promise<void>;
   loadTrending: () => Promise<void>;
   loadNowPlaying: () => Promise<void>;
   loadPopular: () => Promise<void>;
@@ -59,9 +59,18 @@ export const useMovieStore = create<MovieStoreState & MovieActions>((set) => ({
   loading: false,
   error: null,
 
-  loadMovieDetails: async (movieId: number) => {
+  loadMovieDetails: async (movieId: number, initialMovie?: Movie) => {
     try {
       set({ loading: true, error: null });
+
+      if (initialMovie) {
+        set(state => ({
+          currentMovie: {
+            ...state.currentMovie,
+            details: initialMovie as MovieDetails,
+          },
+        }));
+      }
 
       const [
         details,
