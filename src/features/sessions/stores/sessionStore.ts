@@ -11,7 +11,7 @@ export interface Seat {
   price: number;
 }
 
-interface Session {
+export interface Session {
   id: string;
   movieId: string;
   movieTitle: string;

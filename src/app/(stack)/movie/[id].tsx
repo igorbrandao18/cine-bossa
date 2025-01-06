@@ -1,262 +1,156 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, Pressable, StatusBar } from 'react-native';
-import { Text, Button } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useEffect } from 'react';
+import { View, ScrollView, StyleSheet, Dimensions, StatusBar, Platform } from 'react-native';
+import { Button, Title, Paragraph, Chip, Text } from 'react-native-paper';
 import { Image } from 'expo-image';
-import { API_CONFIG, SIZES } from '../../../core/config/api';
-import { useMovieStore } from '../../../features/movies/stores/movieStore';
-import { useSessionStore } from '../../../features/sessions/stores/sessionStore';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useMovieDetails } from '@/features/movies/hooks/useMovieDetails';
+import { MovieDetails } from '@/core/types/tmdb';
+import { API_CONFIG, SIZES } from '@/core/config/api';
+import { rem } from '@/core/theme/rem';
+import { Header } from '@/components/Header';
 
 const { width, height } = Dimensions.get('window');
-const BANNER_HEIGHT = height * 0.65;
+const HEADER_HEIGHT = height * 0.7;
+const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 47 : StatusBar.currentHeight || 0;
 
-const SESSION_TYPES = {
-  imax: {
-    icon: 'theater',
-    label: 'IMAX',
-    color: '#1B95E0',
-  },
-  '3d': {
-    icon: 'glasses',
-    label: '3D',
-    color: '#8E44AD',
-  },
-  'dbox': {
-    icon: 'seat-recline-extra',
-    label: 'D-BOX',
-    color: '#E67E22',
-  },
-  'vip': {
-    icon: 'star',
-    label: 'VIP',
-    color: '#F1C40F',
-  },
-  'standard': {
-    icon: 'filmstrip',
-    label: '2D',
-    color: '#7F8C8D',
-  },
-} as const;
+const MATCH_SCORE = 98; // Simular score de compatibilidade como Netflix
 
-export default function MovieScreen() {
-  const { id } = useLocalSearchParams();
+export default function MovieDetailsScreen() {
+  const params = useLocalSearchParams();
+  const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const router = useRouter();
-  const { sessions, loadSessions, setSelectedSession } = useSessionStore();
-  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
-  
-  const movie = useMovieStore(state => {
-    const sections = state.sections;
-    for (const section of Object.values(sections)) {
-      const found = section.movies.find(m => m.id === Number(id));
-      if (found) return found;
-    }
-    return null;
-  });
+  const { movie, loading, loadMovie } = useMovieDetails(Number(id));
 
   useEffect(() => {
-    if (movie) {
-      const loadMovieSessions = async () => {
-        setIsLoadingSessions(true);
-        await loadSessions(Number(id), movie.title);
-        setIsLoadingSessions(false);
-      };
-      loadMovieSessions();
+    if (id) {
+      loadMovie();
     }
-  }, [movie?.id]);
+  }, [id]);
 
-  const handleSessionPress = (sessionId: string) => {
-    setSelectedSession(sessionId);
-    router.push(`/seats/${sessionId}`);
+  const handleBuyTicket = () => {
+    if (movie) {
+      router.push({
+        pathname: "/(stack)/sessions/[movieId]",
+        params: { 
+          movieId: id,
+          movieTitle: movie.title 
+        }
+      });
+    }
   };
 
   if (!movie) return null;
 
-  const movieSessions = sessions.filter(session => session.movieId === String(id));
-
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" />
-      
-      <Pressable 
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
-        <MaterialCommunityIcons name="chevron-left" size={28} color="#fff" />
-      </Pressable>
-
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Image 
-            source={{ 
-              uri: `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.original}${movie.backdrop_path}` 
-            }}
-            style={styles.backdrop}
-            contentFit="cover"
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.8)', '#000']}
-            style={styles.gradient}
-            locations={[0, 0.6, 1]}
-          />
-          <View style={styles.movieInfo}>
-            <Text style={styles.title}>{movie.title}</Text>
-            <View style={styles.movieMeta}>
-              <View style={styles.rating}>
-                <MaterialCommunityIcons name="star" size={20} color="#FFD700" />
-                <Text style={styles.ratingText}>{movie.vote_average.toFixed(1)}</Text>
-              </View>
-              <View style={styles.classification}>
-                <Text style={styles.classificationText}>14</Text>
-              </View>
-            </View>
-            <Text style={styles.overview}>{movie.overview}</Text>
-          </View>
-        </View>
-
-        <View style={styles.sessions}>
-          <Text style={styles.sessionsTitle}>Sessões Disponíveis</Text>
-          
-          {isLoadingSessions ? (
-            // Loading skeleton para as sessões
-            Array.from({ length: 3 }).map((_, index) => (
-              <View 
-                key={`skeleton-${index}`} 
-                style={[styles.sessionCard, styles.sessionSkeleton]}
-              >
-                <View style={styles.skeletonAnimation}>
-                  <LinearGradient
-                    colors={['#1A1A1A', '#262626', '#1A1A1A']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.skeletonGradient}
-                  />
+      <StatusBar 
+        translucent 
+        backgroundColor="transparent" 
+        barStyle="light-content"
+      />
+      <View style={styles.content}>
+        <ScrollView 
+          style={styles.scrollView} 
+          bounces={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.headerContainer}>
+            <Image
+              source={{ 
+                uri: `${API_CONFIG.imageBaseUrl}/${SIZES.backdrop.original}${movie.backdrop_path}` 
+              }}
+              style={styles.backdrop}
+              contentFit="cover"
+            />
+            <LinearGradient
+              colors={['rgba(0,0,0,0.8)', 'transparent', 'rgba(0,0,0,0.8)', '#000']}
+              style={styles.gradient}
+              locations={[0, 0.2, 0.6, 0.9]}
+            />
+            <Header title={movie.title} />
+            <View style={styles.headerContent}>
+              <Title style={styles.title}>{movie.title}</Title>
+              
+              <View style={styles.highlights}>
+                <View style={styles.matchScore}>
+                  <MaterialCommunityIcons name="thumb-up" size={16} color="#E50914" />
+                  <Text style={styles.matchText}>{MATCH_SCORE}% relevante</Text>
+                </View>
+                <View style={styles.releaseInfo}>
+                  <Text style={styles.releaseYear}>
+                    {new Date(movie.release_date).getFullYear()}
+                  </Text>
+                  <View style={styles.dot} />
+                  <View style={styles.runtimeContainer}>
+                    <MaterialCommunityIcons name="clock-outline" size={14} color="#ccc" />
+                    <Text style={styles.runtime}>{movie.runtime}min</Text>
+                  </View>
                 </View>
               </View>
-            ))
-          ) : movieSessions.length > 0 ? (
-            movieSessions.map(session => (
-              <Pressable
-                key={session.id}
-                style={({ pressed }) => [
-                  styles.sessionCard,
-                  pressed && styles.sessionCardPressed
-                ]}
-                onPress={() => handleSessionPress(session.id)}
-              >
-                <LinearGradient
-                  colors={['#1A1A1A', '#262626']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.sessionGradient}
+
+              <View style={styles.ratingContainer}>
+                <View style={styles.ratingBox}>
+                  <MaterialCommunityIcons name="star" size={16} color="#FFD700" />
+                  <Text style={styles.ratingValue}>
+                    {movie.vote_average.toFixed(1)}
+                  </Text>
+                  <Text style={styles.ratingTotal}>/10</Text>
+                </View>
+                <View style={styles.votesContainer}>
+                  <Text style={styles.votesCount}>
+                    {movie.vote_count.toLocaleString()}
+                  </Text>
+                  <Text style={styles.votesLabel}>avaliações</Text>
+                </View>
+              </View>
+
+              <View style={styles.qualityTags}>
+                <Chip style={styles.qualityChip} textStyle={styles.qualityChipText}>
+                  4K Ultra HD
+                </Chip>
+                <Chip style={styles.qualityChip} textStyle={styles.qualityChipText}>
+                  Dolby Atmos
+                </Chip>
+                {movie.adult && (
+                  <Chip style={styles.qualityChip} textStyle={styles.qualityChipText}>
+                    18+
+                  </Chip>
+                )}
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.movieContent}>
+            <View style={styles.genreContainer}>
+              {movie.genres.map(genre => (
+                <Chip 
+                  key={genre.id} 
+                  style={styles.genreChip}
+                  textStyle={styles.genreText}
                 >
-                  <View style={styles.sessionMainInfo}>
-                    <View style={styles.timeContainer}>
-                      <Text style={styles.sessionTime}>{session.time}</Text>
-                      <View style={styles.sessionBadge}>
-                        <Text style={styles.sessionBadgeText}>
-                          {session.isToday ? 'HOJE' : session.date}
-                        </Text>
-                      </View>
-                    </View>
-                    
-                    <View style={styles.priceContainer}>
-                      <Text style={styles.priceLabel}>A partir de</Text>
-                      <View style={styles.priceWrapper}>
-                        <Text style={styles.priceCurrency}>R$</Text>
-                        <Text style={styles.sessionPrice}>{session.price.toFixed(2)}</Text>
-                      </View>
-                    </View>
-                  </View>
+                  {genre.name}
+                </Chip>
+              ))}
+            </View>
 
-                  <View style={styles.sessionDivider} />
+            <Text variant="titleMedium" style={styles.sectionTitle}>Sinopse</Text>
+            <Paragraph style={styles.overview}>{movie.overview}</Paragraph>
 
-                  <View style={styles.sessionTypes}>
-                    {session.seatTypes.map((type) => (
-                      <View 
-                        key={type} 
-                        style={[
-                          styles.typeTag,
-                          { backgroundColor: `${SESSION_TYPES[type].color}20` }
-                        ]}
-                      >
-                        <MaterialCommunityIcons
-                          name={SESSION_TYPES[type].icon as any}
-                          size={18}
-                          color={SESSION_TYPES[type].color}
-                        />
-                        <Text 
-                          style={[
-                            styles.typeText,
-                            { color: SESSION_TYPES[type].color }
-                          ]}
-                        >
-                          {SESSION_TYPES[type].label}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  <View style={styles.sessionDetails}>
-                    <View style={styles.detailItem}>
-                      <MaterialCommunityIcons 
-                        name="door" 
-                        size={20} 
-                        color="#E50914"
-                      />
-                      <View>
-                        <Text style={styles.detailLabel}>Sala</Text>
-                        <Text style={styles.detailText}>{session.room}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.detailItem}>
-                      <MaterialCommunityIcons 
-                        name="seat" 
-                        size={20} 
-                        color="#E50914"
-                      />
-                      <View>
-                        <Text style={styles.detailLabel}>Lugares</Text>
-                        <Text style={styles.detailText}>Disponível</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.detailItem}>
-                      <MaterialCommunityIcons 
-                        name="surround-sound" 
-                        size={20} 
-                        color="#E50914"
-                      />
-                      <View>
-                        <Text style={styles.detailLabel}>Áudio</Text>
-                        <Text style={styles.detailText}>Dolby Atmos</Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  <View style={styles.sessionFooter}>
-                    <View style={styles.amenities}>
-                      <MaterialCommunityIcons name="food" size={16} color="#666" />
-                      <MaterialCommunityIcons name="parking" size={16} color="#666" />
-                      <MaterialCommunityIcons name="wheelchair-accessibility" size={16} color="#666" />
-                    </View>
-                    <View style={styles.buyButton}>
-                      <Text style={styles.buyButtonText}>Comprar</Text>
-                      <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
-                    </View>
-                  </View>
-                </LinearGradient>
-              </Pressable>
-            ))
-          ) : (
-            <Text style={styles.noSessionsText}>
-              Nenhuma sessão disponível para este filme
-            </Text>
-          )}
-        </View>
-      </ScrollView>
+            <Button 
+              mode="contained" 
+              onPress={handleBuyTicket}
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
+              icon="ticket"
+            >
+              Comprar Ingresso
+            </Button>
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -266,17 +160,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  content: {
+    flex: 1,
+    paddingBottom: rem(4),
+  },
   scrollView: {
     flex: 1,
-    paddingBottom: 80,
   },
-  header: {
-    height: BANNER_HEIGHT,
+  scrollContent: {
+    flexGrow: 1,
+  },
+  headerContainer: {
+    height: HEADER_HEIGHT,
     position: 'relative',
+    marginTop: -STATUSBAR_HEIGHT,
   },
   backdrop: {
-    width: '100%',
-    height: '100%',
+    width: width,
+    height: HEADER_HEIGHT,
     position: 'absolute',
   },
   gradient: {
@@ -284,230 +185,145 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: BANNER_HEIGHT,
+    height: HEADER_HEIGHT,
   },
-  movieInfo: {
+  headerContent: {
     position: 'absolute',
-    bottom: 0,
+    bottom: rem(2),
     left: 0,
     right: 0,
-    padding: 20,
+    padding: rem(1),
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 8,
+    fontSize: rem(2),
+    fontWeight: 'bold',
+    marginBottom: rem(1),
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10
   },
-  overview: {
-    fontSize: 14,
+  highlights: {
+    marginBottom: rem(1),
+  },
+  matchScore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.5),
+    marginBottom: rem(0.5),
+  },
+  matchText: {
+    color: '#E50914',
+    fontSize: rem(1),
+    fontWeight: '600',
+  },
+  releaseInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.5),
+  },
+  releaseYear: {
     color: '#ccc',
-    marginBottom: 12,
-    lineHeight: 20,
+    fontSize: rem(0.875),
   },
-  rating: {
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#666',
+  },
+  runtimeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: rem(0.25),
   },
-  ratingText: {
-    color: '#fff',
-    marginLeft: 4,
-    fontSize: 16,
+  runtime: {
+    color: '#ccc',
+    fontSize: rem(0.875),
   },
-  sessions: {
-    padding: 20,
-    paddingBottom: 100,
-  },
-  sessionsTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-  },
-  sessionCard: {
-    marginBottom: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  sessionCardPressed: {
-    opacity: 0.7,
-  },
-  sessionGradient: {
-    padding: 16,
-  },
-  sessionMainInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  timeContainer: {
+  ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: rem(1),
+    marginBottom: rem(1),
   },
-  sessionTime: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  sessionBadge: {
-    backgroundColor: '#E50914',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  sessionBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  priceWrapper: {
+  ratingBox: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 4,
+    alignItems: 'center',
+    gap: rem(0.25),
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    paddingHorizontal: rem(0.5),
+    paddingVertical: rem(0.25),
+    borderRadius: rem(0.25),
   },
-  priceCurrency: {
-    color: '#E50914',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  sessionPrice: {
-    fontSize: 32,
-    color: '#E50914',
+  ratingValue: {
+    color: '#FFD700',
+    fontSize: rem(1),
     fontWeight: 'bold',
   },
-  sessionDivider: {
-    height: 1,
-    backgroundColor: '#333',
-    marginVertical: 16,
+  ratingTotal: {
+    color: '#999',
+    fontSize: rem(0.75),
   },
-  sessionTypes: {
+  votesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rem(0.25),
+  },
+  votesCount: {
+    color: '#ccc',
+    fontSize: rem(0.875),
+  },
+  votesLabel: {
+    color: '#999',
+    fontSize: rem(0.875),
+  },
+  qualityTags: {
+    flexDirection: 'row',
+    gap: rem(0.5),
+  },
+  qualityChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  qualityChipText: {
+    color: '#fff',
+    fontSize: rem(0.75),
+  },
+  movieContent: {
+    padding: rem(1),
+    backgroundColor: '#000',
+  },
+  genreContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
+    gap: rem(0.5),
+    marginBottom: rem(1.5),
   },
-  typeTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  typeText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  sessionDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  detailLabel: {
-    color: '#666',
-    fontSize: 12,
-  },
-  detailText: {
+  sectionTitle: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
+    marginBottom: rem(0.5),
   },
-  sessionFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
+  overview: {
+    color: '#ccc',
+    fontSize: rem(1),
+    lineHeight: rem(1.5),
+    marginBottom: rem(2),
   },
-  amenities: {
-    flexDirection: 'row',
-    gap: 12,
+  genreChip: {
+    backgroundColor: 'rgba(229, 9, 20, 0.1)',
   },
-  buyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  genreText: {
+    color: '#E50914',
+  },
+  button: {
     backgroundColor: '#E50914',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    marginBottom: rem(2),
   },
-  buyButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  buttonContent: {
+    height: rem(3),
   },
-  backButton: {
-    position: 'absolute',
-    top: 60,
-    left: 16,
-    zIndex: 10,
-    width: 40,
-    height: 40,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  movieMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    marginBottom: 12,
-  },
-  classification: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#E50914',
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  classificationText: {
-    color: '#fff',
-    fontSize: 16,
+  buttonLabel: {
+    fontSize: rem(1),
     fontWeight: 'bold',
-  },
-  priceContainer: {
-    alignItems: 'flex-end',
-  },
-  priceLabel: {
-    color: '#666',
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  sessionSkeleton: {
-    height: 200, // Altura aproximada de um card de sessão
-    backgroundColor: '#1A1A1A',
-    overflow: 'hidden',
-  },
-  skeletonAnimation: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  skeletonGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.5,
-  },
-  noSessionsText: {
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
   },
 }); 

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { rem } from '../../core/theme/rem';
-import { Header } from '../../shared/components/Header';
-import { Button } from '../../shared/components/Button';
+import { rem } from '@/core/theme/rem';
+import { Header } from '@/shared/components/Header';
+import { Button } from '@/shared/components/Button';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useCardStore } from '../../features/payment/stores/cardStore';
-import { CardScanner } from '../../features/payment/components/CardScanner';
+import { useCardStore } from '@/features/payment/stores/cardStore';
+import { CardScanner } from '@/features/payment/components/CardScanner';
 
 export default function AddCardScreen() {
   const router = useRouter();
@@ -33,11 +33,11 @@ export default function AddCardScreen() {
   };
 
   const handleSave = () => {
-    // Detectar a bandeira do cartão
+    // Detect card brand
     const firstDigit = cardNumber.charAt(0);
     const brand = firstDigit === '4' ? 'visa' : 'mastercard';
 
-    // Adicionar cartão ao store
+    // Add card to store
     addCard({
       number: cardNumber.replace(/\s/g, ''),
       name: cardName,
@@ -68,7 +68,7 @@ export default function AddCardScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Header title="Adicionar cartão" />
+      <Header title="Add Card" />
       
       <ScrollView 
         style={styles.content}
@@ -78,17 +78,17 @@ export default function AddCardScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <MaterialCommunityIcons name="credit-card" size={24} color="#E50914" />
-            <Text style={styles.cardHeaderText}>Informações do cartão</Text>
+            <Text style={styles.cardHeaderText}>Card Information</Text>
             <View style={styles.spacer} />
             <Button
               onPress={() => setShowScanner(true)}
               variant="secondary"
-              title="Escanear"
+              title="Scan"
             />
           </View>
 
           <TextInput
-            label="Número do cartão"
+            label="Card Number"
             value={cardNumber}
             onChangeText={(text) => setCardNumber(formatCardNumber(text))}
             style={styles.input}
@@ -102,7 +102,7 @@ export default function AddCardScreen() {
           />
 
           <TextInput
-            label="Nome no cartão"
+            label="Name on Card"
             value={cardName}
             onChangeText={setCardName}
             style={styles.input}
@@ -116,7 +116,7 @@ export default function AddCardScreen() {
 
           <View style={styles.row}>
             <TextInput
-              label="Validade"
+              label="Expiry Date"
               value={expiryDate}
               onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
               style={[styles.input, styles.halfInput]}
@@ -154,7 +154,7 @@ export default function AddCardScreen() {
         <View style={styles.footer}>
           <Button 
             onPress={handleSave}
-            title="Salvar cartão"
+            title="Save Card"
             variant="primary"
             size="large"
             fullWidth

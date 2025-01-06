@@ -4,10 +4,11 @@ import { Text, ActivityIndicator, Searchbar } from 'react-native-paper';
 import { useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { rem } from '../core/theme/rem';
-import { useMovieStore } from '../features/movies/stores/movieStore';
+import { rem } from '@/core/theme/rem';
+import { useMovieStore } from '@/features/movies/stores/movieStore';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { MovieCard } from '@/features/movies/components/MovieCard';
 
 const SearchHeader = ({ initialQuery, onSearch }: { initialQuery: string, onSearch: (text: string) => void }) => {
   const [value, setValue] = useState(initialQuery);

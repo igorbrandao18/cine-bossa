@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Header } from '../../shared/components/Header';
-import { SavedCard } from '../../features/seats/components/SavedCard';
-import { AddCardButton } from '../../features/seats/components/AddCardButton';
-import { usePaymentStore } from '../../features/seats/stores/paymentStore';
-import { rem } from '../../core/theme/rem';
+import { Header } from '@/shared/components/Header';
+import { SavedCard } from '@/features/seats/components/SavedCard';
+import { AddCardButton } from '@/features/seats/components/AddCardButton';
+import { usePaymentStore } from '@/features/seats/stores/paymentStore';
+import { rem } from '@/core/theme/rem';
 
 export default function SelectCardScreen() {
   const { type, selectedCardId } = useLocalSearchParams<{ type: string; selectedCardId: string }>();
@@ -26,8 +26,8 @@ export default function SelectCardScreen() {
   return (
     <View style={styles.container}>
       <Header 
-        title={type === 'credit' ? 'Cartões de Crédito' : 'Cartões de Débito'}
-        showBackButton
+        title={type === 'credit' ? 'Credit Cards' : 'Debit Cards'}
+        onBack={() => router.back()}
       />
       
       <ScrollView style={styles.content}>

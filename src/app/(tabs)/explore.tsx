@@ -4,7 +4,7 @@ import { Text, Searchbar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { rem } from '../core/theme/rem';
+import { rem } from '@/core/theme/rem';
 import { useMovieStore } from '@/features/movies/stores/movieStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -47,7 +47,7 @@ const SearchHeader = memo(() => {
       >
         <View style={styles.searchContainer}>
           <Searchbar
-            placeholder="Buscar filmes..."
+            placeholder="Search movies..."
             value={value}
             onChangeText={handleSearch}
             onFocus={() => setFocused(true)}
@@ -176,25 +176,25 @@ export default function Explore() {
   };
 
   const genreDescriptions: Record<number, string> = {
-    28: 'Filmes cheios de adrenalina e emoção',
-    12: 'Aventuras épicas e descobertas incríveis',
-    16: 'Diversão para todas as idades',
-    35: 'Diversão garantida para todos os momentos',
-    80: 'Mistérios e crimes intrigantes',
-    99: 'Histórias reais que inspiram',
-    18: 'Histórias profundas e emocionantes',
-    10751: 'Diversão para toda a família',
-    14: 'Mundos mágicos e fantásticos',
-    36: 'Momentos que marcaram a história',
-    27: 'Sustos e tensão do início ao fim',
-    10402: 'Ritmo e emoção em cada cena',
-    9648: 'Mistérios que prendem sua atenção',
-    10749: 'Histórias de amor que emocionam',
-    878: 'Aventuras além da imaginação',
-    10770: 'Produções especiais para TV',
-    53: 'Suspense que prende do início ao fim',
-    10752: 'Batalhas e conflitos históricos',
-    37: 'Aventuras no velho oeste',
+    28: 'Action-packed movies full of adrenaline',
+    12: 'Epic adventures and incredible discoveries',
+    16: 'Fun for all ages',
+    35: 'Guaranteed fun for every moment',
+    80: 'Intriguing mysteries and crimes',
+    99: 'Inspiring real stories',
+    18: 'Deep and emotional stories',
+    10751: 'Entertainment for the whole family',
+    14: 'Magical and fantastic worlds',
+    36: 'Moments that made history',
+    27: 'Thrills and tension from start to finish',
+    10402: 'Rhythm and emotion in every scene',
+    9648: 'Mysteries that keep you hooked',
+    10749: 'Moving love stories',
+    878: 'Adventures beyond imagination',
+    10770: 'Special TV productions',
+    53: 'Suspense that keeps you on the edge',
+    10752: 'Historical battles and conflicts',
+    37: 'Adventures in the old west',
   };
 
   const trendingMovies = sections.popular?.movies || [];
@@ -216,7 +216,7 @@ export default function Explore() {
 
       {trendingMovies.length > 0 && (
         <View style={styles.recommendedSection}>
-          <Text style={styles.sectionTitle}>Recomendados para você</Text>
+          <Text style={styles.sectionTitle}>Recommended for you</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -269,7 +269,7 @@ export default function Explore() {
       )}
 
       <View style={styles.categoriesSection}>
-        <Text style={styles.sectionTitle}>Explore por gêneros</Text>
+        <Text style={styles.sectionTitle}>Explore by genres</Text>
         <View style={styles.categoriesContainer}>
           {genres.map((genre, index) => (
             <CategoryButton
@@ -279,7 +279,7 @@ export default function Explore() {
                 name: genre.name,
                 icon: genreIcons[genre.id] || 'movie',
                 color: '#E50914',
-                description: genreDescriptions[genre.id] || 'Descubra novos filmes'
+                description: genreDescriptions[genre.id] || 'Discover new movies'
               }}
               onPress={() => router.push(`/category/${genre.id}`)}
               index={index}

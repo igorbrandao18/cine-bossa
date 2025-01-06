@@ -23,6 +23,8 @@ export interface MovieDetails extends Movie {
     logo_path: string | null;
   }[];
   status: string;
+  vote_count: number;
+  adult: boolean;
 }
 
 export interface MoviesResponse {

@@ -1,21 +1,22 @@
-import { View, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { useTheme } from '@/shared/hooks/useTheme';
-import { PurchaseConfirmation } from '@/features/seats/components/PurchaseConfirmation';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { ConfirmationScreen } from '@/features/confirmation/components/ConfirmationScreen';
 
-export default function ConfirmationScreen() {
+export default function ConfirmationPage() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
-  const theme = useTheme();
+  const router = useRouter();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <PurchaseConfirmation sessionId={sessionId} />
-    </View>
+    <>
+      <Stack.Screen 
+        options={{
+          title: 'Confirmação',
+          headerBackTitle: 'Voltar'
+        }} 
+      />
+      <ConfirmationScreen 
+        sessionId={sessionId} 
+        onFinish={() => router.push('/')}
+      />
+    </>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-}); 
+} 

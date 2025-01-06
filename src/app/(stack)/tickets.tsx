@@ -14,18 +14,18 @@ import Animated, {
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
-import { useTicketStore } from '../features/tickets/stores/ticketStore';
-import { Ticket } from '../features/tickets/types/ticket';
+import { useTicketStore } from '@/features/tickets/stores/ticketStore';
+import { Ticket } from '@/features/tickets/types/ticket';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import QRCode from 'react-native-qrcode-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { rem } from '../core/theme/rem';
+import { rem } from '@/core/theme/rem';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
-import { Header } from '../shared/components/Header';
-import { colors } from '../core/theme/colors';
-import { theme } from '../core/theme';
+import { Header } from '@/shared/components/Header';
+import { colors } from '@/core/theme/colors';
+import { theme } from '@/core/theme';
 
 const { width, height } = Dimensions.get('window');
 const TICKET_HEIGHT = height * 0.65;

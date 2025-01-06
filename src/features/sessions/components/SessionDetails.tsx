@@ -2,8 +2,9 @@ import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-nati
 import { Button } from 'react-native-paper';
 import { router } from 'expo-router';
 import { memo, useCallback, useMemo, useState } from 'react';
-import type { Session } from '../types/session';
 import { useSessionStore } from '../stores/sessionStore';
+import type { Session } from '../stores/sessionStore';
+import { rem } from '@/core/theme/rem';
 
 interface SessionButtonProps {
   session: Session;
@@ -40,6 +41,7 @@ const SessionButton = memo(function SessionButton({ session, onPressStart }: Ses
       ]}
     >
       <Text style={styles.sessionButtonLabel}>{session.time}</Text>
+      <Text style={styles.sessionType}>{session.type}</Text>
     </Pressable>
   );
 });
@@ -58,13 +60,13 @@ export const SessionDetails = memo(function SessionDetails({ sessions }: Session
 
   // Agrupar sessões por data
   const groupedSessions = useMemo(() => {
-    return sessions.reduce((acc, session) => {
+    return sessions.reduce<Record<string, Session[]>>((acc, session) => {
       if (!acc[session.date]) {
         acc[session.date] = [];
       }
       acc[session.date].push(session);
       return acc;
-    }, {} as Record<string, Session[]>);
+    }, {});
   }, [sessions]);
 
   if (loading && sessions.length === 0) {
@@ -118,7 +120,7 @@ export const SessionDetails = memo(function SessionDetails({ sessions }: Session
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: rem(1),
     flex: 1,
   },
   centerContent: {
@@ -126,57 +128,65 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: rem(1.5),
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 16,
+    marginBottom: rem(1.5),
   },
   dateGroup: {
-    marginBottom: 20,
+    marginBottom: rem(2),
   },
   dateTitle: {
-    fontSize: 16,
-    color: '#999',
-    marginBottom: 12,
+    fontSize: rem(1.125),
+    color: '#E50914',
+    marginBottom: rem(1),
+    fontWeight: '600',
   },
   sessionList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: rem(0.75),
   },
   sessionButton: {
-    backgroundColor: '#E50914',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
-    minWidth: 80,
+    backgroundColor: 'rgba(229, 9, 20, 0.1)',
+    paddingHorizontal: rem(1),
+    paddingVertical: rem(0.75),
+    borderRadius: rem(0.5),
+    minWidth: rem(5),
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 9, 20, 0.3)',
   },
   sessionButtonPressed: {
-    backgroundColor: '#B30710',
+    backgroundColor: 'rgba(229, 9, 20, 0.2)',
     transform: [{ scale: 0.98 }],
   },
   sessionButtonLabel: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: rem(1.125),
+    fontWeight: '600',
+    marginBottom: rem(0.25),
+  },
+  sessionType: {
+    color: '#999',
+    fontSize: rem(0.75),
+    textTransform: 'uppercase',
   },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 16,
+    gap: rem(0.5),
+    marginTop: rem(1),
   },
   loadingText: {
     color: '#999',
-    fontSize: 14,
-    marginTop: 12,
+    fontSize: rem(0.875),
   },
   noSessionsText: {
     color: '#999',
-    fontSize: 16,
+    fontSize: rem(1),
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: rem(1.5),
   },
 }); 

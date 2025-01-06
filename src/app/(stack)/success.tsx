@@ -3,14 +3,14 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import LottieView from 'lottie-react-native';
-import { rem } from '@/shared/utils/rem';
+import { rem } from '@/core/theme/rem';
 
 export default function SuccessScreen() {
   const router = useRouter();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/(tabs)/home');
+      router.push('/');
     }, 3000);
 
     return () => clearTimeout(timer);

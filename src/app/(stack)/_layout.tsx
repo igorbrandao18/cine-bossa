@@ -39,14 +39,6 @@ export default function StackLayout() {
         }}
       />
       <Stack.Screen 
-        name="payment"
-        options={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          presentation: 'card'
-        }}
-      />
-      <Stack.Screen 
         name="success"
         options={{
           headerShown: false,

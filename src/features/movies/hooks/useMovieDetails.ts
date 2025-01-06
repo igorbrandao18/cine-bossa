@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
-import { Movie } from '../types/movie';
+import { MovieDetails } from '@/core/types/tmdb';
 import { movieService } from '../services/movieService';
 
 export const useMovieDetails = (movieId: number) => {
-  const [movie, setMovie] = useState<Movie | null>(null);
+  const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

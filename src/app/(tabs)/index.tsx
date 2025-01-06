@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text } from 'react-native-paper';
-import { FeaturedMovie } from '../features/movies/components/FeaturedMovie';
-import { MovieRow } from '../features/movies/components/MovieRow';
-import { useMovieStore } from '../features/movies/stores/movieStore';
-import { LoadingState } from '../features/movies/components/LoadingState';
-import { ErrorState } from '../features/movies/components/ErrorState';
-import { rem } from '../core/theme/rem';
+import { FeaturedMovie } from '@/features/movies/components/FeaturedMovie';
+import { MovieRow } from '@/features/movies/components/MovieRow';
+import { useMovieStore } from '@/features/movies/stores/movieStore';
+import { LoadingState } from '@/features/movies/components/LoadingState';
+import { ErrorState } from '@/features/movies/components/ErrorState';
+import { rem } from '@/core/theme/rem';
 
 const SECTIONS = [
-  { type: 'nowPlaying', title: 'Em Cartaz' },
-  { type: 'popular', title: 'Populares' },
-  { type: 'upcoming', title: 'Em Breve' },
-  { type: 'topRated', title: 'Mais Bem Avaliados' },
+  { type: 'nowPlaying', title: 'Now Playing' },
+  { type: 'popular', title: 'Popular' },
+  { type: 'upcoming', title: 'Coming Soon' },
+  { type: 'topRated', title: 'Top Rated' },
 ] as const;
 
 export default function Home() {
