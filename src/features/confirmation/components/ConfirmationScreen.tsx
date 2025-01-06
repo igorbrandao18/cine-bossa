@@ -3,7 +3,7 @@ import { Text } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Button } from '@/shared/components/Button';
 import { theme, rem } from '@/theme';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTicketStore } from '@/features/tickets/stores/ticketStore';
 import { useSessionStore } from '@/features/sessions/stores/sessionStore';
 import { useRouter } from 'expo-router';
@@ -17,12 +17,15 @@ interface ConfirmationScreenProps {
   onFinish: () => void;
 }
 
+const TIMEOUT_DURATION = 50; // 50 segundos
+
 export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenProps) {
   const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const { addTicket } = useTicketStore();
-  const { selectedSession, selectedSeats } = useSessionStore();
+  const { selectedSession, selectedSeats, clearSelectedSeats } = useSessionStore();
   const { sections } = useMovieStore();
+  const [timeLeft, setTimeLeft] = useState(TIMEOUT_DURATION);
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -58,12 +61,33 @@ export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenPr
             lastDigits: '1234' // This should come from the payment flow
           }
         });
+
+        // Iniciar o timer de 50 segundos
+        const timer = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              // Limpar os assentos selecionados
+              clearSelectedSeats();
+              // Redirecionar para a tela de ingressos
+              router.push('/@tickets');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        return () => {
+          clearInterval(timer);
+          clearSelectedSeats();
+        };
       }
     }
   }, []);
 
   const handleSeeTickets = () => {
     router.push('/@tickets');
+    clearSelectedSeats();
     onFinish?.();
   };
 
@@ -83,6 +107,10 @@ export function ConfirmationScreen({ sessionId, onFinish }: ConfirmationScreenPr
       
       <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
         Você receberá os ingressos no seu e-mail em instantes.
+      </Text>
+
+      <Text style={[styles.timer, { color: theme.colors.textSecondary }]}>
+        Redirecionando em {timeLeft} segundos...
       </Text>
 
       <Button 
@@ -118,6 +146,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: rem(1),
+    textAlign: 'center',
+    marginBottom: rem(1),
+  },
+  timer: {
+    fontSize: rem(0.875),
     textAlign: 'center',
     marginBottom: rem(3),
   },

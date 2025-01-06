@@ -1,5 +1,13 @@
 # 🎬 Cine Bossa - Tutorial Completo
 
+## 📋 Demo
+
+https://github.com/seu-usuario/cine-bossa/assets/video/demo.gif
+
+Você também pode assistir ao vídeo completo no YouTube:
+
+[![Cine Bossa Demo](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
+
 ## 📋 Começando
 
 ### Pré-requisitos
